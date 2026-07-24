@@ -18,6 +18,7 @@ const app = await createApp({
   appleAudiences: (process.env.APPLE_AUDIENCES ?? "com.aiity.maps").split(",").filter(Boolean),
   googleAudiences: (process.env.GOOGLE_AUDIENCES ?? "").split(",").filter(Boolean),
   devCors: process.env.DEV_CORS === "1",
+  poiDbPath: process.env.POI_DB_PATH ?? "/data/pois.db",
   valhallaUrls: (process.env.VALHALLA_URLS ?? process.env.VALHALLA_URL ?? "https://valhalla1.openstreetmap.de")
     .split(",").map((s) => s.trim()).filter(Boolean),
 });

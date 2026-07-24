@@ -1,0 +1,8 @@
+{
+  "mc-grass": { "width": 64, "height": 64, "x": 0, "y": 0, "pixelRatio": 1 },
+  "mc-water": { "width": 64, "height": 64, "x": 64, "y": 0, "pixelRatio": 1 },
+  "mc-stone": { "width": 64, "height": 64, "x": 128, "y": 0, "pixelRatio": 1 },
+  "mc-wood": { "width": 64, "height": 64, "x": 192, "y": 0, "pixelRatio": 1 },
+  "mc-sand": { "width": 64, "height": 64, "x": 256, "y": 0, "pixelRatio": 1 },
+  "mc-dirt": { "width": 64, "height": 64, "x": 320, "y": 0, "pixelRatio": 1 }
+}

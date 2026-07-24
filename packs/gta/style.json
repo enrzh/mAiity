@@ -1,0 +1,96 @@
+{
+  "version": 8,
+  "name": "Neon City",
+  "metadata": { "maps:pack": "gta", "maps:schema": "protomaps-basemap-v4", "maps:3d": true },
+  "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+  "sprite": "https://privatenas.nl/maps/packs/gta/sprite",
+  "sources": {
+    "protomaps": {
+      "type": "vector",
+      "url": "pmtiles://https://privatenas.nl/maps/region.pmtiles",
+      "attribution": "<a href=\"https://openstreetmap.org/copyright\">© OpenStreetMap</a> · <a href=\"https://protomaps.com\">Protomaps</a>"
+    }
+  },
+  "light": { "anchor": "viewport", "color": "#ff5ad4", "intensity": 0.6, "position": [1.5, 90, 40] },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#05030d" } },
+    {
+      "id": "earth", "type": "fill", "source": "protomaps", "source-layer": "earth",
+      "paint": { "fill-pattern": "gta-neon" }
+    },
+    {
+      "id": "landcover", "type": "fill", "source": "protomaps", "source-layer": "landcover",
+      "filter": ["match", ["get", "kind"], ["sand", "beach"], true, false],
+      "paint": { "fill-pattern": "gta-sand", "fill-opacity": 0.85 }
+    },
+    {
+      "id": "landuse-park", "type": "fill", "source": "protomaps", "source-layer": "landuse",
+      "filter": ["match", ["get", "kind"], ["park", "grass", "garden", "recreation_ground", "pitch"], true, false],
+      "paint": { "fill-color": "#12301f", "fill-opacity": 0.9 }
+    },
+    {
+      "id": "water", "type": "fill", "source": "protomaps", "source-layer": "water",
+      "paint": { "fill-pattern": "gta-water" }
+    },
+    {
+      "id": "roads-asphalt", "type": "line", "source": "protomaps", "source-layer": "roads",
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-pattern": "gta-asphalt",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 2, 12, 6, 16, 20, 20, 52]
+      }
+    },
+    {
+      "id": "roads-neon", "type": "line", "source": "protomaps", "source-layer": "roads",
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": [
+          "match", ["get", "kind"],
+          ["highway"], "#ff2fb9",
+          ["major_road"], "#21e5ff",
+          ["medium_road"], "#8b6bff",
+          "#3d4a63"
+        ],
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 0.5, 12, 1.4, 16, 3.5, 20, 8],
+        "line-blur": ["interpolate", ["linear"], ["zoom"], 10, 0.4, 16, 2]
+      }
+    },
+    {
+      "id": "buildings-3d", "type": "fill-extrusion", "source": "protomaps", "source-layer": "buildings",
+      "minzoom": 14,
+      "paint": {
+        "fill-extrusion-color": [
+          "interpolate", ["linear"], ["case", ["has", "height"], ["get", "height"], 12],
+          0, "#181336",
+          40, "#2b1c5c",
+          120, "#5a2a8f"
+        ],
+        "fill-extrusion-height": ["case", ["has", "height"], ["get", "height"], 12],
+        "fill-extrusion-base": ["case", ["has", "min_height"], ["get", "min_height"], 0],
+        "fill-extrusion-opacity": 0.95,
+        "fill-extrusion-vertical-gradient": true
+      }
+    },
+    {
+      "id": "buildings-flat", "type": "fill", "source": "protomaps", "source-layer": "buildings",
+      "maxzoom": 14,
+      "paint": { "fill-color": "#1b1440", "fill-outline-color": "#ff2fb9" }
+    },
+    {
+      "id": "boundaries", "type": "line", "source": "protomaps", "source-layer": "boundaries",
+      "paint": { "line-color": "#ff2fb9", "line-dasharray": [3, 3], "line-width": 1, "line-opacity": 0.55 }
+    },
+    {
+      "id": "places-labels", "type": "symbol", "source": "protomaps", "source-layer": "places",
+      "layout": {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 14, 13, 18],
+        "text-letter-spacing": 0.16,
+        "text-transform": "uppercase",
+        "text-max-width": 7
+      },
+      "paint": { "text-color": "#ffe9fb", "text-halo-color": "#ff2fb9", "text-halo-width": 1.6 }
+    }
+  ]
+}

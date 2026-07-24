@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gta",
+  "name": "Neon City",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Vice-Style: Asphalt, Neon-Straßen, 3D-Skyline.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "supports3D": true,
+  "preview": { "colors": ["#05030d", "#ff2fb9", "#21e5ff"] }
+}

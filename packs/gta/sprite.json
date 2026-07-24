@@ -1,0 +1,6 @@
+{
+  "gta-asphalt": { "width": 64, "height": 64, "x": 0, "y": 0, "pixelRatio": 1 },
+  "gta-neon": { "width": 64, "height": 64, "x": 64, "y": 0, "pixelRatio": 1 },
+  "gta-sand": { "width": 64, "height": 64, "x": 128, "y": 0, "pixelRatio": 1 },
+  "gta-water": { "width": 64, "height": 64, "x": 192, "y": 0, "pixelRatio": 1 }
+}

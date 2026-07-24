@@ -10,6 +10,7 @@ import { registerGeocodeRoutes } from "./geocode";
 import { makeSocialVerifier, registerSocialRoutes, type SocialVerifier } from "./social";
 import { registerRouteRoutes } from "./route";
 import { registerUserPackRoutes } from "./userpacks";
+import { PoiIndex } from "./pois";
 
 export interface AppOpts {
   dbPath: string;
@@ -31,6 +32,8 @@ export interface AppOpts {
   devCors?: boolean;
   /** Valhalla-compatible routing engines, tried in order (self-host → public). */
   valhallaUrls?: string[];
+  /** SQLite POI index from data/build-poi-db.sh (optional). */
+  poiDbPath?: string;
 }
 
 export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: Database }> {
@@ -39,6 +42,7 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
   // let clients spoof req.ip via X-Forwarded-For and bypass rate limits.
   const app = Fastify({ logger: false, trustProxy: 1 });
   const db = createDb(opts.dbPath);
+  const pois = opts.poiDbPath ? new PoiIndex(opts.poiDbPath) : undefined;
 
   // Evict expired cache rows (24h is the longest TTL any reader applies).
   const prune = db.query(`DELETE FROM geocode_cache WHERE created_at < ?`);
@@ -77,7 +81,7 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
       registerUserDataRoutes(scope, db, signer);
       registerPackRoutes(scope, opts.packsDir, opts.packsPublicBase ?? "/maps/packs");
       registerUserPackRoutes(scope, db, signer, prefix);
-      registerGeocodeRoutes(scope, db, opts.geocoderUrls);
+      registerGeocodeRoutes(scope, db, opts.geocoderUrls, pois);
       registerRouteRoutes(scope, db, opts.valhallaUrls ?? ["https://valhalla1.openstreetmap.de"]);
     },
     { prefix }

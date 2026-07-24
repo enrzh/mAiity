@@ -42,7 +42,7 @@ describe("health + packs", () => {
     const res = await app.inject({ method: "GET", url: "/maps/api/packs" });
     expect(res.statusCode).toBe(200);
     const ids = res.json().packs.map((p: { id: string }) => p.id);
-    expect(ids).toEqual(["dark", "light", "paper"]);
+    expect(ids).toEqual(["dark", "gta", "light", "minecraft", "paper"]);
     const light = res.json().packs.find((p: { id: string }) => p.id === "light");
     expect(light.styleUrl).toBe("/maps/packs/light/style.json");
   });

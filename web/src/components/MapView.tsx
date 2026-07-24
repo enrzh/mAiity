@@ -14,6 +14,18 @@ const DEFAULT_ZOOM = 5.5
 /** Live map handle for siblings that need camera reads (e.g. POI center). */
 export const liveMap: { current: MLMap | null } = { current: null }
 
+/** Tilt the camera into 3D (or back flat). Buildings extrude from z14. */
+export function set3D(on: boolean) {
+  const m = liveMap.current
+  if (!m) return
+  m.easeTo({
+    pitch: on ? 60 : 0,
+    bearing: on ? -20 : 0,
+    zoom: on ? Math.max(m.getZoom(), 15) : m.getZoom(),
+    duration: 900,
+  })
+}
+
 /// The one imperative component: owns the MapLibre map, keeps it in sync with
 /// app state (active pack style, selected place, bookmark markers).
 export function MapView() {
@@ -45,6 +57,7 @@ export function MapView() {
       zoom: DEFAULT_ZOOM,
       hash: true,
       attributionControl: { compact: true },
+      maxPitch: 75, // 3D view
     })
     styleRef.current = appRef.current.activeStyleUrl
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
@@ -110,7 +123,11 @@ export function MapView() {
     }
     map.once('style.load', onLoad)
     map.on('error', onError)
-    map.setStyle(url, { diff: true })
+    // diff:false — packs carry their OWN sprite atlas, and a diffed swap
+    // leaves stale pattern/sprite references behind (GTA buildings on
+    // Minecraft grass). A full rebuild is correct; the camera is outside the
+    // style so the view is preserved either way.
+    map.setStyle(url, { diff: false })
     return () => {
       map.off('style.load', onLoad)
       map.off('error', onError)

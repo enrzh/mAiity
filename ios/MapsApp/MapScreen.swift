@@ -13,6 +13,9 @@ struct MapScreen: View {
     @State private var camera = MapViewCamera.center(
         CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45), zoom: 5.5
     )
+    @State private var is3D = false
+    /// Last known map centre, so the 3D toggle can re-frame in place.
+    @State private var lastCenter = CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45)
 
     var body: some View {
         if let styleURL = model.styleURL {
@@ -48,27 +51,44 @@ struct MapScreen: View {
             }
             .ignoresSafeArea()
             .overlay(alignment: .topTrailing) {
-                Button {
-                    location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
-                    location.requestOrTrack()
-                } label: {
-                    Image(systemName: location.isAuthorized ? "location.fill" : "location")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 44, height: 44)
-                        .background(.regularMaterial, in: Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
+                VStack(spacing: 10) {
+                    Button {
+                        location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
+                        location.requestOrTrack()
+                    } label: {
+                        Image(systemName: location.isAuthorized ? "location.fill" : "location")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: 44, height: 44)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
+                    }
+                    .accessibilityLabel("Mein Standort")
+
+                    // 3D: tilt the camera; buildings extrude from z14.
+                    Button {
+                        is3D.toggle()
+                        camera = .center(lastCenter, zoom: is3D ? 16 : 14,
+                                         pitch: is3D ? 60 : 0,
+                                         direction: is3D ? 20 : 0)
+                    } label: {
+                        Image(systemName: is3D ? "cube.fill" : "cube")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: 44, height: 44)
+                            .background(.regularMaterial, in: Circle())
+                            .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
+                    }
+                    .accessibilityLabel("3D-Ansicht")
                 }
                 .padding(.trailing, 14)
                 .padding(.top, 8)
-                .accessibilityLabel("Mein Standort")
             }
             .onChange(of: model.cameraTarget) { target in
                 guard let target else { return }
-                camera = .center(
-                    CLLocationCoordinate2D(latitude: target.place.lat, longitude: target.place.lon),
-                    zoom: 15
-                )
+                let c = CLLocationCoordinate2D(latitude: target.place.lat, longitude: target.place.lon)
+                lastCenter = c
+                camera = .center(c, zoom: 15, pitch: is3D ? 60 : 0)
             }
             .onChange(of: model.pois) { pois in
                 // Frame the POI result set.

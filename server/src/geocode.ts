@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { Database } from "bun:sqlite";
+import type { PoiIndex } from "./pois";
 
 /// Search component. Clients only ever call OUR api; the upstream engine is an
 /// implementation detail (public Photon today, self-hosted Photon later — the
@@ -78,7 +79,12 @@ async function throttled<T>(host: string, fn: () => Promise<T>): Promise<T> {
 }
 
 
-export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocoderUrls: string[]) {
+export function registerGeocodeRoutes(
+  app: FastifyInstance,
+  db: Database,
+  geocoderUrls: string[],
+  pois?: PoiIndex,
+) {
   const getCached = db.query(`SELECT response, created_at AS createdAt FROM geocode_cache WHERE key = ?`);
   const putCached = db.query(
     `INSERT INTO geocode_cache (key, response, created_at) VALUES (?, ?, ?)
@@ -172,6 +178,18 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     const key = `s|${q.toLowerCase()}|${lang}|${limit}${biasKey}`;
     const payload = await cachedFetch(key, `/api?${params}`, q);
     if (!payload) return reply.code(502).send({ error: "geocoder_unavailable" });
+
+    // Blend in nearby brand/POI matches the address geocoder misses entirely
+    // ("REWE", "Späti"), keeping geocoder hits first.
+    if (pois?.available && lat && lon) {
+      const la = Number(lat), lo = Number(lon);
+      if (Number.isFinite(la) && Number.isFinite(lo)) {
+        const seen = new Set(payload.results.map((r) => `${r.lat.toFixed(4)},${r.lon.toFixed(4)}`));
+        const extra = pois.search(q, la, lo, 4)
+          .filter((r) => !seen.has(`${r.lat.toFixed(4)},${r.lon.toFixed(4)}`));
+        if (extra.length > 0) return { results: [...payload.results, ...extra].slice(0, limit) };
+      }
+    }
     return payload;
   });
 
@@ -182,6 +200,13 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     const la = Number(lat), lo = Number(lon);
     if (!Number.isFinite(la) || !Number.isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180)
       return reply.code(400).send({ error: "invalid_coordinates" });
+
+    // Local OSM index first: it has EVERY named POI incl. brands, which a
+    // text-matching geocoder cannot return.
+    if (pois?.available) {
+      const local = pois.nearby(cat, la, lo);
+      if (local.length > 0) return { results: local };
+    }
 
     const key = `n|${cat}|${la.toFixed(2)},${lo.toFixed(2)}`;
     const params = new URLSearchParams({

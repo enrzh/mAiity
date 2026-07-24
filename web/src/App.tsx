@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LogOut, Palette, Star, User } from 'lucide-react'
+import { Box, LogOut, Palette, Star, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -8,7 +8,7 @@ import {
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import { AppProvider, useApp } from './state'
-import { MapView, liveMap } from './components/MapView'
+import { MapView, liveMap, set3D } from './components/MapView'
 import { CategoryChips, centerOf } from './components/CategoryChips'
 import { SearchBar } from './components/SearchBar'
 import { PlaceCard } from './components/PlaceCard'
@@ -24,6 +24,7 @@ const roundBtn = 'size-11 rounded-full bg-background/95 shadow-md backdrop-blur 
 function Shell() {
   const app = useApp()
   const [panel, setPanel] = useState<Panel>('none')
+  const [is3D, setIs3D] = useState(false)
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? 'none' : p))
 
   // A selected place takes the stage — close side panels so the card is clear.
@@ -43,6 +44,14 @@ function Shell() {
       >
         <div className="pointer-events-auto min-w-0 flex-1"><SearchBar /></div>
         <div className="pointer-events-auto ml-auto flex shrink-0 gap-2">
+          <Button
+            variant="ghost" size="icon"
+            className={cn(roundBtn, is3D && 'ring-2 ring-primary')}
+            onClick={() => { const next = !is3D; setIs3D(next); set3D(next) }}
+            aria-label="3D-Ansicht" aria-pressed={is3D} title="3D-Ansicht"
+          >
+            <Box className="size-5" />
+          </Button>
           <Button
             variant="ghost" size="icon"
             className={cn(roundBtn, panel === 'packs' && 'ring-2 ring-primary')}

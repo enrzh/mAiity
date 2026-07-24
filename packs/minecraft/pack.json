@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "minecraft",
+  "name": "Blockwelt",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Klötzchen-Look: Pixel-Texturen + 3D-Gebäude.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "supports3D": true,
+  "preview": { "colors": ["#5d9c3c", "#3355bb", "#9c6b3f"] }
+}
