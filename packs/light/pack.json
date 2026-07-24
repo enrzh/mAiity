@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "light",
+  "name": "Light",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Klare, helle Standard-Karte.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "preview": { "colors": ["#eae7df", "#a5cae8", "#ffffff"] }
+}

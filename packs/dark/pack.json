@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "dark",
+  "name": "Dark",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Dunkles Design für Nacht und OLED.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "preview": { "colors": ["#171e26", "#0e1e30", "#2e3945"] }
+}

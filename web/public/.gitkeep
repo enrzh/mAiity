@@ -1,0 +1,2 @@
+# Built region.pmtiles / pois.pmtiles land here (git-ignored) and are served
+# by Vite with HTTP range support at /region.pmtiles etc.

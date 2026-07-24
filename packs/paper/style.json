@@ -1,0 +1,133 @@
+{
+  "version": 8,
+  "name": "Paper",
+  "metadata": { "maps:pack": "paper", "maps:schema": "protomaps-basemap-v4" },
+  "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+  "sprite": "https://privatenas.nl/maps/packs/paper/sprite",
+  "sources": {
+    "protomaps": {
+      "type": "vector",
+      "url": "pmtiles://https://privatenas.nl/maps/region.pmtiles",
+      "attribution": "<a href=\"https://openstreetmap.org/copyright\">© OpenStreetMap</a> · <a href=\"https://protomaps.com\">Protomaps</a>"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#b9cdc5" }
+    },
+    {
+      "id": "earth",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "earth",
+      "paint": { "fill-pattern": "paper-grain" }
+    },
+    {
+      "id": "landcover",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landcover",
+      "paint": {
+        "fill-color": [
+          "match", ["get", "kind"],
+          ["forest", "wood", "scrub", "grassland", "grass"], "#dfe0bd",
+          ["farmland"], "#ece4c6",
+          ["glacier", "snow"], "#f7f4ea",
+          "rgba(0,0,0,0)"
+        ],
+        "fill-opacity": 0.6
+      }
+    },
+    {
+      "id": "landuse",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landuse",
+      "paint": {
+        "fill-color": [
+          "match", ["get", "kind"],
+          ["park", "grass", "recreation_ground", "garden", "cemetery", "pitch"], "#dce3bd",
+          ["hospital"], "#eddfd2",
+          ["school", "university", "college"], "#ece2ca",
+          "rgba(0,0,0,0)"
+        ]
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "water",
+      "paint": { "fill-color": "#b9cdc5" }
+    },
+    {
+      "id": "buildings",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 13,
+      "paint": {
+        "fill-pattern": "pencil-hatch",
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 0.9]
+      }
+    },
+    {
+      "id": "roads-casing",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": ["match", ["get", "kind"], ["highway", "major_road", "medium_road"], true, false],
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": "#d8cbb0",
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 1, 12, 3, 16, 10, 20, 34]
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "layout": { "line-cap": "round", "line-join": "round" },
+      "paint": {
+        "line-color": [
+          "match", ["get", "kind"],
+          ["highway"], "#f0dfb4",
+          ["major_road", "medium_road"], "#fffdf5",
+          "#fbf7ec"
+        ],
+        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 0.4, 12, 1.4, 16, 6, 20, 24]
+      }
+    },
+    {
+      "id": "boundaries",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "boundaries",
+      "paint": {
+        "line-color": "#8a7a68",
+        "line-dasharray": [4, 3],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 10, 1.4]
+      }
+    },
+    {
+      "id": "places-labels",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "places",
+      "layout": {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 14, 13, 18],
+        "text-max-width": 7
+      },
+      "paint": {
+        "text-color": "#4a4238",
+        "text-halo-color": "#f6efe0",
+        "text-halo-width": 1.4
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+# Maps stack on the NAS. Public routes via VPS Caddy:
+#   /maps/*     -> :3102 (static: web app, tiles, packs)
+#   /maps/api/* -> :3103 (API: auth, bookmarks, packs, geocode)
+services:
+  maps:
+    image: nginx:alpine
+    container_name: apps-nas-maps
+    restart: unless-stopped
+    volumes:
+      - ./dist:/usr/share/nginx/html/maps:ro
+      - ./packs:/packs-data:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      # Bind on the Tailscale IP so only the VPS edge can reach it.
+      - "100.93.237.25:3102:80"
+
+  # Self-hosted geocoder (Germany index ~7.3 GB compressed, auto-downloaded on
+  # first start). The API tries this first and falls back to photon.komoot.io
+  # for non-German queries — unlimited local search, worldwide coverage kept.
+  photon:
+    image: rtuszik/photon-docker:latest
+    container_name: apps-nas-maps-photon
+    restart: unless-stopped
+    environment:
+      REGION: germany
+      UPDATE_STRATEGY: DISABLED   # updates re-download GBs; refresh manually
+      JAVA_PARAMS: -Xmx4g
+    volumes:
+      - ./photon-data:/photon/photon_data
+    ports:
+      - "100.93.237.25:2322:2322"
+
+  # Self-hosted routing engine. First start downloads germany-latest.osm.pbf
+  # (~4 GB) and builds routing tiles (takes a while); the API's route chain
+  # falls back to the public FOSSGIS instance until this is ready.
+  valhalla:
+    image: ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+    container_name: apps-nas-maps-valhalla
+    restart: unless-stopped
+    environment:
+      tile_urls: https://download.geofabrik.de/europe/germany-latest.osm.pbf
+      server_threads: 4
+      build_elevation: "False"
+      build_admins: "True"
+      build_time_zones: "True"
+      use_tiles_ignore_pbf: "True"
+      force_rebuild: "False"
+    volumes:
+      - ./valhalla-data:/custom_files
+    ports:
+      - "100.93.237.25:8002:8002"
+
+  api:
+    build: ./api
+    container_name: apps-nas-maps-api
+    restart: unless-stopped
+    env_file: .env            # JWT_SECRET=... (generated on first deploy)
+    environment:
+      DB_PATH: /data/maps.db
+      PACKS_DIR: /packs
+      # Chain: self-hosted Photon (Germany, unlimited) → public fallback.
+      GEOCODER_URLS: "http://photon:2322,https://photon.komoot.io"
+      # Chain: self-hosted Valhalla (Germany) → public FOSSGIS fallback.
+      VALHALLA_URLS: "http://valhalla:8002,https://valhalla1.openstreetmap.de"
+      API_PREFIX: /maps/api
+      PACKS_PUBLIC_BASE: /maps/packs
+    volumes:
+      - ./data-api:/data
+      - ./packs:/packs:ro
+    ports:
+      - "100.93.237.25:3103:3103"

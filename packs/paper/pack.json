@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "paper",
+  "name": "Paper",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Warmer Papier-Look mit Sepia-Tönen.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "preview": { "colors": ["#f2ead8", "#b9cdc5", "#fffdf5"] }
+}
