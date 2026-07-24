@@ -17,6 +17,10 @@ struct SheetView: View {
                 if model.route != nil { routeSection }
                 if let place = model.selected { placeSection(place) }
                 if !model.searchResults.isEmpty { resultsSection }
+                if model.searchQuery.isEmpty && model.searchResults.isEmpty
+                    && !model.recents.isEmpty && model.route == nil && model.selected == nil {
+                    recentsSection
+                }
                 if !model.pois.isEmpty && model.route == nil { poiSection }
                 savedSection
                 packsSection
@@ -65,6 +69,20 @@ struct SheetView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(r.name).fontWeight(.semibold)
                         Text(r.label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var recentsSection: some View {
+        Section("Zuletzt gesucht") {
+            ForEach(model.recents) { r in
+                Button { model.select(result: r); detent = .height(220) } label: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(r.name).fontWeight(.medium)
+                        Text(r.label).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
                 }
                 .buttonStyle(.plain)
@@ -246,6 +264,16 @@ struct SheetView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Route hierhin")
+                ShareLink(
+                    item: URL(string: "https://privatenas.nl/maps/?p=\(String(format: "%.5f,%.5f", place.lat, place.lon)),\(place.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!,
+                    subject: Text(place.name)
+                ) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Ort teilen")
                 Button {
                     Task {
                         let ok = await model.toggleBookmark(place)

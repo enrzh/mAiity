@@ -24,6 +24,7 @@ final class AppModel: ObservableObject {
     @Published var pickingStart = false
     @Published var pois: [GeoResult] = []
     @Published var activeCategory: String?
+    @Published var recents: [GeoResult] = []
     @Published var activePackId: String {
         didSet { UserDefaults.standard.set(activePackId, forKey: "maps.activePack") }
     }
@@ -43,6 +44,19 @@ final class AppModel: ObservableObject {
 
     init() {
         activePackId = UserDefaults.standard.string(forKey: "maps.activePack") ?? "light"
+        if let data = UserDefaults.standard.data(forKey: "maps.recents"),
+           let stored = try? JSONDecoder().decode([GeoResult].self, from: data) {
+            recents = stored
+        }
+    }
+
+    private func recordRecent(_ r: GeoResult) {
+        recents.removeAll { $0.lat == r.lat && $0.lon == r.lon }
+        recents.insert(r, at: 0)
+        recents = Array(recents.prefix(8))
+        if let data = try? JSONEncoder().encode(recents) {
+            UserDefaults.standard.set(data, forKey: "maps.recents")
+        }
     }
 
     var allPacks: [Pack] { packs + customPacks }
@@ -146,6 +160,7 @@ final class AppModel: ObservableObject {
     func select(result: GeoResult) {
         let place = Place(name: result.name, label: result.label, lat: result.lat, lon: result.lon)
         if pickingStart { setRouteStart(place); return }
+        recordRecent(result)
         selected = place
         cameraTarget = place
         searchResults = []
