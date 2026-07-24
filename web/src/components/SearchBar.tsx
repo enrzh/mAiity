@@ -15,10 +15,18 @@ export function SearchBar() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(false)
   const seq = useRef(0)
+  // Picking a result writes its name back into the input — that must not
+  // re-trigger the debounce and reopen the dropdown 350ms later.
+  const suppressRef = useRef<string | null>(null)
   const boxRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const query = q.trim()
+    if (suppressRef.current !== null && query === suppressRef.current) {
+      suppressRef.current = null
+      return
+    }
+    suppressRef.current = null
     if (query.length < 3) {
       // Invalidate any in-flight request — a stale response must not reopen
       // the dropdown, and the spinner must not stick.
@@ -59,6 +67,9 @@ export function SearchBar() {
   const pick = (r: GeoResult) => {
     app.selectResult(r)
     setOpen(false)
+    suppressRef.current = r.name.trim()
+    seq.current++
+    setBusy(false)
     setQ(r.name)
     // Remember for the recents dropdown (dedup by coords, cap 8).
     try {

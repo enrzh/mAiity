@@ -50,7 +50,9 @@ describe("social sign-in", () => {
     expect(r2.json().user.id).toBe(r1.json().user.id);
   });
 
-  test("apple: links to existing verified-email account", async () => {
+  test("apple does NOT link to a password account (pre-hijack defense)", async () => {
+    // Password-account e-mails are unverified here — an attacker could
+    // pre-register the victim's address. Social sign-in must not merge.
     const app = await makeApp(fakeVerifier({ sub: "apple-sub-2", email: "link@b.de", emailVerified: true, name: null }));
     const reg = await app.inject({
       method: "POST", url: "/maps/api/auth/register",
@@ -60,7 +62,19 @@ describe("social sign-in", () => {
       method: "POST", url: "/maps/api/auth/apple",
       payload: { identityToken: "valid-apple" },
     });
-    expect(social.json().user.id).toBe(reg.json().user.id);
+    expect(social.statusCode).toBe(200);
+    expect(social.json().user.id).not.toBe(reg.json().user.id);
+    expect(social.json().user.email).toBeNull(); // e-mail stays with the password account
+  });
+
+  test("second provider DOES link to a federated (passwordless) account", async () => {
+    const app = await makeApp(fakeVerifier(
+      { sub: "apple-sub-9", email: "both@b.de", emailVerified: true, name: null },
+      { sub: "google-sub-9", email: "both@b.de", emailVerified: true, name: null },
+    ));
+    const apple = await app.inject({ method: "POST", url: "/maps/api/auth/apple", payload: { identityToken: "valid-apple" } });
+    const google = await app.inject({ method: "POST", url: "/maps/api/auth/google", payload: { idToken: "valid-google" } });
+    expect(google.json().user.id).toBe(apple.json().user.id);
   });
 
   test("apple: does NOT link on unverified email", async () => {

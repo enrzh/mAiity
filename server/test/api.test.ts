@@ -99,7 +99,9 @@ describe("auth", () => {
     expect(ok.json().accessToken).toBeTruthy();
   });
 
-  test("refresh rotates; IMMEDIATE reuse is a benign race (401, no family nuke)", async () => {
+  test("refresh rotates; ANY reuse of a rotated token revokes the family", async () => {
+    // Clients single-flight refreshes (web navigator.locks / iOS actor), so
+    // reuse can only be replay of a stolen token — no grace window.
     const app = await makeApp();
     const reg = await registerUser(app, "rot@b.de");
     const rt1 = reg.json().refreshToken as string;
@@ -108,25 +110,6 @@ describe("auth", () => {
     expect(r1.statusCode).toBe(200);
     const rt2 = r1.json().refreshToken as string;
     expect(rt2).not.toBe(rt1);
-
-    // Reuse within the grace window (two tabs sharing a cookie) → plain 401,
-    // and the freshly rotated token keeps working.
-    const reuse = await app.inject({ method: "POST", url: "/maps/api/auth/refresh", payload: { refreshToken: rt1 } });
-    expect(reuse.statusCode).toBe(401);
-    expect(reuse.json().error).toBe("invalid_refresh_token");
-    const afterReuse = await app.inject({ method: "POST", url: "/maps/api/auth/refresh", payload: { refreshToken: rt2 } });
-    expect(afterReuse.statusCode).toBe(200);
-  });
-
-  test("STALE reuse of a rotated token is theft — the whole family is revoked", async () => {
-    const app = await makeApp();
-    const reg = await registerUser(app, "theft@b.de");
-    const rt1 = reg.json().refreshToken as string;
-    const r1 = await app.inject({ method: "POST", url: "/maps/api/auth/refresh", payload: { refreshToken: rt1 } });
-    const rt2 = r1.json().refreshToken as string;
-
-    // Backdate the rotation beyond the grace window.
-    app.db.query(`UPDATE refresh_tokens SET revoked_at = revoked_at - 3600 WHERE revoked_at IS NOT NULL`).run();
 
     const reuse = await app.inject({ method: "POST", url: "/maps/api/auth/refresh", payload: { refreshToken: rt1 } });
     expect(reuse.statusCode).toBe(401);

@@ -118,11 +118,13 @@ export function registerRouteRoutes(app: FastifyInstance, db: Database, valhalla
           signal: AbortSignal.timeout(10_000),
           body: payload,
         });
-        if (res.status === 400) { sawNoRoute = true; break; }
+        // 400 = "this engine found no route" — authoritative for THIS engine
+        // only (a regional graph may lack the area); still try the next one.
+        if (res.status === 400) { sawNoRoute = true; continue; }
         if (!res.ok) continue;
         const json = (await res.json()) as { trip?: Parameters<typeof normalize>[1] };
         const result = json.trip ? normalize(b.mode ?? "car", json.trip) : null;
-        if (!result) { sawNoRoute = true; break; }
+        if (!result) { sawNoRoute = true; continue; }
         putCached.run(key, JSON.stringify(result), now());
         return result;
       } catch {

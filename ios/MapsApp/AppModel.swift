@@ -32,15 +32,32 @@ final class AppModel: ObservableObject {
     @Published var selected: Place?
     @Published var searchResults: [GeoResult] = []
     @Published var searchQuery = "" {
-        didSet { scheduleSearch() }
+        didSet { if !suppressSearch { scheduleSearch() } }
     }
     @Published var searching = false
     @Published var authError: String?
+    @Published var bootFailed = false
 
-    /// Camera target set by search/bookmark selection; MapScreen consumes it.
-    @Published var cameraTarget: Place?
+    /// One-shot camera event (identity-tagged so re-selecting the same place
+    /// still moves the camera).
+    struct CameraEvent: Equatable {
+        let id = UUID()
+        let place: Place
+    }
+    @Published var cameraTarget: CameraEvent?
 
     private var searchTask: Task<Void, Never>?
+    private var poiTask: Task<Void, Never>?
+    private var suppressSearch = false
+
+    /// Set the search field without scheduling a search (result picked).
+    func setQueryQuietly(_ q: String) {
+        suppressSearch = true
+        searchQuery = q
+        suppressSearch = false
+        searchTask?.cancel()
+        searching = false
+    }
 
     init() {
         activePackId = UserDefaults.standard.string(forKey: "maps.activePack") ?? "light"
@@ -72,8 +89,11 @@ final class AppModel: ObservableObject {
     // MARK: - Boot
 
     func boot() async {
-        if let packs = try? await APIClient.shared.packs() {
+        bootFailed = false
+        if let packs = try? await APIClient.shared.packs(), !packs.isEmpty {
             self.packs = packs
+        } else if self.packs.isEmpty {
+            bootFailed = true // first launch offline — show retry instead of spinner
         }
         if let user = await APIClient.shared.resume() {
             self.user = user
@@ -135,7 +155,8 @@ final class AppModel: ObservableObject {
         user = nil
         bookmarks = []
         customPacks = []
-        route = nil
+        clearRoute() // cancels an in-flight route task — it must not resurrect
+        clearPois()
         if activePackId.hasPrefix("u-") { activePackId = "light" }
     }
 
@@ -144,12 +165,12 @@ final class AppModel: ObservableObject {
     private func scheduleSearch() {
         searchTask?.cancel()
         let q = searchQuery.trimmingCharacters(in: .whitespaces)
-        guard q.count >= 3 else { searchResults = []; return }
+        guard q.count >= 3 else { searchResults = []; searching = false; return }
         searching = true
         searchTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
             guard !Task.isCancelled, let self else { return }
-            let bias = self.cameraTarget.map { (lat: $0.lat, lon: $0.lon) }
+            let bias = self.cameraTarget.map { (lat: $0.place.lat, lon: $0.place.lon) }
             let results = (try? await APIClient.shared.geocode(q, bias: bias)) ?? []
             guard !Task.isCancelled else { return }
             self.searchResults = results
@@ -162,14 +183,14 @@ final class AppModel: ObservableObject {
         if pickingStart { setRouteStart(place); return }
         recordRecent(result)
         selected = place
-        cameraTarget = place
+        cameraTarget = CameraEvent(place: place)
         searchResults = []
     }
 
     func select(bookmark: Bookmark) {
         let place = Place(name: bookmark.name, label: bookmark.note.isEmpty ? bookmark.name : bookmark.note, lat: bookmark.lat, lon: bookmark.lon)
         selected = place
-        cameraTarget = place
+        cameraTarget = CameraEvent(place: place)
     }
 
     func selectTap(lat: Double, lon: Double) async {
@@ -185,22 +206,27 @@ final class AppModel: ObservableObject {
 
     // MARK: - POI browsing
 
-    func showCategory(_ cat: NearbyCategory) async {
+    func showCategory(_ cat: NearbyCategory) {
+        poiTask?.cancel()
         if activeCategory == cat.id { clearPois(); return }
         activeCategory = cat.id
-        // Search around: the selected place, else the user, else the camera
-        // target, else the Germany overview center.
-        var center = (lat: 51.16, lon: 10.45)
-        if let s = selected { center = (s.lat, s.lon) }
-        else if let loc = await LocationService.shared.currentLocation() { center = (loc.latitude, loc.longitude) }
-        else if let t = cameraTarget { center = (t.lat, t.lon) }
-        guard activeCategory == cat.id else { return }
-        let results = (try? await APIClient.shared.nearby(cat: cat.id, lat: center.lat, lon: center.lon)) ?? []
-        guard activeCategory == cat.id else { return }
-        pois = results
+        poiTask = Task { [weak self] in
+            guard let self else { return }
+            // Search around: the selected place, else the user, else the last
+            // camera target, else the Germany overview center.
+            var center = (lat: 51.16, lon: 10.45)
+            if let s = self.selected { center = (s.lat, s.lon) }
+            else if let loc = await LocationService.shared.currentLocation() { center = (loc.latitude, loc.longitude) }
+            else if let t = self.cameraTarget { center = (t.place.lat, t.place.lon) }
+            guard !Task.isCancelled else { return }
+            let results = (try? await APIClient.shared.nearby(cat: cat.id, lat: center.lat, lon: center.lon)) ?? []
+            guard !Task.isCancelled else { return }
+            self.pois = results
+        }
     }
 
     func clearPois() {
+        poiTask?.cancel()
         pois = []
         activeCategory = nil
     }
@@ -212,12 +238,13 @@ final class AppModel: ObservableObject {
     }
 
     /// Returns false when the user must log in first.
+    /// Local state only mutates when the server call SUCCEEDS (404 on delete
+    /// counts — the bookmark is gone either way).
     @discardableResult
     func toggleBookmark(_ place: Place) async -> Bool {
         guard user != nil else { return false }
         if let existing = bookmarkFor(place) {
-            try? await APIClient.shared.deleteBookmark(id: existing.id)
-            bookmarks.removeAll { $0.id == existing.id }
+            await deleteBookmarkSynced(existing.id)
         } else if let created = try? await APIClient.shared.addBookmark(name: place.name, lat: place.lat, lon: place.lon) {
             bookmarks.insert(created, at: 0)
         }
@@ -225,8 +252,18 @@ final class AppModel: ObservableObject {
     }
 
     func removeBookmark(_ id: String) async {
-        try? await APIClient.shared.deleteBookmark(id: id)
-        bookmarks.removeAll { $0.id == id }
+        await deleteBookmarkSynced(id)
+    }
+
+    private func deleteBookmarkSynced(_ id: String) async {
+        do {
+            try await APIClient.shared.deleteBookmark(id: id)
+            bookmarks.removeAll { $0.id == id }
+        } catch let e as APIClient.APIError where e.status == 404 {
+            bookmarks.removeAll { $0.id == id } // already gone server-side
+        } catch {
+            // Server still has it — keep it visible rather than lying.
+        }
     }
 
     // MARK: - Packs

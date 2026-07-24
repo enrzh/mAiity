@@ -35,8 +35,19 @@ export interface AppOpts {
 
 export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: Database }> {
   const prefix = opts.prefix ?? "/maps/api";
-  const app = Fastify({ logger: false, trustProxy: true });
+  // trustProxy: 1 — exactly one trusted hop (the Caddy edge). `true` would
+  // let clients spoof req.ip via X-Forwarded-For and bypass rate limits.
+  const app = Fastify({ logger: false, trustProxy: 1 });
   const db = createDb(opts.dbPath);
+
+  // Evict expired cache rows (24h is the longest TTL any reader applies).
+  const prune = db.query(`DELETE FROM geocode_cache WHERE created_at < ?`);
+  prune.run(Math.floor(Date.now() / 1000) - 24 * 3600);
+  const pruneTimer = setInterval(
+    () => prune.run(Math.floor(Date.now() / 1000) - 24 * 3600),
+    3600_000,
+  );
+  (pruneTimer as unknown as { unref?: () => void }).unref?.();
   const signer = makeAccessSigner(opts.jwtSecret);
 
   await app.register(cookie);

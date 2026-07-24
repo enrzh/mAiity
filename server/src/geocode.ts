@@ -66,20 +66,17 @@ function normalize(json: unknown): GeoResult[] {
   return out;
 }
 
-/** Serialize upstream calls and keep a polite minimum gap (public-API fair use). */
-let upstreamChain: Promise<unknown> = Promise.resolve();
-let lastUpstream = 0;
-function throttled<T>(fn: () => Promise<T>): Promise<T> {
-  const run = async () => {
-    const wait = 250 - (Date.now() - lastUpstream);
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-    lastUpstream = Date.now();
-    return fn();
-  };
-  const p = upstreamChain.then(run, run);
-  upstreamChain = p.catch(() => {});
-  return p;
+/** Space request STARTS per upstream host (fair use) without serializing on
+ *  completions — a hung upstream must never head-of-line-block the others. */
+const nextSlot = new Map<string, number>();
+async function throttled<T>(host: string, fn: () => Promise<T>): Promise<T> {
+  const slot = Math.max(nextSlot.get(host) ?? 0, Date.now());
+  nextSlot.set(host, slot + 250);
+  const wait = slot - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  return fn();
 }
+
 
 export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocoderUrls: string[]) {
   const getCached = db.query(`SELECT response, created_at AS createdAt FROM geocode_cache WHERE key = ?`);
@@ -88,10 +85,10 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
      ON CONFLICT(key) DO UPDATE SET response = excluded.response, created_at = excluded.created_at`
   );
 
-  async function fetchOne(url: string): Promise<{ results: GeoResult[] } | null> {
+  async function fetchOne(base: string, path: string): Promise<{ results: GeoResult[] } | null> {
     try {
-      const res = await throttled(() =>
-        fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(6000) })
+      const res = await throttled(base, () =>
+        fetch(`${base}${path}`, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(6000) })
       );
       if (!res.ok) return null;
       return { results: normalize(await res.json()) };
@@ -102,15 +99,23 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
 
   /// Regional indexes fuzzy-match badly out of area (a Germany index answers
   /// "Times Square New York" with a Dresden venue). A result set only "wins"
-  /// when most significant query words actually appear in it.
+  /// when a SINGLE result covers most significant query words. Folding makes
+  /// "muenchen"/"münchen" and "strasse"/"straße" match; digit tokens (house
+  /// numbers) are ignored; word-boundary prefix match avoids mid-word hits.
+  const fold = (s: string) =>
+    s.toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .normalize("NFKD").replace(/\p{M}/gu, "");
   function coversQuery(results: GeoResult[], query: string | null): boolean {
     if (results.length === 0) return false;
     if (!query) return true; // reverse lookups have no words to cover
-    const tokens = query.toLowerCase().split(/[\s,]+/).filter((t) => t.length > 2);
+    const tokens = fold(query).split(/[\s,]+/).filter((t) => t.length > 2 && !/^\d+$/.test(t));
     if (tokens.length === 0) return true;
-    const haystack = results.slice(0, 3).map((r) => `${r.name} ${r.label}`.toLowerCase()).join(" ");
-    const covered = tokens.filter((t) => haystack.includes(t)).length;
-    return covered / tokens.length >= 0.6;
+    return results.slice(0, 3).some((r) => {
+      const words = fold(`${r.name} ${r.label}`).split(/[\s,()/.\-]+/);
+      const covered = tokens.filter((t) => words.some((w) => w === t || w.startsWith(t))).length;
+      return covered / tokens.length >= 0.6;
+    });
   }
 
   /// Upstream CHAIN: e.g. self-hosted Photon (Germany, unlimited) first, the
@@ -126,7 +131,7 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     if (hit && now() - hit.createdAt < CACHE_TTL_S) return JSON.parse(hit.response);
     let best: { results: GeoResult[] } | null = null;
     for (const base of geocoderUrls) {
-      const payload = await fetchOne(`${base}${path}`);
+      const payload = await fetchOne(base, path);
       if (payload && (best === null || payload.results.length > 0)) best = payload;
       if (payload && coversQuery(payload.results, query)) { best = payload; break; }
     }
@@ -134,7 +139,20 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     return best;
   }
 
-  app.get("/geocode", async (req, reply) => {
+  // Per-IP cap for THESE routes only (app-instance-scoped, not module-global).
+  const geoHits = new Map<string, number[]>();
+  const geoLimiter = async (req: Parameters<Parameters<FastifyInstance["get"]>[2]>[0], reply: Parameters<Parameters<FastifyInstance["get"]>[2]>[1]) => {
+    const cutoff = Date.now() - 60_000;
+    const list = (geoHits.get(req.ip) ?? []).filter((t) => t > cutoff);
+    list.push(Date.now());
+    geoHits.set(req.ip, list);
+    if (list.length > 120) {
+      reply.code(429).send({ error: "too_many_requests" });
+      return reply;
+    }
+  };
+
+  app.get("/geocode", { preHandler: geoLimiter }, async (req, reply) => {
     const q = ((req.query as Record<string, string>).q ?? "").trim();
     if (q.length < 2) return { results: [] };
     const { lang = "de", lat, lon } = req.query as Record<string, string>;
@@ -157,7 +175,7 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     return payload;
   });
 
-  app.get("/nearby", async (req, reply) => {
+  app.get("/nearby", { preHandler: geoLimiter }, async (req, reply) => {
     const { cat, lat, lon } = req.query as Record<string, string>;
     const category = NEARBY_CATEGORIES[cat ?? ""];
     if (!category) return reply.code(400).send({ error: "unknown_category" });
@@ -181,7 +199,7 @@ export function registerGeocodeRoutes(app: FastifyInstance, db: Database, geocod
     return payload;
   });
 
-  app.get("/reverse", async (req, reply) => {
+  app.get("/reverse", { preHandler: geoLimiter }, async (req, reply) => {
     const { lat, lon, lang = "de" } = req.query as Record<string, string>;
     const la = Number(lat), lo = Number(lon);
     if (!Number.isFinite(la) || !Number.isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180)

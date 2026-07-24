@@ -69,9 +69,13 @@ actor APIClient {
                 let session = try self.decode(SessionResponse.self, data)
                 await self.storeSession(session)
                 return true
-            } catch {
-                // Invalid/rotated-away token — drop it so we don't loop.
+            } catch let e as APIError where e.status == 401 || e.status == 403 {
+                // The SERVER rejected the token — it's dead, drop it.
                 Keychain.delete(Self.refreshKey)
+                return false
+            } catch {
+                // Transient (offline, timeout, 5xx) — keep the token; the
+                // session resumes on the next attempt with connectivity.
                 return false
             }
         }
@@ -130,6 +134,10 @@ actor APIClient {
             items.append(URLQueryItem(name: "lon", value: String(bias.lon)))
         }
         comps.queryItems = items
+        // URLComponents leaves '+' literal, which Node backends decode as a
+        // space — re-encode it so "C++ Museum" style queries survive.
+        comps.percentEncodedQuery = comps.percentEncodedQuery?
+            .replacingOccurrences(of: "+", with: "%2B")
         let (data, resp) = try await URLSession.shared.data(from: comps.url!)
         guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
         return try decode(GeoResponse.self, data).results

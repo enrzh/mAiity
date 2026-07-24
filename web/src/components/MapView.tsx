@@ -22,6 +22,10 @@ export function MapView() {
   // the map exists — a ref write alone would leave them dead forever.
   const [map, setMap] = useState<MLMap | null>(null)
   const styleRef = useRef<string | null>(null)
+  // Own readiness flag: map.isStyleLoaded() is a transient tiles+sprite check
+  // that reads false during tile loads — trusting it can silently drop the
+  // route layer forever.
+  const styleReadyRef = useRef(false)
   const selMarker = useRef<Marker | null>(null)
   const bmMarkers = useRef<globalThis.Map<string, Marker>>(new globalThis.Map())
   const app = useApp()
@@ -67,7 +71,10 @@ export function MapView() {
 
     // Route layers are user layers on TOP of pack styles — re-added after
     // every setStyle (pack switch) from the current routeRef.
-    m.on('style.load', () => syncRouteLayers(m))
+    m.on('style.load', () => {
+      styleReadyRef.current = true
+      syncRouteLayers(m)
+    })
 
     // Keep the GL canvas matched to the container (init can happen pre-layout).
     const ro = new ResizeObserver(() => m.resize())
@@ -87,19 +94,27 @@ export function MapView() {
   }, [ready])
 
   // Pack switching — camera survives setStyle; DOM markers survive too.
-  // styleRef only commits on successful load so a failed pack can be retried.
+  // styleRef re-commits on successful load; ANY error during the load window
+  // reverts it so re-selecting the pack retries (idempotent — an unrelated
+  // map error just re-allows a retry that becomes a no-op-diff).
   useEffect(() => {
     if (!map || !app.activeStyleUrl || styleRef.current === app.activeStyleUrl) return
+    const url = app.activeStyleUrl
     const prev = styleRef.current
-    styleRef.current = app.activeStyleUrl
-    const onError = () => {
-      styleRef.current = prev // allow re-selecting the pack to retry
-      map.off('style.load', onLoad)
+    styleRef.current = url // optimistic, for the early-return guard
+    styleReadyRef.current = false
+    const onError = () => { styleRef.current = prev }
+    const onLoad = () => {
+      styleRef.current = url
+      map.off('error', onError)
     }
-    const onLoad = () => map.off('error', onError)
     map.once('style.load', onLoad)
-    map.once('error', onError)
-    map.setStyle(app.activeStyleUrl, { diff: true })
+    map.on('error', onError)
+    map.setStyle(url, { diff: true })
+    return () => {
+      map.off('style.load', onLoad)
+      map.off('error', onError)
+    }
   }, [map, app.activeStyleUrl])
 
   // Selected-place marker + flyTo.
@@ -146,7 +161,8 @@ export function MapView() {
   useEffect(() => {
     if (!map) return
     routeGeoRef.current = routeGeometry
-    if (map.isStyleLoaded()) syncRouteLayers(map)
+    // If the style isn't ready, the persistent style.load handler syncs later.
+    if (styleReadyRef.current) syncRouteLayers(map)
     if (routeGeometry && routeGeometry.length > 1) {
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
       for (const [x, y] of routeGeometry) {

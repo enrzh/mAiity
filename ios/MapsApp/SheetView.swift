@@ -99,7 +99,7 @@ struct SheetView: View {
                     ForEach(NearbyCategory.all) { cat in
                         Button {
                             detent = .medium
-                            Task { await model.showCategory(cat) }
+                            model.showCategory(cat)
                         } label: {
                             HStack(spacing: 4) {
                                 Text(cat.emoji)
@@ -132,8 +132,9 @@ struct SheetView: View {
         Section("In der Nähe") {
             ForEach(model.pois) { p in
                 Button {
-                    model.selected = Place(name: p.name, label: p.label, lat: p.lat, lon: p.lon)
-                    model.cameraTarget = model.selected
+                    let place = Place(name: p.name, label: p.label, lat: p.lat, lon: p.lon)
+                    model.selected = place
+                    model.cameraTarget = AppModel.CameraEvent(place: place)
                     detent = .height(220)
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
@@ -419,7 +420,9 @@ struct SheetView: View {
 
     private func pick(_ r: GeoResult) {
         model.select(result: r)
-        model.searchQuery = r.name
+        // Quiet write — a normal assignment would re-trigger the debounced
+        // search and pop the results list back open 350ms later.
+        model.setQueryQuietly(r.name)
         searchFocused = false
         detent = .height(220)
     }

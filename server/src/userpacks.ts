@@ -25,11 +25,14 @@ export function ensureUserPacksTable(db: Database) {
 
 /** Light structural validation — advisory, the renderer is the real judge. */
 function validateStyle(style: unknown): string | null {
-  if (typeof style !== "object" || style === null) return "style_not_object";
+  if (typeof style !== "object" || style === null || Array.isArray(style)) return "style_not_object";
   const s = style as { version?: unknown; layers?: unknown; sources?: unknown };
   if (s.version !== 8) return "style_version_must_be_8";
-  if (!Array.isArray(s.layers)) return "style_layers_missing";
-  if (typeof s.sources !== "object" || s.sources === null) return "style_sources_missing";
+  if (!Array.isArray(s.layers) ||
+      s.layers.some((l) => typeof l !== "object" || l === null || Array.isArray(l)))
+    return "style_layers_missing";
+  if (typeof s.sources !== "object" || s.sources === null || Array.isArray(s.sources))
+    return "style_sources_missing";
   return null;
 }
 
@@ -75,19 +78,27 @@ export function registerUserPackRoutes(
       styleUrl = u.toString();
     } else if (b.styleJson !== undefined) {
       const raw = typeof b.styleJson === "string" ? b.styleJson : JSON.stringify(b.styleJson);
-      if (raw.length > MAX_STYLE_BYTES) return reply.code(413).send({ error: "style_too_large" });
+      // Bytes, not UTF-16 code units — multi-byte styles must not slip the cap.
+      if (Buffer.byteLength(raw, "utf8") > MAX_STYLE_BYTES)
+        return reply.code(413).send({ error: "style_too_large" });
       let parsed: unknown;
       try { parsed = typeof b.styleJson === "string" ? JSON.parse(b.styleJson) : b.styleJson }
       catch { return reply.code(400).send({ error: "style_not_json" }) }
       const err = validateStyle(parsed);
       if (err) return reply.code(400).send({ error: err });
       styleJson = JSON.stringify(parsed);
+      if (Buffer.byteLength(styleJson, "utf8") > MAX_STYLE_BYTES)
+        return reply.code(413).send({ error: "style_too_large" });
     } else {
       return reply.code(400).send({ error: "style_url_or_json_required" });
     }
 
     const count = db.query(`SELECT COUNT(*) AS n FROM user_packs WHERE user_id = ?`).get(uid(req)) as { n: number };
     if (count.n >= 20) return reply.code(409).send({ error: "pack_limit_reached" });
+    // Global backstop: per-user caps don't bound total storage under open
+    // registration (20 packs × 512 KB × unlimited users).
+    const total = db.query(`SELECT COUNT(*) AS n FROM user_packs`).get() as { n: number };
+    if (total.n >= 2000) return reply.code(507).send({ error: "global_pack_limit" });
 
     const id = crypto.randomUUID();
     db.query(
@@ -105,15 +116,17 @@ export function registerUserPackRoutes(
     reply.code(204);
   });
 
-  // Public style serving for stored packs (unguessable UUID; styles are not
-  // secrets — the renderer must fetch them without auth headers).
+  // Public style serving for STORED packs only (unguessable UUID; styles are
+  // not secrets — the renderer must fetch them without auth headers).
+  // URL-packs are never served here: clients get their external styleUrl
+  // directly, and redirecting from a trusted origin to an arbitrary
+  // user-supplied URL would be an open redirect.
   app.get("/packs/u/:id/style.json", async (req, reply) => {
     const { id } = req.params as { id: string };
     const row = db
       .query(`SELECT style_json AS styleJson, style_url AS styleUrl FROM user_packs WHERE id = ?`)
       .get(id) as { styleJson: string | null; styleUrl: string | null } | null;
-    if (!row) return reply.code(404).send({ error: "not_found" });
-    if (row.styleUrl) return reply.redirect(row.styleUrl, 302);
+    if (!row || row.styleUrl) return reply.code(404).send({ error: "not_found" });
     reply.header("Cache-Control", "public, max-age=60");
     reply.type("application/json");
     return row.styleJson;

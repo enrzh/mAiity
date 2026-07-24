@@ -66,7 +66,7 @@ struct MapScreen: View {
             .onChange(of: model.cameraTarget) { target in
                 guard let target else { return }
                 camera = .center(
-                    CLLocationCoordinate2D(latitude: target.lat, longitude: target.lon),
+                    CLLocationCoordinate2D(latitude: target.place.lat, longitude: target.place.lon),
                     zoom: 15
                 )
             }
@@ -98,6 +98,18 @@ struct MapScreen: View {
                     ne: CLLocationCoordinate2D(latitude: maxLat, longitude: maxLon)
                 )
                 camera = .boundingBox(bounds, edgePadding: UIEdgeInsets(top: 80, left: 40, bottom: 280, right: 40))
+            }
+        } else if model.bootFailed {
+            // First launch without connectivity — a spinner forever helps nobody.
+            VStack(spacing: 14) {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.largeTitle).foregroundStyle(.secondary)
+                Text("Karte konnte nicht geladen werden.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button("Erneut versuchen") {
+                    Task { await model.boot() }
+                }
+                .buttonStyle(.borderedProminent)
             }
         } else {
             ProgressView().task { await model.boot() }

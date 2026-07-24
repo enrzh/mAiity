@@ -110,14 +110,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [])
 
-  const loadBookmarks = useCallback(() => {
+  const loadBookmarks = useCallback(function load() {
     const e = epoch.current
     const v = bmVersion.current
     setBookmarksStatus('loading')
     api.bookmarks()
       .then((list) => {
-        // Discard when the session changed or a local mutation happened since.
-        if (e !== epoch.current || v !== bmVersion.current) return
+        if (e !== epoch.current) return // session changed — logout resets status
+        if (v !== bmVersion.current) { load(); return } // mutated mid-fetch — refetch
         setBookmarks(list)
         setBookmarksStatus('ready')
       })
@@ -169,7 +169,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setBookmarks([])
       setSelected(null)
+      routeSeq.current++
       setRoute(null)
+      setPickingStart(false) // a stuck pick mode would swallow all selections
       setCustomPacks([])
       setBookmarksStatus('ready')
       // A custom pack can't render without the account context list — fall back.
@@ -194,11 +196,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const select = useCallback((p: Place | null) => {
     if (p && pickingRef.current) { setRouteStartRef.current(p); return }
+    // Selecting a place during an active route means inspecting it — end the
+    // route so the place card (hidden behind the route panel) can show.
+    if (p && routeRef.current) { routeSeq.current++; setRoute(null) }
     setSelected(p)
   }, [])
   const selectResult = useCallback((r: GeoResult) => {
     const place = { name: r.name, label: r.label, lat: r.lat, lon: r.lon }
     if (pickingRef.current) { setRouteStartRef.current(place); return }
+    if (routeRef.current) { routeSeq.current++; setRoute(null) }
     setSelected(place)
   }, [])
 
@@ -209,7 +215,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [latS, lonS, ...nameParts] = p.split(',')
     const lat = Number(latS), lon = Number(lonS)
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return
-    const name = decodeURIComponent(nameParts.join(',')) || `${lat.toFixed(5)}, ${lon.toFixed(5)}`
+    // URLSearchParams already decoded — decoding again crashes on literal '%'.
+    const name = nameParts.join(',') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`
     setSelected({ name, label: 'Geteilter Ort', lat, lon })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -261,6 +268,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ---- Routing -------------------------------------------------------------
   const routeSeq = useRef(0)
+  // Mirror for callbacks: side effects inside setState updaters double-fire
+  // under StrictMode, so route actions read this ref instead.
+  const routeRef = useRef<RouteState | null>(null)
+  routeRef.current = route
 
   const requestRoute = useCallback(async (fromPlace: Place | null, to: Place, mode: RouteMode) => {
     const seq = ++routeSeq.current
@@ -302,17 +313,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startRoute = useCallback((to: Place) => { void requestRoute(null, to, 'car') }, [requestRoute])
   const setRouteMode = useCallback((mode: RouteMode) => {
-    setRoute((r) => { if (r) void requestRoute(r.from, r.to, mode); return r })
+    const r = routeRef.current
+    if (r) void requestRoute(r.from, r.to, mode)
   }, [requestRoute])
   const setRouteStart = useCallback((from: Place | null) => {
-    setRoute((r) => { if (r) void requestRoute(from, r.to, r.mode); return r })
+    const r = routeRef.current
+    if (r) void requestRoute(from, r.to, r.mode)
+    else setPickingStart(false) // stray pick mode without a route — unstick
   }, [requestRoute])
   setRouteStartRef.current = setRouteStart
   const swapRoute = useCallback(() => {
-    setRoute((r) => {
-      if (r?.from) void requestRoute(r.to, r.from, r.mode)
-      return r
-    })
+    const r = routeRef.current
+    if (r?.from) void requestRoute(r.to, r.from, r.mode)
   }, [requestRoute])
   const beginPickStart = useCallback(() => setPickingStart(true), [])
   const clearRoute = useCallback(() => {
@@ -350,8 +362,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const removePack = useCallback(async (id: string) => {
     await api.deletePack(id)
     setCustomPacks((ps) => ps.filter((p) => p.id !== id))
-    if (activePack === id) applyPack('light')
-  }, [activePack, applyPack])
+    if (activePack === id) {
+      applyPack('light')
+      // Persist the fallback, or other devices keep pointing at a dead pack.
+      if (user) api.saveSettings({ activePack: 'light' }).catch(() => {})
+    }
+  }, [activePack, applyPack, user])
 
   const allPacks = useMemo(() => [...packs, ...customPacks], [packs, customPacks])
 

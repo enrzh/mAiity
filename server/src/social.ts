@@ -74,27 +74,31 @@ function upsertSocialUser(
   const existing = db.query(`SELECT id FROM users WHERE ${col} = ?`).get(id.sub) as { id: string } | null;
   if (existing) return existing.id;
 
-  // Link to an existing e-mail/password account only on a verified address.
-  if (id.email && id.emailVerified) {
-    const byEmail = db.query(`SELECT id FROM users WHERE email = ?`).get(id.email.toLowerCase()) as
-      | { id: string }
+  // Auto-link by e-mail ONLY when the existing account is itself a federated
+  // identity (no password). A password account's address was never verified
+  // here, so linking to it would enable account pre-hijacking: an attacker
+  // pre-registers the victim's e-mail with a password, waits for the victim's
+  // first social sign-in, and keeps password access to the merged account.
+  let email: string | null = id.email && id.emailVerified ? id.email.toLowerCase() : null;
+  if (email) {
+    const byEmail = db.query(`SELECT id, pw_hash AS pwHash FROM users WHERE email = ?`).get(email) as
+      | { id: string; pwHash: string | null }
       | null;
     if (byEmail) {
-      db.query(`UPDATE users SET ${col} = ? WHERE id = ?`).run(id.sub, byEmail.id);
-      return byEmail.id;
+      if (byEmail.pwHash === null) {
+        db.query(`UPDATE users SET ${col} = ? WHERE id = ?`).run(id.sub, byEmail.id);
+        return byEmail.id;
+      }
+      // Occupied by a password account — create a distinct user. The e-mail
+      // column is UNIQUE, so the new account stores no address.
+      email = null;
     }
   }
 
   const userId = crypto.randomUUID();
   db.query(
     `INSERT INTO users (id, email, ${col}, display_name, created_at) VALUES (?, ?, ?, ?, ?)`
-  ).run(
-    userId,
-    id.email && id.emailVerified ? id.email.toLowerCase() : null,
-    id.sub,
-    displayName ?? id.name,
-    now(),
-  );
+  ).run(userId, email, id.sub, displayName ?? id.name, now());
   return userId;
 }
 

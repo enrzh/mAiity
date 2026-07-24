@@ -4,8 +4,6 @@ import { SignJWT, jwtVerify } from "jose";
 
 const ACCESS_TTL_S = 15 * 60; // 15 min
 const REFRESH_TTL_S = 30 * 24 * 3600; // 30 days
-/** Reuse of a rotated token within this window = benign race, not theft. */
-const REUSE_GRACE_S = 30;
 
 export interface AuthOpts {
   db: Database;
@@ -169,12 +167,11 @@ export function registerAuthRoutes(app: FastifyInstance, opts: AuthOpts, signer:
 
     if (!row || row.expiresAt < now()) return reply.code(401).send({ error: "invalid_refresh_token" });
     if (row.revokedAt) {
-      // Reuse inside a short grace window is a benign race (two tabs / a
-      // parallel request pair sharing one cookie) — reject WITHOUT nuking.
-      if (now() - row.revokedAt <= REUSE_GRACE_S) {
-        return reply.code(401).send({ error: "invalid_refresh_token" });
-      }
-      // Older reuse — assume theft, kill every session of the user.
+      // Reuse of a rotated token = theft signal, kill every session of the
+      // user. Both shipped clients single-flight their refreshes (web:
+      // navigator.locks across tabs; iOS: actor), so a benign same-cookie
+      // race cannot reach this branch — a grace window would only shelter
+      // an actual attacker replaying a stolen token.
       db.query(`UPDATE refresh_tokens SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL`)
         .run(now(), row.userId);
       return reply.code(401).send({ error: "refresh_token_reused" });

@@ -103,7 +103,9 @@ export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange
     try {
       // Template: the Light pack (known layer structure).
       const res = await fetch('/maps/packs/light/style.json')
+      if (!res.ok) throw new Error(`template ${res.status}`)
       const base = await res.json()
+      if (!Array.isArray((base as { layers?: unknown })?.layers)) throw new Error('template invalid')
       const styled = applySlots(base, slots)
       await app.installPack({ name: name.trim(), styleJson: JSON.stringify(styled) })
       toast.success('Pack erstellt und aktiviert.')

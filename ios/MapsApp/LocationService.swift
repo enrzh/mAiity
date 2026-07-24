@@ -20,16 +20,29 @@ final class LocationService: NSObject, ObservableObject {
     }
 
     /// One-shot current position (for routing). Nil when denied/unavailable.
+    /// IMPORTANT: never issue requestLocation() before authorization resolves —
+    /// CoreLocation fails a pre-grant request with kCLErrorDenied while the
+    /// permission prompt is still on screen (empirically verified), which
+    /// would resolve the waiter nil even though the user then grants.
     func currentLocation() async -> CLLocationCoordinate2D? {
         if let cached = manager.location,
            cached.timestamp.timeIntervalSinceNow > -60 {
             return cached.coordinate
         }
-        if status == .notDetermined { manager.requestWhenInUseAuthorization() }
-        if status == .denied || status == .restricted { return nil }
-        return await withCheckedContinuation { cont in
-            locationWaiters.append(cont)
-            manager.requestLocation()
+        switch status {
+        case .denied, .restricted:
+            return nil
+        case .notDetermined:
+            // Defer the location request to didChangeAuthorization.
+            return await withCheckedContinuation { cont in
+                locationWaiters.append(cont)
+                manager.requestWhenInUseAuthorization()
+            }
+        default:
+            return await withCheckedContinuation { cont in
+                locationWaiters.append(cont)
+                manager.requestLocation()
+            }
         }
     }
 
@@ -68,7 +81,13 @@ extension LocationService: CLLocationManagerDelegate {
             self.status = s
             if s == .authorizedWhenInUse || s == .authorizedAlways {
                 self.onAuthorized?()
-            } else if s == .denied || s == .restricted {
+                // Grant arrived — now issue the real request for anyone waiting.
+                if !self.locationWaiters.isEmpty {
+                    self.manager.requestLocation()
+                }
+            } else {
+                // .denied/.restricted, or .notDetermined again (prompt was
+                // dismissed without a decision) — nothing will ever arrive.
                 self.resolveWaiters(nil)
             }
         }
