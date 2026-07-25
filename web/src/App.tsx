@@ -61,11 +61,67 @@ function MapControls() {
   )
 }
 
+/// The rail's controls, reused verbatim in the collapsed floating overlay so
+/// hiding the rail never removes a capability.
+function RailControls({
+  panel, toggle, compact = false,
+}: { panel: Panel; toggle: (p: Panel) => void; compact?: boolean }) {
+  const app = useApp()
+  const size = compact ? 'size-9' : 'size-10'
+  return (
+    <>
+      <Button
+        variant="ghost" size="icon"
+        className={cn(size, 'shrink-0 rounded-xl', panel === 'packs' && 'bg-accent text-accent-foreground')}
+        onClick={() => toggle('packs')}
+        aria-label="Karten-Stil" aria-pressed={panel === 'packs'} title="Karten-Stil"
+      >
+        <Palette className="size-5" />
+      </Button>
+      <Button
+        variant="ghost" size="icon"
+        className={cn(size, 'shrink-0 rounded-xl', panel === 'saved' && 'bg-accent text-accent-foreground')}
+        onClick={() => toggle('saved')}
+        aria-label="Gespeicherte Orte" aria-pressed={panel === 'saved'} title="Gespeicherte Orte"
+      >
+        <Star className="size-5" />
+      </Button>
+      {app.user ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className={cn(size, 'shrink-0 rounded-xl font-semibold')} aria-label={`Konto: ${app.user.email ?? ''}`}>
+              {(app.user.email ?? '?')[0].toUpperCase()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="truncate">{app.user.displayName ?? app.user.email}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => app.logout()}>
+              <LogOut className="size-4" /> Abmelden
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button
+          variant="ghost" size="icon" className={cn(size, 'shrink-0 rounded-xl')}
+          onClick={() => app.setAuthOpen(true)} aria-label="Anmelden" title="Anmelden"
+        >
+          <User className="size-5" />
+        </Button>
+      )}
+    </>
+  )
+}
+
 function Shell() {
   const app = useApp()
   const [panel, setPanel] = useState<Panel>('none')
   const [collapsed, setCollapsed] = useState(false)
-  const toggle = (p: Panel) => setPanel((cur) => (cur === p ? 'none' : p))
+  const toggle = (p: Panel) => {
+    // Acting on a rail function while collapsed reopens the rail to show it.
+    if (collapsed) setCollapsed(false)
+    setPanel((cur) => (cur === p ? 'none' : p))
+  }
 
   // A place or route takes over the rail; side panels step aside.
   useEffect(() => { if (app.selected || app.route) setPanel('none') }, [app.selected, app.route])
@@ -85,45 +141,7 @@ function Shell() {
       >
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1"><SearchBar /></div>
-          <Button
-            variant="ghost" size="icon"
-            className={cn('size-10 shrink-0 rounded-xl', panel === 'packs' && 'bg-accent text-accent-foreground')}
-            onClick={() => toggle('packs')}
-            aria-label="Karten-Stil" aria-pressed={panel === 'packs'} title="Karten-Stil"
-          >
-            <Palette className="size-5" />
-          </Button>
-          <Button
-            variant="ghost" size="icon"
-            className={cn('size-10 shrink-0 rounded-xl', panel === 'saved' && 'bg-accent text-accent-foreground')}
-            onClick={() => toggle('saved')}
-            aria-label="Gespeicherte Orte" aria-pressed={panel === 'saved'} title="Gespeicherte Orte"
-          >
-            <Star className="size-5" />
-          </Button>
-          {app.user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="size-10 shrink-0 rounded-xl font-semibold" aria-label={`Konto: ${app.user.email ?? ''}`}>
-                  {(app.user.email ?? '?')[0].toUpperCase()}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="truncate">{app.user.displayName ?? app.user.email}</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={() => app.logout()}>
-                  <LogOut className="size-4" /> Abmelden
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              variant="ghost" size="icon" className="size-10 shrink-0 rounded-xl"
-              onClick={() => app.setAuthOpen(true)} aria-label="Anmelden" title="Anmelden"
-            >
-              <User className="size-5" />
-            </Button>
-          )}
+          <RailControls panel={panel} toggle={toggle} />
         </div>
 
         <CategoryChips getCenter={() => centerOf(liveMap.current)} />
@@ -141,6 +159,20 @@ function Shell() {
       {/* ---- Map ------------------------------------------------------- */}
       <main className="relative min-w-0 flex-1">
         <MapView />
+
+        {/* Collapsing hides the rail, never its functions: search, chips and
+            the rail controls float over the map instead. */}
+        {collapsed && (
+          <div className="pointer-events-none absolute left-8 top-4 z-20 hidden w-[380px] max-w-[calc(100%-6rem)] flex-col gap-2 md:flex">
+            <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur-xl">
+              <div className="min-w-0 flex-1"><SearchBar /></div>
+              <RailControls panel={panel} toggle={toggle} compact />
+            </div>
+            <div className="pointer-events-auto">
+              <CategoryChips getCenter={() => centerOf(liveMap.current)} />
+            </div>
+          </div>
+        )}
 
         {/* Google-style collapse handle riding the rail's edge (desktop). */}
         <button
