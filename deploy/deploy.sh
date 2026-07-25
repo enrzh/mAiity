@@ -43,7 +43,7 @@ if [[ "$WANT" == *api* ]]; then
 fi
 
 echo "── verify"
-curl -s https://privatenas.nl/maps/api/healthz && echo
-curl -s -o /dev/null -w "web: %{http_code}\n" https://privatenas.nl/maps/
-curl -s -o /dev/null -w "tiles range: %{http_code}\n" -H 'Range: bytes=0-0' https://privatenas.nl/maps/region.pmtiles
+curl -s https://maps.aiity.de/maps/api/healthz && echo
+curl -s -o /dev/null -w "web: %{http_code}\n" https://maps.aiity.de/
+curl -s -o /dev/null -w "tiles range: %{http_code}\n" -H 'Range: bytes=0-0' https://maps.aiity.de/maps/region-z15.pmtiles
 echo "done."

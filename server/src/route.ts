@@ -5,7 +5,7 @@ import type { Database } from "bun:sqlite";
 /// the engine (public FOSSGIS Valhalla today, self-hosted Valhalla later) is
 /// an env-swappable implementation detail with an identical request shape.
 const CACHE_TTL_S = 10 * 60;
-const UA = "maps.privatenas.nl/0.1 (self-hosted hobby map; contact: leemojix@gmail.com)";
+const UA = "maps.aiity.de/0.1 (self-hosted hobby map; contact: leemojix@gmail.com)";
 
 const now = () => Math.floor(Date.now() / 1000);
 

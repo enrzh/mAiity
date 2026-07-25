@@ -43,7 +43,7 @@ struct Pack: Codable, Identifiable, Equatable {
     /// and stored packs, absolute https URLs for url-installed packs.
     var absoluteStyleURL: URL {
         if styleUrl.hasPrefix("http") { return URL(string: styleUrl)! }
-        return URL(string: "https://privatenas.nl\(styleUrl)")!
+        return URL(string: "https://maps.aiity.de\(styleUrl)")!
     }
 
     var isCustom: Bool { custom == true }

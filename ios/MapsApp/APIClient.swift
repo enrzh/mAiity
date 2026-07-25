@@ -6,7 +6,7 @@ import Foundation
 actor APIClient {
     static let shared = APIClient()
 
-    private let base = URL(string: "https://privatenas.nl/maps/api")!
+    private let base = URL(string: "https://maps.aiity.de/maps/api")!
     private var accessToken: String?
     private var refreshTask: Task<Bool, Never>?
 

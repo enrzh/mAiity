@@ -6,11 +6,11 @@
     "maps:schema": "protomaps-basemap-v4"
   },
   "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
-  "sprite": "https://privatenas.nl/maps/packs/paper/sprite",
+  "sprite": "https://maps.aiity.de/maps/packs/paper/sprite",
   "sources": {
     "protomaps": {
       "type": "vector",
-      "url": "pmtiles://https://privatenas.nl/maps/region-z15.pmtiles?v=1",
+      "url": "pmtiles://https://maps.aiity.de/maps/region-z15.pmtiles?v=1",
       "attribution": "<a href=\"https://openstreetmap.org/copyright\">© OpenStreetMap</a> · <a href=\"https://protomaps.com\">Protomaps</a>"
     }
   },

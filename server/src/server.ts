@@ -60,12 +60,12 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
   await app.register(cookie);
   await app.register(cors, {
     // Production is same-origin only; localhost origins are dev-opt-in.
-    // maps.aiity.de is the new canonical domain; privatenas.nl/maps is kept
-    // as a legacy path (both proxy same-origin through Caddy, so this list
-    // is defense-in-depth rather than load-bearing for the normal request path).
+    // maps.aiity.de is the sole canonical domain — privatenas.nl/maps now
+    // redirects at the Caddy edge rather than being proxied, so a request
+    // never actually arrives here with that Origin.
     origin: opts.devCors
-      ? [/^https?:\/\/localhost(:\d+)?$/, /^https?:\/\/127\.0\.0\.1(:\d+)?$/, "https://privatenas.nl", "https://maps.aiity.de"]
-      : ["https://privatenas.nl", "https://maps.aiity.de"],
+      ? [/^https?:\/\/localhost(:\d+)?$/, /^https?:\/\/127\.0\.0\.1(:\d+)?$/, "https://maps.aiity.de"]
+      : ["https://maps.aiity.de"],
     credentials: true,
   });
 

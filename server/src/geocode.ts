@@ -6,7 +6,7 @@ import type { PoiIndex } from "./pois";
 /// implementation detail (public Photon today, self-hosted Photon later — the
 /// response format is identical, so swapping is an env-var change).
 const CACHE_TTL_S = 24 * 3600;
-const UA = "maps.privatenas.nl/0.1 (self-hosted hobby map; contact: leemojix@gmail.com)";
+const UA = "maps.aiity.de/0.1 (self-hosted hobby map; contact: leemojix@gmail.com)";
 
 const now = () => Math.floor(Date.now() / 1000);
 

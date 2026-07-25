@@ -320,7 +320,7 @@ struct SheetView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Route hierhin")
                 ShareLink(
-                    item: URL(string: "https://privatenas.nl/maps/?p=\(String(format: "%.5f,%.5f", place.lat, place.lon)),\(place.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!,
+                    item: URL(string: "https://maps.aiity.de/maps/?p=\(String(format: "%.5f,%.5f", place.lat, place.lon)),\(place.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!,
                     subject: Text(place.name)
                 ) {
                     Image(systemName: "square.and.arrow.up")

@@ -14,9 +14,9 @@ export default defineConfig({
     // Same-origin dev: API, packs and tiles are proxied to production, so the
     // SameSite=Lax refresh cookie and CORS behave exactly like the live site.
     proxy: {
-      '/maps/api': { target: 'https://privatenas.nl', changeOrigin: true },
-      '/maps/packs': { target: 'https://privatenas.nl', changeOrigin: true },
-      '/maps/region.pmtiles': { target: 'https://privatenas.nl', changeOrigin: true },
+      '/maps/api': { target: 'https://maps.aiity.de', changeOrigin: true },
+      '/maps/packs': { target: 'https://maps.aiity.de', changeOrigin: true },
+      '/maps/region.pmtiles': { target: 'https://maps.aiity.de', changeOrigin: true },
     },
   },
 })
