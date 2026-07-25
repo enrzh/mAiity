@@ -86,6 +86,27 @@ let planks: TileDraw = { ctx, rect, scale, rnd in
     }
 }
 
+/// Quartz block: pale cream base with subtle vertical veining — the
+/// Minecraft "tower" material, distinct from the warm wood/grey stone used
+/// on low/mid buildings so a dense skyline (z15 Manhattan: 3000+ buildings
+/// per tile) reads as varied blocks instead of one uniform wood wall.
+let quartz: TileDraw = { ctx, rect, scale, rnd in
+    ctx.setFillColor(rgb(0xe4ded0)); ctx.fill(rect)
+    let cols = 8
+    let w = rect.width / CGFloat(cols)
+    for i in 0..<cols {
+        let x = rect.minX + CGFloat(i) * w
+        ctx.setFillColor(rgb([0xd8d0bf, 0xece6d8][i % 2], 0.6))
+        ctx.fill(CGRect(x: x, y: rect.minY, width: w - scale * 0.5, height: rect.height))
+    }
+    for _ in 0..<40 {
+        let x = rect.minX + rnd.next() * rect.width
+        let y = rect.minY + rnd.next() * rect.height
+        ctx.setFillColor(rgb(0xc9c0ac, 0.5))
+        ctx.fill(CGRect(x: x, y: y, width: scale * (1 + rnd.next()), height: scale * 3))
+    }
+}
+
 // ---- GTA: asphalt, neon grid ----------------------------------------------
 
 /// Asphalt: dark speckled tarmac.
@@ -143,6 +164,7 @@ let tiles: [Tile] = {
             Tile(name: "mc-wood",  draw: planks),
             Tile(name: "mc-sand",  draw: blockFace([0xdbcf9a, 0xe5daa8, 0xd0c48d, 0xeae0b5])),
             Tile(name: "mc-dirt",  draw: blockFace([0x8b5a2b, 0x7a4e24, 0x9b6733, 0x6d4520])),
+            Tile(name: "mc-quartz", draw: quartz),
         ]
     default: // gta
         return [

@@ -193,7 +193,26 @@
       "source-layer": "buildings",
       "minzoom": 14,
       "paint": {
-        "fill-extrusion-pattern": "mc-wood",
+        "fill-extrusion-pattern": [
+          "step",
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ],
+          "mc-wood",
+          15,
+          "mc-stone",
+          40,
+          "mc-quartz"
+        ],
         "fill-extrusion-height": [
           "case",
           [
@@ -229,7 +248,26 @@
       "source-layer": "buildings",
       "maxzoom": 14,
       "paint": {
-        "fill-pattern": "mc-wood",
+        "fill-pattern": [
+          "step",
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ],
+          "mc-wood",
+          15,
+          "mc-stone",
+          40,
+          "mc-quartz"
+        ],
         "fill-opacity": 0.9
       }
     },
