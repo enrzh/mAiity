@@ -9,7 +9,7 @@ export function SavedPanel({ onClose }: { onClose: () => void }) {
   const app = useApp()
 
   return (
-    <Card className="absolute right-3 top-[68px] z-25 max-h-[calc(100%-240px)] w-[min(340px,calc(100vw-24px))] gap-2 overflow-y-auto py-4 shadow-2xl max-sm:left-3 max-sm:w-auto">
+    <Card className="gap-2 border-border/60 py-4 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between px-4">
         <CardTitle className="text-base">Gespeicherte Orte</CardTitle>
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Schließen">

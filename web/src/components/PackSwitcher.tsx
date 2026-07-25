@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Plus, Trash2, X } from 'lucide-react'
+import { Check, Palette, Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,7 +24,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <Card className="absolute right-3 top-[68px] z-25 max-h-[calc(100%-240px)] w-[min(340px,calc(100vw-24px))] gap-2 overflow-y-auto py-4 shadow-2xl max-sm:left-3 max-sm:w-auto">
+      <Card className="gap-2 border-border/60 py-4 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between px-4">
           <CardTitle className="text-base">Karten-Stil</CardTitle>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Schließen">
@@ -86,7 +86,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                 setEditorOpen(true)
               }}
             >
-              🎨 Erstellen
+              <Palette className="size-4" /> Erstellen
             </Button>
             <Button
               variant="outline" className="flex-1"

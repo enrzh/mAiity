@@ -20,7 +20,7 @@ export function RoutePanel() {
   if (!route) return null
 
   return (
-    <Card className="absolute bottom-6 left-1/2 z-20 w-[min(460px,calc(100vw-24px))] -translate-x-1/2 gap-0 py-0 shadow-2xl">
+    <Card className="gap-0 border-border/60 py-0 shadow-none">
       <CardContent className="space-y-3 p-4">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1 space-y-1.5">
@@ -76,7 +76,7 @@ export function RoutePanel() {
               <span className="text-sm text-muted-foreground">{fmtDist(route.result.distanceM)}</span>
             </div>
             <Separator />
-            <ol className="max-h-44 space-y-2 overflow-y-auto pr-1 text-sm">
+            <ol className="space-y-2 pr-1 text-sm">
               {route.result.steps.map((s, i) => (
                 <li key={i} className="flex gap-2.5">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">

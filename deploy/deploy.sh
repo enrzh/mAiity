@@ -18,7 +18,10 @@ if [[ "$WANT" == *web* ]]; then
   (cd web && npm run build >/dev/null)
   tar czf /tmp/maps-dist.tgz -C web/dist .
   $SCP /tmp/maps-dist.tgz "$NAS:/tmp/"
-  $SSH "$NAS" 'cd /volume1/docker/maps && find dist -mindepth 1 -maxdepth 1 ! -name region.pmtiles -exec rm -rf {} + && tar xzf /tmp/maps-dist.tgz -C dist 2>/dev/null; ls dist | head'
+  # Preserve EVERY tile archive (they are 7-128 GB and versioned, e.g.
+  # region-z14.pmtiles) — a bare `! -name region.pmtiles` silently deletes
+  # the versioned ones and the map 404s.
+  $SSH "$NAS" 'cd /volume1/docker/maps && find dist -mindepth 1 -maxdepth 1 ! -name "*.pmtiles" -exec rm -rf {} + && tar xzf /tmp/maps-dist.tgz -C dist 2>/dev/null; ls dist | head'
 fi
 
 if [[ "$WANT" == *packs* ]]; then

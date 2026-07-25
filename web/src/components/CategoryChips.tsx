@@ -1,9 +1,25 @@
-import { X } from 'lucide-react'
+import {
+  Banknote, BedDouble, Coffee, Fuel, Pill, ShoppingCart, SquareParking, Utensils, X,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { NEARBY_CATEGORIES, type NearbyCategory } from '../lib/api'
 import { useApp } from '../state'
 import type { Map as MLMap } from 'maplibre-gl'
+
+/// Real icons, not emoji — emoji render differently per platform and read
+/// as filler. One icon per category id.
+const ICONS: Record<string, LucideIcon> = {
+  restaurant: Utensils,
+  cafe: Coffee,
+  supermarket: ShoppingCart,
+  fuel: Fuel,
+  pharmacy: Pill,
+  hotel: BedDouble,
+  parking: SquareParking,
+  atm: Banknote,
+}
 
 /// "In der Nähe" browsing — one tap shows a category around the map center.
 export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; lon: number } | null }) {
@@ -17,25 +33,27 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
   }
 
   return (
-    <div
-      className="pointer-events-auto absolute left-0 right-0 z-10 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]"
-      style={{ top: 'calc(max(12px, env(safe-area-inset-top)) + 52px)' }}
-    >
-      {NEARBY_CATEGORIES.map((c) => (
-        <Button
-          key={c.id}
-          size="sm"
-          variant="ghost"
-          className={cn(
-            'h-8 shrink-0 rounded-full bg-background/95 px-3 text-xs font-medium shadow-sm backdrop-blur',
-            app.activeCategory === c.id && 'ring-2 ring-primary',
-          )}
-          onClick={() => pick(c.id)}
-        >
-          <span aria-hidden="true">{c.emoji}</span> {c.label}
-          {app.activeCategory === c.id && <X className="size-3" />}
-        </Button>
-      ))}
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {NEARBY_CATEGORIES.map((c) => {
+        const Icon = ICONS[c.id] ?? Utensils
+        const active = app.activeCategory === c.id
+        return (
+          <Button
+            key={c.id}
+            size="sm"
+            variant={active ? 'default' : 'secondary'}
+            className={cn(
+              'h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-medium shadow-sm',
+              !active && 'border-border/60 bg-background/95 backdrop-blur hover:bg-accent',
+            )}
+            onClick={() => pick(c.id)}
+          >
+            <Icon className="size-3.5" />
+            {c.label}
+            {active && <X className="size-3 opacity-70" />}
+          </Button>
+        )
+      })}
     </div>
   )
 }

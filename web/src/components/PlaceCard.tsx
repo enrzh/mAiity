@@ -32,8 +32,8 @@ export function PlaceCard() {
   }
 
   return (
-    <Card className="absolute bottom-6 left-1/2 z-20 w-[min(440px,calc(100vw-24px))] -translate-x-1/2 py-0 shadow-2xl">
-      <CardContent className="flex items-center gap-3 p-4">
+    <Card className="gap-0 border-border/60 py-0 shadow-none">
+      <CardContent className="flex items-start gap-3 p-3.5">
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-bold">{place.name}</div>
           <div className="truncate text-sm text-muted-foreground">{place.label}</div>
