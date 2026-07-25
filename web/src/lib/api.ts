@@ -17,6 +17,16 @@ export interface Pack {
   styleUrl: string; preview?: { colors?: string[] }; custom?: boolean
 }
 export interface GeoResult { name: string; label: string; lat: number; lon: number; kind: string }
+export interface PlaceDetails extends GeoResult {
+  street?: string | null
+  postcode?: string | null
+  city?: string | null
+  phone?: string | null
+  website?: string | null
+  openingHours?: string | null
+  cuisine?: string | null
+  wheelchair?: string | null
+}
 export interface RouteStep { instruction: string; distanceM: number; durationS: number }
 export interface RouteResult {
   mode: string; distanceM: number; durationS: number
@@ -162,6 +172,16 @@ export const api = {
     const res = await fetch(`${API}/nearby?cat=${cat}&lat=${lat}&lon=${lon}`)
     if (!res.ok) return parseError(res)
     return (await res.json()).results
+  },
+  /** Full details for a place (OSM data, else reverse-geocoded address). */
+  async place(lat: number, lon: number, name?: string): Promise<PlaceDetails | null> {
+    const p = new URLSearchParams({ lat: String(lat), lon: String(lon) })
+    if (name) p.set('name', name)
+    try {
+      const res = await fetch(`${API}/place?${p}`)
+      if (!res.ok) return null
+      return (await res.json()).place
+    } catch { return null }
   },
   async reverse(lat: number, lon: number): Promise<GeoResult | null> {
     try {

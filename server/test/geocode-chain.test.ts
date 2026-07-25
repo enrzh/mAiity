@@ -105,6 +105,15 @@ describe("geocoder chain", () => {
     expect(res.json().results[0].name).toBe("Stub Reverse");
   });
 
+  test("place: falls back to reverse geocoding when not a known POI", async () => {
+    const app = await makeApp([DEAD, STUB]);
+    const res = await app.inject({ method: "GET", url: "/maps/api/place?lat=52.5&lon=13.4" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().source).toBe("geocoder");
+    expect(res.json().place.name).toBe("Stub Reverse");
+    expect((await app.inject({ method: "GET", url: "/maps/api/place?lat=999&lon=0" })).statusCode).toBe(400);
+  });
+
   test("nearby: category browse works, unknown category 400", async () => {
     const app = await makeApp([DEAD, STUB]);
     const res = await app.inject({ method: "GET", url: "/maps/api/nearby?cat=restaurant&lat=52.5&lon=13.4" });

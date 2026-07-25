@@ -1,85 +1,161 @@
 import { useEffect, useState } from 'react'
-import { Navigation, Share2, Star, X } from 'lucide-react'
+import {
+  Accessibility, Clock, Globe, MapPin, Navigation, Phone, Share2, Star, UtensilsCrossed, X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { api, type PlaceDetails } from '../lib/api'
 import { useApp } from '../state'
 
-/// Bottom card for the selected place: name, address, save/unsave star.
+/// Place panel: name, address, and whatever OSM knows — opening hours,
+/// phone, website, cuisine, accessibility.
 export function PlaceCard() {
   const app = useApp()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [details, setDetails] = useState<PlaceDetails | null>(null)
+  const [loading, setLoading] = useState(false)
   const place = app.selected
 
-  // Reset transient state whenever another place is selected.
   useEffect(() => { setError(null); setSaving(false) }, [place])
+
+  // Fetch details for whichever place is selected (map tap or search hit).
+  useEffect(() => {
+    if (!place) { setDetails(null); return }
+    let cancelled = false
+    setLoading(true)
+    setDetails(null)
+    api.place(place.lat, place.lon, place.name)
+      .then((d) => { if (!cancelled) setDetails(d) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [place])
 
   if (!place) return null
   const saved = !!app.bookmarkFor(place)
 
   const toggleSave = async () => {
-    setSaving(true)
-    setError(null)
+    setSaving(true); setError(null)
+    try { await app.saveBookmark(place) }
+    catch { setError('Speichern fehlgeschlagen — bitte erneut versuchen.') }
+    finally { setSaving(false) }
+  }
+
+  const address = [details?.street, [details?.postcode, details?.city].filter(Boolean).join(' ')]
+    .filter((s) => s && String(s).trim()).join(', ')
+
+  const share = async () => {
+    const url = `${location.origin}/maps/?p=${place.lat.toFixed(5)},${place.lon.toFixed(5)},${encodeURIComponent(place.name)}`
     try {
-      await app.saveBookmark(place)
-    } catch {
-      setError('Speichern fehlgeschlagen — bitte erneut versuchen.')
-    } finally {
-      setSaving(false)
-    }
+      if (navigator.share) await navigator.share({ title: place.name, url })
+      else { await navigator.clipboard.writeText(url); toast.success('Link kopiert.') }
+    } catch { /* share sheet dismissed */ }
   }
 
   return (
     <Card className="gap-0 border-border/60 py-0 shadow-none">
-      <CardContent className="flex items-start gap-3 p-3.5">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-base font-bold">{place.name}</div>
-          <div className="truncate text-sm text-muted-foreground">{place.label}</div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground/70">
-            {place.lat.toFixed(5)}, {place.lon.toFixed(5)}
+      <CardContent className="space-y-3 p-3.5">
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-[17px] font-semibold leading-tight">{place.name}</h2>
+            <p className="mt-0.5 line-clamp-2 text-[13px] text-muted-foreground">
+              {address || place.label}
+            </p>
+            {details?.kind && (
+              <Badge variant="secondary" className="mt-1.5 text-[11px] font-medium capitalize">
+                {details.kind.replace(/_/g, ' ')}
+              </Badge>
+            )}
+            {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
           </div>
-          {error && <div className="mt-1 text-xs text-destructive">{error}</div>}
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost" size="icon"
-            onClick={() => app.startRoute(place)}
-            aria-label="Route hierhin"
-            title="Route hierhin"
-          >
-            <Navigation className="size-5 text-primary" />
-          </Button>
-          <Button
-            variant="ghost" size="icon"
-            onClick={async () => {
-              const url = `${location.origin}/maps/?p=${place.lat.toFixed(5)},${place.lon.toFixed(5)},${encodeURIComponent(place.name)}`
-              try {
-                if (navigator.share) await navigator.share({ title: place.name, url })
-                else { await navigator.clipboard.writeText(url); toast.success('Link kopiert.') }
-              } catch { /* user cancelled the share sheet */ }
-            }}
-            aria-label="Ort teilen"
-            title="Ort teilen"
-          >
-            <Share2 className="size-5 text-muted-foreground" />
-          </Button>
-          <Button
-            variant="ghost" size="icon"
-            onClick={toggleSave}
-            disabled={saving}
-            aria-pressed={saved}
-            aria-label={saved ? 'Ort gespeichert — entfernen' : 'Ort speichern'}
-            title={saved ? 'Gespeichert — tippen zum Entfernen' : 'Ort speichern'}
-          >
-            <Star className={cn('size-5', saved ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => app.select(null)} aria-label="Schließen">
+          <Button variant="ghost" size="icon-sm" onClick={() => app.select(null)} aria-label="Schließen">
             <X className="size-4 text-muted-foreground" />
           </Button>
         </div>
+
+        {/* Primary actions */}
+        <div className="flex gap-2">
+          <Button className="flex-1 gap-1.5" onClick={() => app.startRoute(place)}>
+            <Navigation className="size-4" /> Route
+          </Button>
+          <Button
+            variant="outline" size="icon" onClick={toggleSave} disabled={saving}
+            aria-pressed={saved} aria-label={saved ? 'Gespeichert — entfernen' : 'Ort speichern'}
+          >
+            <Star className={cn('size-4', saved && 'fill-yellow-400 text-yellow-400')} />
+          </Button>
+          <Button variant="outline" size="icon" onClick={share} aria-label="Ort teilen">
+            <Share2 className="size-4" />
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2 pt-1">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        ) : (details?.openingHours || details?.phone || details?.website || details?.cuisine || details?.wheelchair) ? (
+          <>
+            <Separator />
+            <dl className="space-y-2 text-[13px]">
+              {details.openingHours && (
+                <Row icon={<Clock className="size-4" />} label="Öffnungszeiten">
+                  <span className="tabular-nums">{details.openingHours}</span>
+                </Row>
+              )}
+              {details.phone && (
+                <Row icon={<Phone className="size-4" />} label="Telefon">
+                  <a className="text-primary hover:underline" href={`tel:${details.phone.replace(/\s/g, '')}`}>
+                    {details.phone}
+                  </a>
+                </Row>
+              )}
+              {details.website && (
+                <Row icon={<Globe className="size-4" />} label="Website">
+                  <a
+                    className="truncate text-primary hover:underline"
+                    href={details.website} target="_blank" rel="noreferrer noopener"
+                  >
+                    {details.website.replace(/^https?:\/\/(www\.)?/, '')}
+                  </a>
+                </Row>
+              )}
+              {details.cuisine && (
+                <Row icon={<UtensilsCrossed className="size-4" />} label="Küche">
+                  <span className="capitalize">{details.cuisine.replace(/[_;]/g, ' ')}</span>
+                </Row>
+              )}
+              {details.wheelchair && (
+                <Row icon={<Accessibility className="size-4" />} label="Barrierefrei">
+                  {details.wheelchair === 'yes' ? 'Ja'
+                    : details.wheelchair === 'limited' ? 'Eingeschränkt'
+                    : details.wheelchair === 'no' ? 'Nein' : details.wheelchair}
+                </Row>
+              )}
+            </dl>
+          </>
+        ) : null}
+
+        <p className="flex items-center gap-1.5 pt-0.5 text-[11px] text-muted-foreground/70">
+          <MapPin className="size-3" />
+          {place.lat.toFixed(5)}, {place.lon.toFixed(5)}
+        </p>
       </CardContent>
     </Card>
+  )
+}
+
+function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="mt-px text-muted-foreground" aria-hidden="true">{icon}</span>
+      <dt className="sr-only">{label}</dt>
+      <dd className="min-w-0 flex-1">{children}</dd>
+    </div>
   )
 }

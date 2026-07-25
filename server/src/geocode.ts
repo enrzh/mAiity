@@ -193,6 +193,26 @@ export function registerGeocodeRoutes(
     return payload;
   });
 
+  /// Place details for the panel: address, hours, phone, website, cuisine.
+  /// Falls back to reverse geocoding when the coordinate isn't a known POI.
+  app.get("/place", { preHandler: geoLimiter }, async (req, reply) => {
+    const { lat, lon, name } = req.query as Record<string, string>;
+    const la = Number(lat), lo = Number(lon);
+    if (!Number.isFinite(la) || !Number.isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180)
+      return reply.code(400).send({ error: "invalid_coordinates" });
+
+    const local = pois?.available ? pois.detailsAt(la, lo, name) : null;
+    if (local) return { place: local, source: "osm" };
+
+    // Not a POI — give back the address so the panel still says something.
+    const key = `r|${la.toFixed(5)},${lo.toFixed(5)}|de`;
+    const params = new URLSearchParams({ lat: la.toFixed(6), lon: lo.toFixed(6), lang: "de" });
+    const payload = await cachedFetch(key, `/reverse?${params}`, null);
+    const first = payload?.results[0];
+    if (!first) return reply.code(404).send({ error: "not_found" });
+    return { place: { ...first, street: null, phone: null, website: null, openingHours: null }, source: "geocoder" };
+  });
+
   app.get("/nearby", { preHandler: geoLimiter }, async (req, reply) => {
     const { cat, lat, lon } = req.query as Record<string, string>;
     const category = NEARBY_CATEGORIES[cat ?? ""];
