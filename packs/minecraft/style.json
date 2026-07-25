@@ -1,88 +1,295 @@
 {
   "version": 8,
   "name": "Blockwelt",
-  "metadata": { "maps:pack": "minecraft", "maps:schema": "protomaps-basemap-v4", "maps:3d": true },
+  "metadata": {
+    "maps:pack": "minecraft",
+    "maps:schema": "protomaps-basemap-v4",
+    "maps:3d": true
+  },
   "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
   "sprite": "https://privatenas.nl/maps/packs/minecraft/sprite",
   "sources": {
     "protomaps": {
       "type": "vector",
-      "url": "pmtiles://https://privatenas.nl/maps/region-z14.pmtiles?v=1",
+      "url": "pmtiles://https://privatenas.nl/maps/region-z15.pmtiles?v=1",
       "attribution": "<a href=\"https://openstreetmap.org/copyright\">© OpenStreetMap</a> · <a href=\"https://protomaps.com\">Protomaps</a>"
     }
   },
-  "light": { "anchor": "viewport", "color": "#ffffff", "intensity": 0.45, "position": [1.4, 210, 30] },
+  "light": {
+    "anchor": "viewport",
+    "color": "#ffffff",
+    "intensity": 0.45,
+    "position": [
+      1.4,
+      210,
+      30
+    ]
+  },
   "layers": [
-    { "id": "background", "type": "background", "paint": { "background-pattern": "mc-water" } },
     {
-      "id": "earth", "type": "fill", "source": "protomaps", "source-layer": "earth",
-      "paint": { "fill-pattern": "mc-grass" }
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-pattern": "mc-water"
+      }
     },
     {
-      "id": "landcover-forest", "type": "fill", "source": "protomaps", "source-layer": "landcover",
-      "filter": ["match", ["get", "kind"], ["forest", "wood", "scrub"], true, false],
-      "paint": { "fill-pattern": "mc-grass", "fill-opacity": 0.85 }
+      "id": "earth",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "earth",
+      "paint": {
+        "fill-pattern": "mc-grass"
+      }
     },
     {
-      "id": "landcover-sand", "type": "fill", "source": "protomaps", "source-layer": "landcover",
-      "filter": ["match", ["get", "kind"], ["sand", "beach", "farmland", "glacier", "snow"], true, false],
-      "paint": { "fill-pattern": "mc-sand" }
+      "id": "landcover-forest",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landcover",
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "forest",
+          "wood",
+          "scrub"
+        ],
+        true,
+        false
+      ],
+      "paint": {
+        "fill-pattern": "mc-grass",
+        "fill-opacity": 0.85
+      }
     },
     {
-      "id": "landuse-dirt", "type": "fill", "source": "protomaps", "source-layer": "landuse",
-      "filter": ["match", ["get", "kind"], ["industrial", "railway", "quarry", "construction"], true, false],
-      "paint": { "fill-pattern": "mc-dirt" }
+      "id": "landcover-sand",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landcover",
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "sand",
+          "beach",
+          "farmland",
+          "glacier",
+          "snow"
+        ],
+        true,
+        false
+      ],
+      "paint": {
+        "fill-pattern": "mc-sand"
+      }
     },
     {
-      "id": "water", "type": "fill", "source": "protomaps", "source-layer": "water",
-      "paint": { "fill-pattern": "mc-water" }
+      "id": "landuse-dirt",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landuse",
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "industrial",
+          "railway",
+          "quarry",
+          "construction"
+        ],
+        true,
+        false
+      ],
+      "paint": {
+        "fill-pattern": "mc-dirt"
+      }
     },
     {
-      "id": "roads-casing", "type": "line", "source": "protomaps", "source-layer": "roads",
-      "layout": { "line-cap": "butt", "line-join": "miter" },
+      "id": "water",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "water",
+      "paint": {
+        "fill-pattern": "mc-water"
+      }
+    },
+    {
+      "id": "roads-casing",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "layout": {
+        "line-cap": "butt",
+        "line-join": "miter"
+      },
       "paint": {
         "line-color": "#4a4a4a",
-        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 1.5, 12, 5, 16, 16, 20, 44]
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          1.5,
+          12,
+          5,
+          16,
+          16,
+          20,
+          44
+        ]
       }
     },
     {
-      "id": "roads", "type": "line", "source": "protomaps", "source-layer": "roads",
-      "layout": { "line-cap": "butt", "line-join": "miter" },
+      "id": "roads",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "layout": {
+        "line-cap": "butt",
+        "line-join": "miter"
+      },
       "paint": {
         "line-pattern": "mc-stone",
-        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 1, 12, 3.5, 16, 12, 20, 36]
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          1,
+          12,
+          3.5,
+          16,
+          12,
+          20,
+          36
+        ]
       }
     },
     {
-      "id": "buildings-3d", "type": "fill-extrusion", "source": "protomaps", "source-layer": "buildings",
+      "id": "buildings-3d",
+      "type": "fill-extrusion",
+      "source": "protomaps",
+      "source-layer": "buildings",
       "minzoom": 14,
       "paint": {
         "fill-extrusion-pattern": "mc-wood",
-        "fill-extrusion-height": ["case", ["has", "height"], ["get", "height"], 9],
-        "fill-extrusion-base": ["case", ["has", "min_height"], ["get", "min_height"], 0],
+        "fill-extrusion-height": [
+          "case",
+          [
+            "has",
+            "height"
+          ],
+          [
+            "get",
+            "height"
+          ],
+          9
+        ],
+        "fill-extrusion-base": [
+          "case",
+          [
+            "has",
+            "min_height"
+          ],
+          [
+            "get",
+            "min_height"
+          ],
+          0
+        ],
         "fill-extrusion-opacity": 1,
         "fill-extrusion-vertical-gradient": true
       }
     },
     {
-      "id": "buildings-flat", "type": "fill", "source": "protomaps", "source-layer": "buildings",
+      "id": "buildings-flat",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "buildings",
       "maxzoom": 14,
-      "paint": { "fill-pattern": "mc-wood", "fill-opacity": 0.9 }
+      "paint": {
+        "fill-pattern": "mc-wood",
+        "fill-opacity": 0.9
+      }
     },
     {
-      "id": "boundaries", "type": "line", "source": "protomaps", "source-layer": "boundaries",
-      "paint": { "line-color": "#2b1d10", "line-dasharray": [2, 2], "line-width": 1.4 }
+      "id": "boundaries",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "boundaries",
+      "paint": {
+        "line-color": "#2b1d10",
+        "line-dasharray": [
+          2,
+          2
+        ],
+        "line-width": 1.4
+      }
     },
     {
-      "id": "places-labels", "type": "symbol", "source": "protomaps", "source-layer": "places",
+      "id": "places-labels",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "places",
       "layout": {
-        "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Noto Sans Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 12, 8, 15, 13, 19],
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          3,
+          12,
+          8,
+          15,
+          13,
+          19
+        ],
         "text-letter-spacing": 0.08,
         "text-max-width": 7
       },
-      "paint": { "text-color": "#ffffff", "text-halo-color": "#2b1d10", "text-halo-width": 2.2 }
+      "paint": {
+        "text-color": "#ffffff",
+        "text-halo-color": "#2b1d10",
+        "text-halo-width": 2.2
+      }
     }
   ]
 }
