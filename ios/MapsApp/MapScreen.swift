@@ -23,6 +23,13 @@ struct MapScreen: View {
     var body: some View {
         if let styleURL = model.styleURL {
             MapView(styleURL: styleURL, camera: $camera) {
+                // "You are here" dot — always visible once authorized, like
+                // the platform maps (not only after tapping locate).
+                CircleStyleLayer(identifier: "user-dot", source: userSource)
+                    .radius(7)
+                    .color(UIColor(red: 0.10, green: 0.45, blue: 0.91, alpha: 1))
+                    .strokeWidth(3)
+                    .strokeColor(.white)
                 // Active route (blue line under the markers).
                 LineStyleLayer(identifier: "route-line", source: routeSource)
                     .lineCap(.round)
@@ -166,6 +173,14 @@ struct MapScreen: View {
                 .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
         }
         .accessibilityLabel(label)
+    }
+
+    private var userSource: ShapeSource {
+        ShapeSource(identifier: "user-source") {
+            if let u = model.startupLocation {
+                MLNPointFeature(coordinate: CLLocationCoordinate2D(latitude: u.place.lat, longitude: u.place.lon))
+            }
+        }
     }
 
     private var poiSource: ShapeSource {

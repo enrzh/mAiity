@@ -103,11 +103,16 @@ final class AppModel: ObservableObject {
             self.user = user
             await loadUserData()
         }
-        // Open the map where the user actually is (no-op if they decline).
-        if let loc = await LocationService.shared.currentLocation() {
-            startupLocation = CameraEvent(place: Place(
-                name: "Mein Standort", label: "", lat: loc.latitude, lon: loc.longitude))
-        }
+        await locateOnStartup()
+    }
+
+    /// Open the map where the user actually is. Runs on every launch (not
+    /// just the first) so the app always starts local; silently no-ops when
+    /// permission is declined.
+    func locateOnStartup() async {
+        guard let loc = await LocationService.shared.currentLocation() else { return }
+        startupLocation = CameraEvent(place: Place(
+            name: "Mein Standort", label: "", lat: loc.latitude, lon: loc.longitude))
     }
 
     private func loadUserData() async {

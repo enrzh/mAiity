@@ -33,7 +33,10 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
   }
 
   return (
-    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div
+      className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ maskImage: 'linear-gradient(to right, #000 calc(100% - 28px), transparent)', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 28px), transparent)' }}
+    >
       {NEARBY_CATEGORIES.map((c) => {
         const Icon = ICONS[c.id] ?? Utensils
         const active = app.activeCategory === c.id

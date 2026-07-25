@@ -132,3 +132,11 @@
 .map { position: absolute; inset: 0; }
 html, body, #root { height: 100%; margin: 0; }
 body { overscroll-behavior: none; }
+
+/* "You are here" dot — mirrors the platform convention (blue, haloed). */
+.maps-user-dot {
+  width: 16px; height: 16px; border-radius: 9999px;
+  background: #1a73e8;
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.35);
+}

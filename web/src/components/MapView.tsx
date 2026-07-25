@@ -87,6 +87,39 @@ export function is3DActive(): boolean {
   return !!liveMap.current?.getTerrain()
 }
 
+/// Persistent "you are here" dot — the built-in GeolocateControl only shows
+/// one after an explicit click, and it collides with our control stack.
+let userDot: Marker | null = null
+export function showUserDot(m: MLMap, at: [number, number]) {
+  if (!userDot) {
+    const el = document.createElement('div')
+    el.className = 'maps-user-dot'
+    userDot = new Marker({ element: el })
+  }
+  userDot.setLngLat(at).addTo(m)
+}
+
+/** Centre on the user, showing the dot. */
+export function locateUser() {
+  const m = liveMap.current
+  if (!m || !navigator.geolocation) return
+  navigator.geolocation.getCurrentPosition(
+    (p) => {
+      const here: [number, number] = [p.coords.longitude, p.coords.latitude]
+      showUserDot(m, here)
+      m.flyTo({ center: here, zoom: 15, duration: 900 })
+    },
+    () => { /* permission denied — nothing to centre on */ },
+    { enableHighAccuracy: true, timeout: 8000 },
+  )
+}
+
+export function zoomBy(delta: number) {
+  const m = liveMap.current
+  if (!m) return
+  m.easeTo({ zoom: m.getZoom() + delta, duration: 220 })
+}
+
 /// The one imperative component: owns the MapLibre map, keeps it in sync with
 /// app state (active pack style, selected place, bookmark markers).
 export function MapView() {
@@ -123,11 +156,9 @@ export function MapView() {
       maxPitch: 85, // near-horizon 3D views
     })
     styleRef.current = appRef.current.activeStyleUrl
-    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
-    m.addControl(new maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true,
-    }), 'bottom-right')
+    // NOTE: no built-in NavigationControl/GeolocateControl — they render in
+    // the same bottom-right corner as our own stack and overlap it. Zoom and
+    // locate live in MapControls instead.
 
     // Last click wins; a dead network falls back to the coordinate card.
     let clickSeq = 0
@@ -158,18 +189,25 @@ export function MapView() {
       }
     })
 
-    // Startup location: open the map where the user IS, unless the URL
-    // already pins a view (#camera hash) or a shared place (?p=).
-    const pinned = window.location.hash.length > 1 || new URLSearchParams(window.location.search).has('p')
-    if (!pinned && navigator.geolocation) {
+    // Startup location: open the map where the user IS.
+    // The old check bailed whenever a #hash existed — but `hash: true` writes
+    // one on every map move, so after the first visit it ALWAYS bailed and
+    // never located. Instead: only a shared place (?p=) pins the view, and we
+    // skip the fly if the user has already grabbed the map themselves.
+    let userMoved = false
+    const markMoved = (e: { originalEvent?: unknown }) => { if (e.originalEvent) userMoved = true }
+    m.on('dragstart', markMoved)
+    m.on('zoomstart', markMoved)
+
+    const shared = new URLSearchParams(window.location.search).has('p')
+    if (!shared && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          // Only if the user hasn't already moved the map themselves.
-          if (m.getZoom() === DEFAULT_ZOOM) {
-            m.jumpTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 })
-          }
+          const here: [number, number] = [pos.coords.longitude, pos.coords.latitude]
+          showUserDot(m, here)
+          if (!userMoved) m.easeTo({ center: here, zoom: 15, duration: 800 })
         },
-        () => { /* denied/unavailable — keep the country overview */ },
+        () => { /* denied/unavailable — keep the current view */ },
         { timeout: 8000, maximumAge: 300_000 },
       )
     }

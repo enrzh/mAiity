@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Box, Crosshair, LogOut, Palette, Star, User } from 'lucide-react'
+import { Box, ChevronLeft, ChevronRight, Crosshair, LogOut, Minus, Palette, Plus, Star, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import { AppProvider, useApp } from './state'
-import { MapView, liveMap, set3D } from './components/MapView'
+import { MapView, liveMap, locateUser, set3D, zoomBy } from './components/MapView'
 import { CategoryChips, centerOf } from './components/CategoryChips'
 import { SearchBar } from './components/SearchBar'
 import { PlaceCard } from './components/PlaceCard'
@@ -24,12 +25,14 @@ type Panel = 'none' | 'saved' | 'packs'
 /// material (blurred, hairline-bordered, generously padded) rather than a
 /// scatter of floating cards.
 
+/// One control stack, bottom-right. The MapLibre built-ins are disabled so
+/// nothing stacks on top of these (they shared the same corner).
 function MapControls() {
   const app = useApp()
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
-    <div className="absolute bottom-6 right-4 z-20 flex flex-col gap-2.5 md:right-6">
+    <div className="absolute bottom-6 right-4 z-20 flex flex-col items-end gap-2.5">
       <Button
         variant={app.is3D ? 'default' : 'ghost'}
         className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
@@ -38,17 +41,22 @@ function MapControls() {
       >
         <Box className="size-5" />
       </Button>
-      <Button
-        variant="ghost"
-        className={btn}
-        onClick={() => {
-          navigator.geolocation?.getCurrentPosition((p) =>
-            liveMap.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 15, duration: 900 }))
-        }}
-        aria-label="Mein Standort" title="Mein Standort"
-      >
+      <Button variant="ghost" className={btn} onClick={locateUser}
+        aria-label="Mein Standort" title="Mein Standort">
         <Crosshair className="size-5" />
       </Button>
+      {/* Zoom pair, joined like a segmented control. */}
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/80 shadow-lg backdrop-blur-xl">
+        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
+          onClick={() => zoomBy(1)} aria-label="Vergrößern" title="Vergrößern">
+          <Plus className="size-5" />
+        </Button>
+        <Separator />
+        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
+          onClick={() => zoomBy(-1)} aria-label="Verkleinern" title="Verkleinern">
+          <Minus className="size-5" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -56,16 +64,24 @@ function MapControls() {
 function Shell() {
   const app = useApp()
   const [panel, setPanel] = useState<Panel>('none')
+  const [collapsed, setCollapsed] = useState(false)
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? 'none' : p))
 
   // A place or route takes over the rail; side panels step aside.
   useEffect(() => { if (app.selected || app.route) setPanel('none') }, [app.selected, app.route])
+  // Selecting something while collapsed should reveal it, like Maps does.
+  useEffect(() => { if (app.selected || app.route) setCollapsed(false) }, [app.selected, app.route])
 
   return (
     <div className="relative flex h-full overflow-hidden bg-muted/30">
       {/* ---- Rail ------------------------------------------------------ */}
       <aside
-        className="absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl md:static md:inset-auto md:h-full md:max-h-none md:w-[392px] md:shrink-0 md:gap-4 md:rounded-none md:border-r md:border-t-0 md:p-4 md:shadow-xl"
+        className={cn(
+          'absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl',
+          'md:static md:inset-auto md:h-full md:max-h-none md:shrink-0 md:gap-4 md:rounded-none md:border-r md:border-t-0 md:shadow-xl',
+          'md:transition-[width,padding] md:duration-300 md:ease-out',
+          collapsed ? 'md:w-0 md:overflow-hidden md:border-r-0 md:p-0' : 'md:w-[392px] md:p-4',
+        )}
       >
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1"><SearchBar /></div>
@@ -125,6 +141,17 @@ function Shell() {
       {/* ---- Map ------------------------------------------------------- */}
       <main className="relative min-w-0 flex-1">
         <MapView />
+
+        {/* Google-style collapse handle riding the rail's edge (desktop). */}
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
+          title={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
+          className="absolute left-0 top-1/2 z-20 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background/90 text-muted-foreground shadow-md backdrop-blur transition-colors hover:bg-accent hover:text-foreground md:flex"
+        >
+          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+        </button>
+
         <MapControls />
         {app.packsError && app.packs.length === 0 && (
           <div
