@@ -176,8 +176,24 @@ export function registerGeocodeRoutes(
       }
     }
     const key = `s|${q.toLowerCase()}|${lang}|${limit}${biasKey}`;
-    const payload = await cachedFetch(key, `/api?${params}`, q);
-    if (!payload) return reply.code(502).send({ error: "geocoder_unavailable" });
+    const raw = await cachedFetch(key, `/api?${params}`, q);
+    if (!raw) return reply.code(502).send({ error: "geocoder_unavailable" });
+
+    // Collapse identical entries. OSM models one park as several objects
+    // (polygon + entrances), so "Rheinpark, Düsseldorf" came back three times
+    // and ate the slots that should have shown three different cities.
+    // Keyed on name+label, NOT coordinates: same name in a different city is a
+    // genuinely different place and must survive.
+    const byLabel = new Set<string>();
+    const payload = {
+      ...raw,
+      results: raw.results.filter((r) => {
+        const k = `${(r.name ?? "").toLowerCase()}|${(r.label ?? "").toLowerCase()}`;
+        if (byLabel.has(k)) return false;
+        byLabel.add(k);
+        return true;
+      }),
+    };
 
     // Blend in nearby brand/POI matches the address geocoder misses entirely
     // ("REWE", "Späti"), keeping geocoder hits first.

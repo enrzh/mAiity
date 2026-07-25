@@ -137,9 +137,15 @@ function Shell() {
       <aside
         className={cn(
           'absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl',
-          'md:static md:inset-auto md:h-full md:max-h-none md:shrink-0 md:gap-4 md:rounded-none md:border-r md:border-t-0 md:shadow-xl',
+          // md:min-w-0 is load-bearing: a flex item defaults to min-width:auto,
+          // which resolves to its MIN-CONTENT width, so md:w-0 could not shrink
+          // the rail below the search bar. It stayed 392px wide while "collapsed"
+          // and the floating overlay rendered on top of it — two search bars.
+          'md:static md:inset-auto md:h-full md:max-h-none md:min-w-0 md:shrink-0 md:gap-4 md:rounded-none md:border-r md:border-t-0 md:shadow-xl',
           'md:transition-[width,padding] md:duration-300 md:ease-out',
-          collapsed ? 'md:w-0 md:overflow-hidden md:border-r-0 md:p-0' : 'md:w-[392px] md:p-4',
+          collapsed
+            ? 'md:w-0 md:overflow-hidden md:border-r-0 md:p-0 md:opacity-0'
+            : 'md:w-[392px] md:p-4',
         )}
       >
         <div className="flex items-center gap-2">

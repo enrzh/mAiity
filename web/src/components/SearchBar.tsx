@@ -3,6 +3,7 @@ import { Loader2, Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { api, type GeoResult } from '../lib/api'
+import { liveMap } from './MapView'
 import { useApp } from '../state'
 
 /// Debounced typeahead against /api/geocode. Distinguishes "no results" from
@@ -42,7 +43,11 @@ export function SearchBar() {
     setError(false)
     const t = setTimeout(async () => {
       try {
-        const res = await api.geocode(query)
+        // Bias to what the user is looking at. Without this, "Rheinpark"
+        // ranked by global importance — a park 400km away could outrank the
+        // one on screen.
+        const c = liveMap.current?.getCenter()
+        const res = await api.geocode(query, c ? { lat: c.lat, lon: c.lng } : undefined)
         if (seq.current !== mySeq) return // stale — a newer query is running
         setResults(res)
         setOpen(true)

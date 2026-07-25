@@ -214,7 +214,20 @@ export function MapView() {
     }
 
     // Keep the GL canvas matched to the container (init can happen pre-layout).
-    const ro = new ResizeObserver(() => m.resize())
+    // Coalesced to one resize per frame and skipped when the box did not
+    // actually change: the sidebar's 300ms width transition fires this on every
+    // frame, and a bare m.resize() per frame re-renders and re-requests tiles
+    // for ~18 intermediate viewports — which looks like the map reloading.
+    let raf = 0
+    let lastW = 0
+    let lastH = 0
+    const ro = new ResizeObserver((entries) => {
+      const box = entries[0]?.contentRect
+      if (box && Math.round(box.width) === lastW && Math.round(box.height) === lastH) return
+      if (box) { lastW = Math.round(box.width); lastH = Math.round(box.height) }
+      if (raf) return
+      raf = requestAnimationFrame(() => { raf = 0; m.resize() })
+    })
     ro.observe(el.current)
 
     setMap(m)
@@ -222,6 +235,7 @@ export function MapView() {
     // Debug handle (harmless, and invaluable for diagnosing render issues).
     ;(window as unknown as { __map?: MLMap }).__map = m
     return () => {
+      if (raf) cancelAnimationFrame(raf)
       ro.disconnect()
       selMarker.current?.remove(); selMarker.current = null
       for (const [, mk] of bmMarkers.current) mk.remove()
