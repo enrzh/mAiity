@@ -15,7 +15,7 @@ const app = await createApp({
   prefix: process.env.API_PREFIX ?? "/maps/api",
   packsPublicBase: process.env.PACKS_PUBLIC_BASE ?? "/maps/packs",
   secureCookies: process.env.INSECURE_COOKIES !== "1",
-  appleAudiences: (process.env.APPLE_AUDIENCES ?? "com.aiity.maps").split(",").filter(Boolean),
+  appleAudiences: (process.env.APPLE_AUDIENCES ?? "de.aiity.maps").split(",").filter(Boolean),
   googleAudiences: (process.env.GOOGLE_AUDIENCES ?? "").split(",").filter(Boolean),
   devCors: process.env.DEV_CORS === "1",
   poiDbPath: process.env.POI_DB_PATH ?? "/data/pois.db",

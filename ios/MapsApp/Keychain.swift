@@ -3,7 +3,10 @@ import Security
 
 /// Minimal keychain wrapper — stores the refresh token (the only secret we keep).
 enum Keychain {
-    private static let service = "com.aiity.maps"
+    // Renamed from com.aiity.maps -> de.aiity.maps (app rename to mAiity).
+    // A stored refresh token under the old service name is simply orphaned —
+    // the user re-authenticates once, no migration needed.
+    private static let service = "de.aiity.maps"
 
     static func set(_ value: String, forKey key: String) {
         let data = Data(value.utf8)
