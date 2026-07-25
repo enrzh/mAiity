@@ -82,6 +82,15 @@ export function set3D(on: boolean) {
   })
 }
 
+/// How much of the map's left edge the rail currently covers. The rail
+/// overlays the map (it no longer takes width from it), so every framing call
+/// must offset by this or a selected place can land behind the panel.
+export const railInset = { current: 0 }
+/** Padding for framing calls, keeping content clear of the rail. */
+function framePad(base: number) {
+  return { top: base, bottom: base, right: base, left: base + railInset.current }
+}
+
 /** Whether 3D is currently engaged. Pitch — NOT getTerrain(), which is always
  *  null while TERRAIN_ENABLED is false and would report 3D as permanently off. */
 export function is3DActive(): boolean {
@@ -287,6 +296,7 @@ export function MapView() {
       center: [app.selected.lon, app.selected.lat],
       zoom: Math.max(map.getZoom(), 14),
       duration: 900,
+      padding: framePad(0),
     })
   }, [map, app.selected])
 
@@ -326,7 +336,7 @@ export function MapView() {
         minX = Math.min(minX, x); maxX = Math.max(maxX, x)
         minY = Math.min(minY, y); maxY = Math.max(maxY, y)
       }
-      map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 80, duration: 900 })
+      map.fitBounds([[minX, minY], [maxX, maxY]], { padding: framePad(80), duration: 900 })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
@@ -353,7 +363,7 @@ export function MapView() {
       minY = Math.min(minY, p.lat); maxY = Math.max(maxY, p.lat)
     }
     if (app.pois.length > 1) {
-      map.fitBounds([[minX, minY], [maxX, maxY]], { padding: 90, duration: 700, maxZoom: 15 })
+      map.fitBounds([[minX, minY], [maxX, maxY]], { padding: framePad(90), duration: 700, maxZoom: 15 })
     }
   }, [map, app.pois])
 

@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import { AppProvider, useApp } from './state'
-import { MapView, liveMap, locateUser, set3D, zoomBy } from './components/MapView'
+import { MapView, liveMap, locateUser, railInset, set3D, zoomBy } from './components/MapView'
 import { CategoryChips, centerOf } from './components/CategoryChips'
 import { SearchBar } from './components/SearchBar'
 import { PlaceCard } from './components/PlaceCard'
@@ -130,6 +130,13 @@ function Shell() {
   useEffect(() => { if (app.selected || app.route) setPanel('none') }, [app.selected, app.route])
   // Selecting something while collapsed should reveal it, like Maps does.
   useEffect(() => { if (app.selected || app.route) setCollapsed(false) }, [app.selected, app.route])
+  // Tell the map how much of its left edge the rail covers, so framing a place
+  // or route puts it in the VISIBLE half rather than behind the panel. Only on
+  // desktop — on mobile the rail is a bottom sheet, not a left panel.
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 768px)').matches
+    railInset.current = collapsed || !desktop ? 0 : 392
+  }, [collapsed])
 
   return (
     <div className="relative flex h-full overflow-hidden bg-muted/30">
@@ -137,15 +144,16 @@ function Shell() {
       <aside
         className={cn(
           'absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl',
-          // md:min-w-0 is load-bearing: a flex item defaults to min-width:auto,
-          // which resolves to its MIN-CONTENT width, so md:w-0 could not shrink
-          // the rail below the search bar. It stayed 392px wide while "collapsed"
-          // and the floating overlay rendered on top of it — two search bars.
-          'md:static md:inset-auto md:h-full md:max-h-none md:min-w-0 md:shrink-0 md:gap-4 md:rounded-none md:border-r md:border-t-0 md:shadow-xl',
-          'md:transition-[width,padding] md:duration-300 md:ease-out',
-          collapsed
-            ? 'md:w-0 md:overflow-hidden md:border-r-0 md:p-0 md:opacity-0'
-            : 'md:w-[392px] md:p-4',
+          // The rail OVERLAYS the map on desktop instead of taking width from
+          // it (this is what Google does). Collapsing then changes no layout,
+          // so the GL canvas is never resized — animating the width made the
+          // canvas resize on all ~18 frames of the transition, and every WebGL
+          // buffer resize clears and repaints, which is the flicker.
+          // Sliding on transform keeps it on the compositor: no layout, no
+          // ResizeObserver, no tile refetch.
+          'md:absolute md:inset-y-0 md:left-0 md:right-auto md:h-full md:w-[392px] md:max-h-none md:rounded-none md:border-r md:border-t-0 md:p-4 md:shadow-xl',
+          'md:transition-transform md:duration-300 md:ease-out md:will-change-transform',
+          collapsed ? 'md:-translate-x-full' : 'md:translate-x-0',
         )}
       >
         <div className="flex items-center gap-2">
@@ -185,12 +193,18 @@ function Shell() {
           </div>
         )}
 
-        {/* Google-style collapse handle riding the rail's edge (desktop). */}
+        {/* Google-style collapse handle riding the rail's edge (desktop).
+            Slides with the rail on the same transform/duration so the two move
+            as one piece; the rail now overlays the map, so the handle can no
+            longer sit at the map's left edge. */}
         <button
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
           title={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
-          className="absolute left-0 top-1/2 z-20 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background/90 text-muted-foreground shadow-md backdrop-blur transition-colors hover:bg-accent hover:text-foreground md:flex"
+          className={cn(
+            'absolute top-1/2 z-40 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background/90 text-muted-foreground shadow-md backdrop-blur transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
+            collapsed ? 'md:left-0' : 'md:left-[392px]',
+          )}
         >
           {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </button>
