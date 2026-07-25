@@ -26,7 +26,10 @@ export function SearchAreaButton() {
   if (!app.activeCategory || !moved) return null
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2">
+    <div // Centred on the VISIBLE map, not the window: the rail (and, when
+    // collapsed, the floating search overlay) covers the left edge, so a
+    // window-centred pill slides under it below ~1050px.
+    className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-20 -translate-x-1/2">
       <Button
         className="pointer-events-auto gap-2 rounded-full px-4 shadow-lg"
         onClick={() => {

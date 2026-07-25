@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Box, ChevronLeft, ChevronRight, Crosshair, LogOut, Minus, Palette, Plus, Star, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,7 +35,11 @@ function MapControls() {
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
-    <div className="absolute bottom-6 right-4 z-20 flex flex-col items-end gap-2.5">
+    // On mobile the rail is a bottom sheet that would cover this stack — the
+    // zoom buttons sat BEHIND it. Ride above it using the measured sheet
+    // height (it changes with content), same as the iOS build. On desktop the
+    // rail is a left panel, so md: puts the stack back on the bottom edge.
+    <div className="absolute bottom-[calc(var(--sheet-h,0px)+1.5rem)] right-4 z-20 flex flex-col items-end gap-2.5 transition-[bottom] duration-200 md:bottom-6">
       <Button
         variant={app.is3D ? 'default' : 'ghost'}
         className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
@@ -120,6 +124,8 @@ function Shell() {
   const app = useApp()
   const [panel, setPanel] = useState<Panel>('none')
   const [collapsed, setCollapsed] = useState(false)
+  const railRef = useRef<HTMLElement>(null)
+  const [sheetH, setSheetH] = useState(0)
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.
     if (collapsed) setCollapsed(false)
@@ -133,15 +139,49 @@ function Shell() {
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on
   // desktop — on mobile the rail is a bottom sheet, not a left panel.
+  // How much chrome covers the map's LEFT edge: the rail when open, the
+  // floating search overlay when collapsed. Top-centred chrome (the
+  // "search this area" button, the pack-error banner) must centre on the
+  // VISIBLE map, not the window, or it slides under that chrome on narrow
+  // desktops. railInset additionally offsets camera framing.
+  const [leftChrome, setLeftChrome] = useState(0)
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 768px)').matches
-    railInset.current = collapsed || !desktop ? 0 : 392
+    const mq = window.matchMedia('(min-width: 768px)')
+    const apply = () => {
+      const w = !mq.matches ? 0 : collapsed ? 412 : 392
+      setLeftChrome(w)
+      railInset.current = collapsed || !mq.matches ? 0 : 392
+    }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [collapsed])
 
+  // Measure the mobile sheet so the map controls can sit above it. The sheet
+  // grows and shrinks with its content, so a fixed offset would be wrong.
+  useEffect(() => {
+    const el = railRef.current
+    if (!el) return
+    const mq = window.matchMedia('(min-width: 768px)')
+    // Measure NOW, not only from the observer: ResizeObserver delivers on the
+    // frame lifecycle, which does not run while the page is hidden, so relying
+    // on it alone left the controls at offset 0 until the first repaint.
+    const measure = () => setSheetH(mq.matches ? 0 : el.offsetHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    mq.addEventListener('change', measure) // crossing the breakpoint flips it
+    return () => { ro.disconnect(); mq.removeEventListener('change', measure) }
+  }, [])
+
   return (
-    <div className="relative flex h-full overflow-hidden bg-muted/30">
+    <div
+      className="relative flex h-full overflow-hidden bg-muted/30"
+      style={{ '--sheet-h': `${sheetH}px`, '--left-chrome': `${leftChrome}px` } as React.CSSProperties}
+    >
       {/* ---- Rail ------------------------------------------------------ */}
       <aside
+        ref={railRef}
         className={cn(
           'absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl',
           // The rail OVERLAYS the map on desktop instead of taking width from
@@ -183,11 +223,16 @@ function Shell() {
             the rail controls float over the map instead. */}
         {collapsed && (
           <div className="pointer-events-none absolute left-8 top-4 z-20 hidden w-[380px] max-w-[calc(100%-6rem)] flex-col gap-2 md:flex">
-            <div className="pointer-events-auto flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur-xl">
+            {/* relative z-20 is load-bearing: backdrop-blur creates a STACKING
+                CONTEXT, so the search dropdown's own z-30 is trapped inside
+                this row and cannot paint over the chips below — the chips are
+                a later sibling and would cover the results. Raising the row
+                itself (not the dropdown) is the only thing that works. */}
+            <div className="pointer-events-auto relative z-20 flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur-xl">
               <div className="min-w-0 flex-1"><SearchBar /></div>
               <RailControls panel={panel} toggle={toggle} compact />
             </div>
-            <div className="pointer-events-auto">
+            <div className="pointer-events-auto relative z-10">
               <CategoryChips getCenter={() => centerOf(liveMap.current)} />
             </div>
           </div>
@@ -213,7 +258,7 @@ function Shell() {
         <MapControls />
         {app.packsError && app.packs.length === 0 && (
           <div
-            className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive shadow-lg backdrop-blur"
+            className="absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive shadow-lg backdrop-blur"
             role="alert"
           >
             Karte konnte nicht geladen werden.
