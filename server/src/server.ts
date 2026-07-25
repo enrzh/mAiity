@@ -11,6 +11,7 @@ import { makeSocialVerifier, registerSocialRoutes, type SocialVerifier } from ".
 import { registerRouteRoutes } from "./route";
 import { registerUserPackRoutes } from "./userpacks";
 import { PoiIndex } from "./pois";
+import { registerDemRoutes } from "./dem";
 
 export interface AppOpts {
   dbPath: string;
@@ -34,6 +35,8 @@ export interface AppOpts {
   valhallaUrls?: string[];
   /** SQLite POI index from data/build-poi-db.sh (optional). */
   poiDbPath?: string;
+  /** Disk cache for proxied elevation tiles (3D terrain). */
+  demCacheDir?: string;
 }
 
 export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: Database }> {
@@ -83,6 +86,7 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
       registerUserPackRoutes(scope, db, signer, prefix);
       registerGeocodeRoutes(scope, db, opts.geocoderUrls, pois);
       registerRouteRoutes(scope, db, opts.valhallaUrls ?? ["https://valhalla1.openstreetmap.de"]);
+      registerDemRoutes(scope, opts.demCacheDir ?? "/data/dem");
     },
     { prefix }
   );

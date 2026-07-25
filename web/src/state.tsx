@@ -35,6 +35,8 @@ interface AppState {
   pickingStart: boolean
   pois: GeoResult[]
   activeCategory: string | null
+  is3D: boolean
+  toggle3D: () => void
 
   setAuthOpen: (open: boolean) => void
   login: (email: string, password: string) => Promise<void>
@@ -84,6 +86,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pickingStart, setPickingStart] = useState(false)
   const [pois, setPois] = useState<GeoResult[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [is3D, setIs3D] = useState(false)
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
   // bookmark mutation counter — stale fetches must never clobber newer state.
@@ -382,6 +385,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppState = {
     user, bookmarks, bookmarksStatus, pendingDeletes, packs: allPacks, packsError,
     activePack, activeStyleUrl, selected, authOpen, route, pickingStart, pois, activeCategory,
+    is3D, toggle3D: () => setIs3D((v) => !v),
     setAuthOpen, login, register, logout, select, selectResult,
     setActivePack, loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,

@@ -18,8 +18,21 @@ struct RootView: View {
     @State private var detent: PresentationDetent = .height(96)
     @State private var sheetShown = true
 
+    /// Height of the sheet for the current detent, so the floating map
+    /// controls can sit directly above it and travel with it.
+    private var sheetHeight: CGFloat {
+        let screen = UIScreen.main.bounds.height
+        switch detent {
+        case .height(96): return 96
+        case .height(220): return 220
+        case .medium: return screen * 0.5
+        case .large: return screen * 0.92
+        default: return 96
+        }
+    }
+
     var body: some View {
-        MapScreen()
+        MapScreen(sheetHeight: sheetHeight)
             .sheet(isPresented: $sheetShown) {
                 SheetView(detent: $detent)
                     .presentationDetents([.height(96), .height(220), .medium, .large], selection: $detent)

@@ -25,6 +25,10 @@ final class AppModel: ObservableObject {
     @Published var pois: [GeoResult] = []
     @Published var activeCategory: String?
     @Published var recents: [GeoResult] = []
+    /// Set by the floating map button; the sheet presents the pack picker.
+    @Published var showPackPicker = false
+    /// One-shot startup position so the map opens where the user is.
+    @Published var startupLocation: CameraEvent?
     @Published var activePackId: String {
         didSet { UserDefaults.standard.set(activePackId, forKey: "maps.activePack") }
     }
@@ -98,6 +102,11 @@ final class AppModel: ObservableObject {
         if let user = await APIClient.shared.resume() {
             self.user = user
             await loadUserData()
+        }
+        // Open the map where the user actually is (no-op if they decline).
+        if let loc = await LocationService.shared.currentLocation() {
+            startupLocation = CameraEvent(place: Place(
+                name: "Mein Standort", label: "", lat: loc.latitude, lon: loc.longitude))
         }
     }
 

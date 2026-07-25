@@ -24,7 +24,6 @@ const roundBtn = 'size-11 rounded-full bg-background/95 shadow-md backdrop-blur 
 function Shell() {
   const app = useApp()
   const [panel, setPanel] = useState<Panel>('none')
-  const [is3D, setIs3D] = useState(false)
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? 'none' : p))
 
   // A selected place takes the stage — close side panels so the card is clear.
@@ -46,9 +45,9 @@ function Shell() {
         <div className="pointer-events-auto ml-auto flex shrink-0 gap-2">
           <Button
             variant="ghost" size="icon"
-            className={cn(roundBtn, is3D && 'ring-2 ring-primary')}
-            onClick={() => { const next = !is3D; setIs3D(next); set3D(next) }}
-            aria-label="3D-Ansicht" aria-pressed={is3D} title="3D-Ansicht"
+            className={cn(roundBtn, app.is3D && 'ring-2 ring-primary')}
+            onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
+            aria-label="3D-Ansicht" aria-pressed={app.is3D} title="3D-Ansicht"
           >
             <Box className="size-5" />
           </Button>

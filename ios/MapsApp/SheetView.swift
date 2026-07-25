@@ -32,6 +32,7 @@ struct SheetView: View {
         }
         .sheet(isPresented: $showAuth) { AuthSheet() }
         .sheet(isPresented: $showInstallPack) { InstallPackSheet() }
+        .sheet(isPresented: $model.showPackPicker) { PackPickerSheet() }
         .onChange(of: searchFocused) { focused in
             if focused { detent = .large }
         }

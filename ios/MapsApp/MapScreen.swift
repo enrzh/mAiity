@@ -8,6 +8,9 @@ import MapLibreSwiftUI
 /// the web renders). Selected place + bookmarks are GPU style layers, re-added
 /// automatically after pack switches.
 struct MapScreen: View {
+    /// Current bottom-sheet height — the floating controls ride just above it.
+    var sheetHeight: CGFloat = 96
+
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var location = LocationService.shared
     @State private var camera = MapViewCamera.center(
@@ -50,45 +53,45 @@ struct MapScreen: View {
                 Task { await model.selectTap(lat: c.latitude, lon: c.longitude) }
             }
             .ignoresSafeArea()
-            .overlay(alignment: .topTrailing) {
+            // Floating controls sit at the BOTTOM-RIGHT, directly above the
+            // sheet, and animate with it as the user drags between detents.
+            .overlay(alignment: .bottomTrailing) {
                 VStack(spacing: 10) {
-                    Button {
-                        location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
-                        location.requestOrTrack()
-                    } label: {
-                        Image(systemName: location.isAuthorized ? "location.fill" : "location")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
-                            .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
-                    }
-                    .accessibilityLabel("Mein Standort")
+                    mapButton(
+                        symbol: model.activePackId == "light" ? "paintpalette" : "paintpalette.fill",
+                        label: "Karten-Stil"
+                    ) { model.showPackPicker = true }
 
-                    // 3D: tilt the camera; buildings extrude from z14.
-                    Button {
+                    mapButton(symbol: is3D ? "cube.fill" : "cube", label: "3D-Ansicht") {
                         is3D.toggle()
                         camera = .center(lastCenter, zoom: is3D ? 16 : 14,
                                          pitch: is3D ? 60 : 0,
                                          direction: is3D ? 20 : 0)
-                    } label: {
-                        Image(systemName: is3D ? "cube.fill" : "cube")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .frame(width: 44, height: 44)
-                            .background(.regularMaterial, in: Circle())
-                            .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
                     }
-                    .accessibilityLabel("3D-Ansicht")
+
+                    mapButton(
+                        symbol: location.isAuthorized ? "location.fill" : "location",
+                        label: "Mein Standort"
+                    ) {
+                        location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
+                        location.requestOrTrack()
+                    }
                 }
                 .padding(.trailing, 14)
-                .padding(.top, 8)
+                .padding(.bottom, sheetHeight + 16)
+                .animation(.interactiveSpring(response: 0.35, dampingFraction: 0.85), value: sheetHeight)
             }
             .onChange(of: model.cameraTarget) { target in
                 guard let target else { return }
                 let c = CLLocationCoordinate2D(latitude: target.place.lat, longitude: target.place.lon)
                 lastCenter = c
                 camera = .center(c, zoom: 15, pitch: is3D ? 60 : 0)
+            }
+            .onChange(of: model.startupLocation) { start in
+                guard let start else { return }
+                let c = CLLocationCoordinate2D(latitude: start.place.lat, longitude: start.place.lon)
+                lastCenter = c
+                camera = .center(c, zoom: 14)
             }
             .onChange(of: model.pois) { pois in
                 // Frame the POI result set.
@@ -150,6 +153,19 @@ struct MapScreen: View {
                 MLNPointFeature(coordinate: CLLocationCoordinate2D(latitude: s.lat, longitude: s.lon))
             }
         }
+    }
+
+    /// Consistent circular control used by the floating map buttons.
+    private func mapButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 44, height: 44)
+                .background(.regularMaterial, in: Circle())
+                .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
+        }
+        .accessibilityLabel(label)
     }
 
     private var poiSource: ShapeSource {

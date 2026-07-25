@@ -14,16 +14,77 @@ const DEFAULT_ZOOM = 5.5
 /** Live map handle for siblings that need camera reads (e.g. POI center). */
 export const liveMap: { current: MLMap | null } = { current: null }
 
-/** Tilt the camera into 3D (or back flat). Buildings extrude from z14. */
+/// Free (keyless) global elevation tiles — Terrarium-encoded DEM. Gives the
+/// map REAL relief instead of a flat plane; the single biggest 3D win.
+/// Served through OUR api: the upstream Terrarium tiles carry no CORS
+/// headers, so the browser cannot use them as WebGL textures directly.
+const DEM_SOURCE = 'terrain-dem'
+const DEM_TILES = '/maps/api/dem/{z}/{x}/{y}.png'
+
+/// TERRAIN IS OFF pending a fix. The DEM proxy serves 200s and the tiles are
+/// byte-identical to upstream, but `isSourceLoaded('terrain-dem')` never goes
+/// true, and while terrain waits on its source MapLibre renders NOTHING
+/// (queryRenderedFeatures() === 0 → a blank sky-coloured screen). Shipping
+/// that would be worse than no terrain. 3D therefore = pitch + sky + extruded
+/// buildings, which all work. Re-enable once the DEM decode is understood.
+const TERRAIN_ENABLED = false
+
+/** Add the DEM source + sky once per style (re-run after every style.load). */
+export function ensure3DScenery(m: MLMap) {
+  if (TERRAIN_ENABLED && !m.getSource(DEM_SOURCE)) {
+    m.addSource(DEM_SOURCE, {
+      type: 'raster-dem',
+      tiles: [DEM_TILES],
+      encoding: 'terrarium',
+      tileSize: 256,
+      maxzoom: 13,
+      attribution: 'Elevation: Terrain Tiles (AWS Open Data)',
+    })
+  }
+  // Atmosphere at the horizon — without it a pitched map looks cropped.
+  // NOTE: in MapLibre v5 `sky` is a ROOT style property (setSky), NOT a
+  // layer type — addLayer({type:'sky'}) throws and aborts 3D setup.
+  try {
+    m.setSky({
+      'sky-color': '#8cb8e8',
+      'sky-horizon-blend': 0.5,
+      'horizon-color': '#f0e6d8',
+      'horizon-fog-blend': 0.6,
+      'fog-color': '#dfe7f0',
+      'fog-ground-blend': 0.1,
+      'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 0.8, 10, 0.6, 14, 0.2],
+    })
+  } catch { /* older renderer without sky support — terrain still works */ }
+}
+
+/** Tilt into 3D with real terrain relief (or back to flat). */
 export function set3D(on: boolean) {
   const m = liveMap.current
   if (!m) return
+  try {
+    ensure3DScenery(m)
+    if (TERRAIN_ENABLED) {
+      m.setTerrain(on ? { source: DEM_SOURCE, exaggeration: 1.2 } : null)
+    }
+  } catch (e) {
+    console.error('[3d] scenery unavailable', e) // never block the tilt
+  }
+  // Do NOT force a high zoom: with terrain enabled, zooming in over
+  // mountains drops the camera below the elevated surface and the view
+  // becomes pure sky. Only lift very far-out views, and keep the pitch
+  // moderate so the horizon stays in frame.
+  // Lift to z16 so extruded buildings (minzoom 14) are actually in view.
   m.easeTo({
-    pitch: on ? 60 : 0,
-    bearing: on ? -20 : 0,
-    zoom: on ? Math.max(m.getZoom(), 15) : m.getZoom(),
-    duration: 900,
+    pitch: on ? 62 : 0,
+    bearing: on ? -18 : 0,
+    zoom: on ? Math.max(m.getZoom(), 16) : m.getZoom(),
+    duration: 1000,
   })
+}
+
+/** Whether 3D is currently engaged (terrain set). */
+export function is3DActive(): boolean {
+  return !!liveMap.current?.getTerrain()
 }
 
 /// The one imperative component: owns the MapLibre map, keeps it in sync with
@@ -38,12 +99,14 @@ export function MapView() {
   // that reads false during tile loads — trusting it can silently drop the
   // route layer forever.
   const styleReadyRef = useRef(false)
+  const wants3DRef = useRef(false)
   const selMarker = useRef<Marker | null>(null)
   const bmMarkers = useRef<globalThis.Map<string, Marker>>(new globalThis.Map())
   const app = useApp()
   // Keep latest handlers reachable from map listeners without re-binding.
   const appRef = useRef(app)
   appRef.current = app
+  wants3DRef.current = app.is3D
 
   // Init once, as soon as the first style URL is known. Keyed on a boolean so
   // later pack changes do NOT re-run this effect (its cleanup destroys the map).
@@ -57,7 +120,7 @@ export function MapView() {
       zoom: DEFAULT_ZOOM,
       hash: true,
       attributionControl: { compact: true },
-      maxPitch: 75, // 3D view
+      maxPitch: 85, // near-horizon 3D views
     })
     styleRef.current = appRef.current.activeStyleUrl
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
@@ -87,7 +150,29 @@ export function MapView() {
     m.on('style.load', () => {
       styleReadyRef.current = true
       syncRouteLayers(m)
+      // A style swap drops sources/terrain — restore the 3D scenery if it
+      // was engaged, so pack switching doesn't silently flatten the map.
+      if (wants3DRef.current) {
+        ensure3DScenery(m)
+        if (TERRAIN_ENABLED) m.setTerrain({ source: DEM_SOURCE, exaggeration: 1.2 })
+      }
     })
+
+    // Startup location: open the map where the user IS, unless the URL
+    // already pins a view (#camera hash) or a shared place (?p=).
+    const pinned = window.location.hash.length > 1 || new URLSearchParams(window.location.search).has('p')
+    if (!pinned && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          // Only if the user hasn't already moved the map themselves.
+          if (m.getZoom() === DEFAULT_ZOOM) {
+            m.jumpTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 14 })
+          }
+        },
+        () => { /* denied/unavailable — keep the country overview */ },
+        { timeout: 8000, maximumAge: 300_000 },
+      )
+    }
 
     // Keep the GL canvas matched to the container (init can happen pre-layout).
     const ro = new ResizeObserver(() => m.resize())
@@ -95,6 +180,8 @@ export function MapView() {
 
     setMap(m)
     liveMap.current = m
+    // Debug handle (harmless, and invaluable for diagnosing render issues).
+    ;(window as unknown as { __map?: MLMap }).__map = m
     return () => {
       ro.disconnect()
       selMarker.current?.remove(); selMarker.current = null
