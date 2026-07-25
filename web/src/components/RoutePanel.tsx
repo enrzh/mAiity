@@ -1,4 +1,4 @@
-import { ArrowUpDown, Bike, Car, Footprints, Loader2, LocateFixed, MapPin, X } from 'lucide-react'
+import { ArrowUpDown, Bike, Car, Footprints, Loader2, LocateFixed, MapPin, Navigation2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -75,6 +75,9 @@ export function RoutePanel() {
               <span className="text-xl font-bold">{fmtDur(route.result.durationS)}</span>
               <span className="text-sm text-muted-foreground">{fmtDist(route.result.distanceM)}</span>
             </div>
+            <Button className="w-full gap-2" onClick={app.startNavigation}>
+              <Navigation2 className="size-4" /> Navigation starten
+            </Button>
             <Separator />
             <ol className="space-y-2 pr-1 text-sm">
               {route.result.steps.map((s, i) => (

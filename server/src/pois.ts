@@ -28,6 +28,8 @@ export interface PoiResult {
   lat: number;
   lon: number;
   kind: string;
+  /** Metres from the query point, when the query had one. */
+  distanceM?: number;
   /** Detail fields — present once the DB carries them. */
   street?: string | null;
   postcode?: string | null;
@@ -42,6 +44,13 @@ export interface PoiResult {
 /** Nice German label: "REWE, Hauptstraße 3, 10115, Berlin". */
 function label(r: PoiRow): string {
   return [r.name, r.street, r.postcode, r.city].filter((s) => s && String(s).trim()).join(", ");
+}
+
+/** Equirectangular metre distance — plenty accurate at city scale. */
+function distanceM(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const x = ((bLon - aLon) * Math.PI / 180) * Math.cos(((aLat + bLat) / 2) * Math.PI / 180);
+  const y = (bLat - aLat) * Math.PI / 180;
+  return Math.sqrt(x * x + y * y) * 6_371_000;
 }
 
 /** Rough metres-per-degree at the given latitude (equirectangular). */
@@ -130,7 +139,10 @@ export class PoiIndex {
     return [];
   }
 
-  /** Name/brand search near a point — finds "REWE", "Netto", "Späti". */
+  /// Name/brand search near a point — finds "REWE", "Netto", "Späti".
+  /// Ranking: exact name > prefix > word-start > brand > contains, then
+  /// distance. Distance only breaks ties WITHIN a tier, so a "REWE" 3 km
+  /// away still beats a "Bikerewerkstatt" next door.
   search(q: string, lat: number, lon: number, limit = 8): PoiResult[] {
     if (!this.db) return [];
     const { dLat, dLon } = degBox(lat, 40_000);
@@ -139,18 +151,44 @@ export class PoiIndex {
         `SELECT ${this.selectList} FROM pois
          WHERE (name LIKE ?1 OR brand LIKE ?1)
            AND lat BETWEEN ?2 AND ?3 AND lon BETWEEN ?4 AND ?5
-         LIMIT 400`,
+         LIMIT 800`,
       )
       .all(`%${q}%`, lat - dLat, lat + dLat, lon - dLon, lon + dLon) as PoiRow[];
+    const needle = q.toLowerCase().trim();
+    const esc = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return rows
-      .map((r) => ({
-        r,
-        rank: r.name.toLowerCase().startsWith(q.toLowerCase()) ? 0 : 1,
-        d: (r.lat - lat) ** 2 + ((r.lon - lon) * Math.cos((lat * Math.PI) / 180)) ** 2,
-      }))
-      .sort((a, b) => a.rank - b.rank || a.d - b.d)
+      .map((r) => {
+        const name = r.name.toLowerCase();
+        const tier =
+          name === needle ? 0
+          : name.startsWith(needle) ? 1
+          : new RegExp(`\\b${esc}`).test(name) ? 2
+          : (r.brand ?? "").toLowerCase().includes(needle) ? 3
+          : 4;
+        return { r, tier, d: distanceM(lat, lon, r.lat, r.lon) };
+      })
+      .sort((a, b) => a.tier - b.tier || a.d - b.d)
       .slice(0, limit)
-      .map(({ r }) => this.toResult(r));
+      .map(({ r, d }) => ({ ...this.toResult(r), distanceM: Math.round(d) }));
+  }
+
+  /// Everything of a category inside an explicit viewport — powers
+  /// "search this area" after the user pans away from their location.
+  inBounds(cat: string, west: number, south: number, east: number, north: number, limit = 40): PoiResult[] {
+    if (!this.db) return [];
+    const cLat = (south + north) / 2, cLon = (west + east) / 2;
+    const rows = this.db
+      .query(
+        `SELECT ${this.selectList} FROM pois
+         WHERE cat = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?
+         LIMIT 1000`,
+      )
+      .all(cat, south, north, west, east) as PoiRow[];
+    return rows
+      .map((r) => ({ r, d: distanceM(cLat, cLon, r.lat, r.lon) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, limit)
+      .map(({ r, d }) => ({ ...this.toResult(r), distanceM: Math.round(d) }));
   }
 
   /// Details for the POI at (or nearest to) a coordinate — powers the place

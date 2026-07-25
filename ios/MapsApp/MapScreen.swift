@@ -94,6 +94,12 @@ struct MapScreen: View {
                 lastCenter = c
                 camera = .center(c, zoom: 15, pitch: is3D ? 60 : 0)
             }
+            .onChange(of: model.navCamera) { cam in
+                // Turn-by-turn: ride behind the user, facing travel direction.
+                guard let cam else { return }
+                lastCenter = cam.center
+                camera = .center(cam.center, zoom: 17, pitch: 60, direction: cam.heading)
+            }
             .onChange(of: model.startupLocation) { start in
                 guard let start else { return }
                 let c = CLLocationCoordinate2D(latitude: start.place.lat, longitude: start.place.lon)

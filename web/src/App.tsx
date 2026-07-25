@@ -13,7 +13,10 @@ import { MapView, liveMap, locateUser, set3D, zoomBy } from './components/MapVie
 import { CategoryChips, centerOf } from './components/CategoryChips'
 import { SearchBar } from './components/SearchBar'
 import { PlaceCard } from './components/PlaceCard'
+import { PoiResults } from './components/PoiResults'
+import { SearchAreaButton } from './components/SearchAreaButton'
 import { RoutePanel } from './components/RoutePanel'
+import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
 import { AuthModal } from './components/AuthModal'
@@ -148,10 +151,12 @@ function Shell() {
 
         {/* Contextual content — one thing at a time, like Maps. */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {app.route ? <RoutePanel />
+          {app.navigating ? <NavigationPanel />
+            : app.route ? <RoutePanel />
             : app.selected ? <PlaceCard />
             : panel === 'saved' ? <SavedPanel onClose={() => setPanel('none')} />
             : panel === 'packs' ? <PackSwitcher onClose={() => setPanel('none')} />
+            : app.pois.length > 0 ? <PoiResults />
             : <EmptyRail />}
         </div>
       </aside>
@@ -184,6 +189,7 @@ function Shell() {
           {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
         </button>
 
+        <SearchAreaButton />
         <MapControls />
         {app.packsError && app.packs.length === 0 && (
           <div

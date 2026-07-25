@@ -221,6 +221,16 @@ export function registerGeocodeRoutes(
     if (!Number.isFinite(la) || !Number.isFinite(lo) || la < -90 || la > 90 || lo < -180 || lo > 180)
       return reply.code(400).send({ error: "invalid_coordinates" });
 
+    // "Search this area": explicit viewport wins over radius-from-a-point.
+    const { west, south, east, north } = req.query as Record<string, string>;
+    if (pois?.available && west && south && east && north) {
+      const [w, s, e, n] = [west, south, east, north].map(Number);
+      if ([w, s, e, n].every(Number.isFinite) && w < e && s < n) {
+        const inView = pois.inBounds(cat, w, s, e, n);
+        if (inView.length > 0) return { results: inView };
+      }
+    }
+
     // Local OSM index first: it has EVERY named POI incl. brands, which a
     // text-matching geocoder cannot return.
     if (pois?.available) {

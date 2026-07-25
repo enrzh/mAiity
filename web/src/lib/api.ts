@@ -16,7 +16,11 @@ export interface Pack {
   id: string; name: string; version: string; description: string
   styleUrl: string; preview?: { colors?: string[] }; custom?: boolean
 }
-export interface GeoResult { name: string; label: string; lat: number; lon: number; kind: string }
+export interface GeoResult {
+  name: string; label: string; lat: number; lon: number; kind: string
+  /** Metres from the query point, when the API had one. */
+  distanceM?: number
+}
 export interface PlaceDetails extends GeoResult {
   street?: string | null
   postcode?: string | null
@@ -27,7 +31,11 @@ export interface PlaceDetails extends GeoResult {
   cuisine?: string | null
   wheelchair?: string | null
 }
-export interface RouteStep { instruction: string; distanceM: number; durationS: number }
+export interface RouteStep {
+  instruction: string; distanceM: number; durationS: number
+  /** Index into geometry where this maneuver begins. */
+  beginIdx: number
+}
 export interface RouteResult {
   mode: string; distanceM: number; durationS: number
   geometry: [number, number][]; steps: RouteStep[]
@@ -168,8 +176,16 @@ export const api = {
     if (!res.ok) return parseError(res)
     return (await res.json()).results
   },
-  async nearby(cat: NearbyCategory, lat: number, lon: number): Promise<GeoResult[]> {
-    const res = await fetch(`${API}/nearby?cat=${cat}&lat=${lat}&lon=${lon}`)
+  async nearby(
+    cat: NearbyCategory, lat: number, lon: number,
+    bounds?: { west: number; south: number; east: number; north: number },
+  ): Promise<GeoResult[]> {
+    const p = new URLSearchParams({ cat, lat: String(lat), lon: String(lon) })
+    if (bounds) {
+      p.set('west', String(bounds.west)); p.set('south', String(bounds.south))
+      p.set('east', String(bounds.east)); p.set('north', String(bounds.north))
+    }
+    const res = await fetch(`${API}/nearby?${p}`)
     if (!res.ok) return parseError(res)
     return (await res.json()).results
   },

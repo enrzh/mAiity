@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import SwiftUI
 
@@ -25,6 +26,16 @@ final class AppModel: ObservableObject {
     @Published var pois: [GeoResult] = []
     @Published var activeCategory: String?
     @Published var recents: [GeoResult] = []
+    /// Live turn-by-turn session (nil when not navigating).
+    @Published var nav: NavState?
+
+    struct NavState: Equatable {
+        var stepIndex = 0
+        var toManeuverM: Double?
+        var remainingM: Double
+        var remainingS: Double
+        var offRoute = false
+    }
     /// Set by the floating map button; the sheet presents the pack picker.
     @Published var showPackPicker = false
     /// One-shot startup position so the map opens where the user is.
@@ -220,7 +231,7 @@ final class AppModel: ObservableObject {
 
     // MARK: - POI browsing
 
-    func showCategory(_ cat: NearbyCategory) {
+    func showCategory(_ cat: NearbyCategory, bounds: (west: Double, south: Double, east: Double, north: Double)? = nil) {
         poiTask?.cancel()
         if activeCategory == cat.id { clearPois(); return }
         activeCategory = cat.id
@@ -233,7 +244,7 @@ final class AppModel: ObservableObject {
             else if let loc = await LocationService.shared.currentLocation() { center = (loc.latitude, loc.longitude) }
             else if let t = self.cameraTarget { center = (t.place.lat, t.place.lon) }
             guard !Task.isCancelled else { return }
-            let results = (try? await APIClient.shared.nearby(cat: cat.id, lat: center.lat, lon: center.lon)) ?? []
+            let results = (try? await APIClient.shared.nearby(cat: cat.id, lat: center.lat, lon: center.lon, bounds: bounds)) ?? []
             guard !Task.isCancelled else { return }
             self.pois = results
         }
@@ -301,6 +312,73 @@ final class AppModel: ObservableObject {
         if activePackId == id { setPack("light") }
     }
 
+    // MARK: - Navigation
+
+    private var navTask: Task<Void, Never>?
+    private var lastSnapIndex = 0
+    private var rerouteGuard = Date.distantPast
+
+    var navigating: Bool { nav != nil }
+
+    func startNavigation() {
+        guard let r = route?.result, r.geometry.count > 1 else { return }
+        lastSnapIndex = 0
+        nav = NavState(remainingM: Double(r.distanceM), remainingS: Double(r.durationS))
+        navTask?.cancel()
+        navTask = Task { [weak self] in
+            // Drive off the location stream; each fix advances the session.
+            while !Task.isCancelled {
+                guard let self, self.nav != nil else { return }
+                if let loc = await LocationService.shared.currentLocation() {
+                    self.advance(with: loc)
+                }
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+        }
+    }
+
+    func stopNavigation() {
+        navTask?.cancel()
+        navTask = nil
+        nav = nil
+    }
+
+    private func advance(with loc: CLLocationCoordinate2D) {
+        guard let r = route?.result, r.geometry.count > 1 else { return }
+        let pos = (lon: loc.longitude, lat: loc.latitude)
+        let snap = Nav.snap(position: pos, geometry: r.geometry, from: lastSnapIndex)
+        lastSnapIndex = snap.index
+
+        let si = Nav.currentStep(r.steps, index: snap.index)
+        var toManeuver: Double?
+        if si + 1 < r.steps.count {
+            toManeuver = Nav.metresToManeuver(
+                geometry: r.geometry, index: snap.index,
+                position: pos, nextBeginIdx: r.steps[si + 1].beginIdx)
+        }
+        let frac = snap.remainingM / max(1, Double(r.distanceM))
+        let off = snap.offRouteM > Nav.offRouteM
+        nav = NavState(stepIndex: si, toManeuverM: toManeuver,
+                       remainingM: snap.remainingM,
+                       remainingS: Double(r.durationS) * frac,
+                       offRoute: off)
+
+        // Left the line — recompute from where we actually are (rate-limited).
+        if off, Date().timeIntervalSince(rerouteGuard) > 12 {
+            rerouteGuard = Date()
+            setRouteStart(Place(name: "Aktuelle Position", label: "", lat: loc.latitude, lon: loc.longitude))
+        }
+
+        // Follow camera: heading from the route direction at our position.
+        let nextIdx = min(snap.index + 1, r.geometry.count - 1)
+        let head = Nav.bearing(pos, (lon: r.geometry[nextIdx][0], lat: r.geometry[nextIdx][1]))
+        navCamera = NavCamera(center: loc, heading: head)
+    }
+
+    /// Consumed by MapScreen to drive the follow camera.
+    struct NavCamera: Equatable { let id = UUID(); let center: CLLocationCoordinate2D; let heading: Double }
+    @Published var navCamera: NavCamera?
+
     // MARK: - Routing
 
     private var routeTask: Task<Void, Never>?
@@ -332,6 +410,7 @@ final class AppModel: ObservableObject {
         routeTask?.cancel()
         route = nil
         pickingStart = false
+        stopNavigation()
     }
 
     private func requestRoute(from fromPlace: Place?, to place: Place, mode: RouteMode) {

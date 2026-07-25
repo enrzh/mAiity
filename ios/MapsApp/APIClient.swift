@@ -143,13 +143,25 @@ actor APIClient {
         return try decode(GeoResponse.self, data).results
     }
 
-    func nearby(cat: String, lat: Double, lon: Double) async throws -> [GeoResult] {
+    func nearby(
+        cat: String, lat: Double, lon: Double,
+        bounds: (west: Double, south: Double, east: Double, north: Double)? = nil
+    ) async throws -> [GeoResult] {
         var comps = URLComponents(url: base.appendingPathComponent("nearby"), resolvingAgainstBaseURL: false)!
-        comps.queryItems = [
+        var items = [
             URLQueryItem(name: "cat", value: cat),
             URLQueryItem(name: "lat", value: String(lat)),
             URLQueryItem(name: "lon", value: String(lon)),
         ]
+        if let b = bounds {
+            items += [
+                URLQueryItem(name: "west", value: String(b.west)),
+                URLQueryItem(name: "south", value: String(b.south)),
+                URLQueryItem(name: "east", value: String(b.east)),
+                URLQueryItem(name: "north", value: String(b.north)),
+            ]
+        }
+        comps.queryItems = items
         let (data, resp) = try await URLSession.shared.data(from: comps.url!)
         guard (resp as? HTTPURLResponse)?.statusCode == 200 else { return [] }
         return try decode(GeoResponse.self, data).results

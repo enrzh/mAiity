@@ -35,7 +35,11 @@ export function decodePolyline6(encoded: string): [number, number][] {
   return coords;
 }
 
-interface RouteStep { instruction: string; distanceM: number; durationS: number }
+interface RouteStep {
+  instruction: string; distanceM: number; durationS: number
+  /** Index into `geometry` where this maneuver begins (navigation). */
+  beginIdx: number
+}
 export interface RouteResult {
   mode: string;
   distanceM: number;
@@ -47,7 +51,7 @@ export interface RouteResult {
 function normalize(mode: string, trip: {
   legs?: Array<{
     shape?: string;
-    maneuvers?: Array<{ instruction?: string; length?: number; time?: number }>;
+    maneuvers?: Array<{ instruction?: string; length?: number; time?: number; begin_shape_index?: number }>;
   }>;
   summary?: { length?: number; time?: number };
 }): RouteResult | null {
@@ -56,12 +60,15 @@ function normalize(mode: string, trip: {
   const geometry: [number, number][] = [];
   const steps: RouteStep[] = [];
   for (const leg of legs) {
+    const legOffset = geometry.length;
     if (leg.shape) geometry.push(...decodePolyline6(leg.shape));
     for (const m of leg.maneuvers ?? []) {
       steps.push({
         instruction: m.instruction ?? "",
         distanceM: Math.round((m.length ?? 0) * 1000),
         durationS: Math.round(m.time ?? 0),
+        // Offset by geometry already collected from previous legs.
+        beginIdx: legOffset + (m.begin_shape_index ?? 0),
       });
     }
   }

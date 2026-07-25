@@ -13,7 +13,8 @@ struct SheetView: View {
         NavigationStack {
             List {
                 searchSection
-                if model.route == nil { categorySection }
+                if let nav = model.nav { navigationSection(nav) }
+                if model.route == nil && model.nav == nil { categorySection }
                 if model.route != nil { routeSection }
                 if let place = model.selected { placeSection(place) }
                 if !model.searchResults.isEmpty { resultsSection }
@@ -138,12 +139,56 @@ struct SheetView: View {
                     model.cameraTarget = AppModel.CameraEvent(place: place)
                     detent = .height(220)
                 } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(p.name).fontWeight(.medium)
-                        Text(p.label).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(p.name).fontWeight(.medium)
+                            Text(p.label).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        if let d = p.distanceM {
+                            Text(d >= 1000 ? String(format: "%.1f km", Double(d)/1000) : "\(d) m")
+                                .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
+                        }
                     }
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: Navigation
+
+    private func navigationSection(_ nav: AppModel.NavState) -> some View {
+        Section {
+            let steps = model.route?.result?.steps ?? []
+            let next = nav.stepIndex + 1 < steps.count ? steps[nav.stepIndex + 1] : nil
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "location.north.line.fill")
+                        .font(.title2).foregroundStyle(.blue)
+                    VStack(alignment: .leading, spacing: 3) {
+                        if let m = nav.toManeuverM {
+                            Text(Self.fmtDist(Int(m))).font(.title.bold()).monospacedDigit()
+                        }
+                        Text(next?.instruction ?? steps[safe: nav.stepIndex]?.instruction ?? "Weiter")
+                            .font(.callout)
+                    }
+                    Spacer()
+                    Button { model.stopNavigation() } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if nav.offRoute {
+                    Label("Abseits der Route — neu berechnen …", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption).foregroundStyle(.orange)
+                }
+                HStack {
+                    Text(Self.fmtDur(Int(nav.remainingS))).fontWeight(.semibold).monospacedDigit()
+                    Spacer()
+                    Text(Self.fmtDist(Int(nav.remainingM))).foregroundStyle(.secondary).monospacedDigit()
+                }
+                .font(.subheadline)
             }
         }
     }
@@ -218,6 +263,14 @@ struct SheetView: View {
                             Text(Self.fmtDur(r.durationS)).font(.title3.bold())
                             Text(Self.fmtDist(r.distanceM)).foregroundStyle(.secondary)
                         }
+                        Button {
+                            model.startNavigation()
+                            detent = .height(220)
+                        } label: {
+                            Label("Navigation starten", systemImage: "location.north.line.fill")
+                                .frame(maxWidth: .infinity).fontWeight(.semibold)
+                        }
+                        .buttonStyle(.borderedProminent)
                         ForEach(Array(r.steps.enumerated()), id: \.offset) { i, step in
                             HStack(alignment: .top, spacing: 10) {
                                 Text("\(i + 1)")

@@ -37,6 +37,9 @@ interface AppState {
   activeCategory: string | null
   is3D: boolean
   toggle3D: () => void
+  navigating: boolean
+  startNavigation: () => void
+  stopNavigation: () => void
 
   setAuthOpen: (open: boolean) => void
   login: (email: string, password: string) => Promise<void>
@@ -56,7 +59,11 @@ interface AppState {
   swapRoute: () => void
   beginPickStart: () => void
   clearRoute: () => void
-  showCategory: (cat: NearbyCategory, center: { lat: number; lon: number }) => Promise<void>
+  showCategory: (
+    cat: NearbyCategory,
+    center: { lat: number; lon: number },
+    bounds?: { west: number; south: number; east: number; north: number },
+  ) => Promise<void>
   clearPois: () => void
   installPack: (body: { name: string; styleUrl?: string; styleJson?: string }) => Promise<void>
   removePack: (id: string) => Promise<void>
@@ -87,6 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pois, setPois] = useState<GeoResult[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [is3D, setIs3D] = useState(false)
+  const [navigating, setNavigating] = useState(false)
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
   // bookmark mutation counter — stale fetches must never clobber newer state.
@@ -334,15 +342,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     routeSeq.current++
     setRoute(null)
     setPickingStart(false)
+    setNavigating(false)
   }, [])
 
   // ---- POI category browsing ----------------------------------------------
   const poiSeq = useRef(0)
-  const showCategory = useCallback(async (cat: NearbyCategory, center: { lat: number; lon: number }) => {
+  const showCategory = useCallback(async (
+    cat: NearbyCategory,
+    center: { lat: number; lon: number },
+    bounds?: { west: number; south: number; east: number; north: number },
+  ) => {
     const seq = ++poiSeq.current
     setActiveCategory(cat)
     try {
-      const results = await api.nearby(cat, center.lat, center.lon)
+      const results = await api.nearby(cat, center.lat, center.lon, bounds)
       if (seq !== poiSeq.current) return
       setPois(results)
       if (results.length === 0) toast.info('Nichts in der Nähe gefunden.')
@@ -386,6 +399,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     user, bookmarks, bookmarksStatus, pendingDeletes, packs: allPacks, packsError,
     activePack, activeStyleUrl, selected, authOpen, route, pickingStart, pois, activeCategory,
     is3D, toggle3D: () => setIs3D((v) => !v),
+    navigating,
+    startNavigation: () => setNavigating(true),
+    stopNavigation: () => setNavigating(false),
     setAuthOpen, login, register, logout, select, selectResult,
     setActivePack, loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,

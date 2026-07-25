@@ -57,6 +57,8 @@ struct GeoResult: Codable, Identifiable, Equatable {
     let lat: Double
     let lon: Double
     let kind: String
+    /// Metres from the query point, when the API had one.
+    var distanceM: Int? = nil
     var id: String { "\(lat),\(lon),\(name)" }
 }
 
@@ -117,6 +119,8 @@ struct RouteStep: Codable, Equatable {
     let instruction: String
     let distanceM: Int
     let durationS: Int
+    /// Index into `geometry` where this maneuver begins (navigation).
+    var beginIdx: Int = 0
 }
 
 struct RouteResult: Codable, Equatable {
