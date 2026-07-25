@@ -82,9 +82,10 @@ export function set3D(on: boolean) {
   })
 }
 
-/** Whether 3D is currently engaged (terrain set). */
+/** Whether 3D is currently engaged. Pitch — NOT getTerrain(), which is always
+ *  null while TERRAIN_ENABLED is false and would report 3D as permanently off. */
 export function is3DActive(): boolean {
-  return !!liveMap.current?.getTerrain()
+  return (liveMap.current?.getPitch() ?? 0) > 5
 }
 
 /// Persistent "you are here" dot — the built-in GeolocateControl only shows

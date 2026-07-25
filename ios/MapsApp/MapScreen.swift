@@ -23,13 +23,9 @@ struct MapScreen: View {
     var body: some View {
         if let styleURL = model.styleURL {
             MapView(styleURL: styleURL, camera: $camera) {
-                // "You are here" dot — always visible once authorized, like
-                // the platform maps (not only after tapping locate).
-                CircleStyleLayer(identifier: "user-dot", source: userSource)
-                    .radius(7)
-                    .color(UIColor(red: 0.10, green: 0.45, blue: 0.91, alpha: 1))
-                    .strokeWidth(3)
-                    .strokeColor(.white)
+                // NOTE: no custom user dot — MapLibre already draws the
+                // system location puck (with accuracy halo and heading) once
+                // the camera tracks the user. Adding our own showed TWO dots.
                 // Active route (blue line under the markers).
                 LineStyleLayer(identifier: "route-line", source: routeSource)
                     .lineCap(.round)
@@ -54,6 +50,17 @@ struct MapScreen: View {
                     .color(UIColor(red: 0.91, green: 0.30, blue: 0.24, alpha: 1))
                     .strokeWidth(2.5)
                     .strokeColor(.white)
+            }
+            // Show the NATIVE location puck (halo + heading) as soon as we're
+            // authorized. Without this the puck only appears once the camera
+            // enters .trackUserLocation (i.e. after tapping locate), because
+            // that's the only path that sets userTrackingMode ≠ .none.
+            // The closure runs on EVERY updateUIView, so only assign on change.
+            .unsafeMapViewControllerModifier { controller in
+                let wanted = location.isAuthorized
+                if controller.mapView.showsUserLocation != wanted {
+                    controller.mapView.showsUserLocation = wanted
+                }
             }
             .onTapMapGesture { context in
                 let c = context.coordinate
@@ -179,14 +186,6 @@ struct MapScreen: View {
                 .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
         }
         .accessibilityLabel(label)
-    }
-
-    private var userSource: ShapeSource {
-        ShapeSource(identifier: "user-source") {
-            if let u = model.startupLocation {
-                MLNPointFeature(coordinate: CLLocationCoordinate2D(latitude: u.place.lat, longitude: u.place.lon))
-            }
-        }
     }
 
     private var poiSource: ShapeSource {

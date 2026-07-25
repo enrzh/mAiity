@@ -1,7 +1,10 @@
 {
   "version": 8,
   "name": "Dark",
-  "metadata": { "maps:pack": "dark", "maps:schema": "protomaps-basemap-v4" },
+  "metadata": {
+    "maps:pack": "dark",
+    "maps:schema": "protomaps-basemap-v4"
+  },
   "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
   "sprite": "https://protomaps.github.io/basemaps-assets/sprites/v4/dark",
   "sources": {
@@ -15,14 +18,18 @@
     {
       "id": "background",
       "type": "background",
-      "paint": { "background-color": "#0e1e30" }
+      "paint": {
+        "background-color": "#0e1e30"
+      }
     },
     {
       "id": "earth",
       "type": "fill",
       "source": "protomaps",
       "source-layer": "earth",
-      "paint": { "fill-color": "#171e26" }
+      "paint": {
+        "fill-color": "#171e26"
+      }
     },
     {
       "id": "landcover",
@@ -31,10 +38,28 @@
       "source-layer": "landcover",
       "paint": {
         "fill-color": [
-          "match", ["get", "kind"],
-          ["forest", "wood", "scrub", "grassland", "grass"], "#1a2a22",
-          ["farmland"], "#20261f",
-          ["glacier", "snow"], "#232a33",
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "forest",
+            "wood",
+            "scrub",
+            "grassland",
+            "grass"
+          ],
+          "#1a2a22",
+          [
+            "farmland"
+          ],
+          "#20261f",
+          [
+            "glacier",
+            "snow"
+          ],
+          "#232a33",
           "rgba(0,0,0,0)"
         ],
         "fill-opacity": 0.7
@@ -47,10 +72,30 @@
       "source-layer": "landuse",
       "paint": {
         "fill-color": [
-          "match", ["get", "kind"],
-          ["park", "grass", "recreation_ground", "garden", "cemetery", "pitch"], "#1b2b23",
-          ["hospital"], "#2a2126",
-          ["school", "university", "college"], "#232431",
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "park",
+            "grass",
+            "recreation_ground",
+            "garden",
+            "cemetery",
+            "pitch"
+          ],
+          "#1b2b23",
+          [
+            "hospital"
+          ],
+          "#2a2126",
+          [
+            "school",
+            "university",
+            "college"
+          ],
+          "#232431",
           "rgba(0,0,0,0)"
         ]
       }
@@ -60,7 +105,9 @@
       "type": "fill",
       "source": "protomaps",
       "source-layer": "water",
-      "paint": { "fill-color": "#0e1e30" }
+      "paint": {
+        "fill-color": "#0e1e30"
+      }
     },
     {
       "id": "buildings",
@@ -71,7 +118,77 @@
       "paint": {
         "fill-color": "#242c36",
         "fill-outline-color": "#2d3743",
-        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 0.9]
+        "fill-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          13,
+          0,
+          15,
+          0.9
+        ]
+      },
+      "maxzoom": 14
+    },
+    {
+      "id": "buildings-3d",
+      "type": "fill-extrusion",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 14,
+      "paint": {
+        "fill-extrusion-color": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            8
+          ],
+          0,
+          "#242c36",
+          60,
+          "#39434f"
+        ],
+        "fill-extrusion-height": [
+          "case",
+          [
+            "has",
+            "height"
+          ],
+          [
+            "get",
+            "height"
+          ],
+          8
+        ],
+        "fill-extrusion-base": [
+          "case",
+          [
+            "has",
+            "min_height"
+          ],
+          [
+            "get",
+            "min_height"
+          ],
+          0
+        ],
+        "fill-extrusion-opacity": 0.95,
+        "fill-extrusion-vertical-gradient": true
       }
     },
     {
@@ -79,11 +196,44 @@
       "type": "line",
       "source": "protomaps",
       "source-layer": "roads",
-      "filter": ["match", ["get", "kind"], ["highway", "major_road", "medium_road"], true, false],
-      "layout": { "line-cap": "round", "line-join": "round" },
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "highway",
+          "major_road",
+          "medium_road"
+        ],
+        true,
+        false
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
       "paint": {
         "line-color": "#10161d",
-        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 1, 12, 3, 16, 10, 20, 34]
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          1,
+          12,
+          3,
+          16,
+          10,
+          20,
+          34
+        ]
       }
     },
     {
@@ -91,15 +241,46 @@
       "type": "line",
       "source": "protomaps",
       "source-layer": "roads",
-      "layout": { "line-cap": "round", "line-join": "round" },
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
       "paint": {
         "line-color": [
-          "match", ["get", "kind"],
-          ["highway"], "#4a5468",
-          ["major_road", "medium_road"], "#39414e",
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "highway"
+          ],
+          "#4a5468",
+          [
+            "major_road",
+            "medium_road"
+          ],
+          "#39414e",
           "#2e3641"
         ],
-        "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 6, 0.4, 12, 1.4, 16, 6, 20, 24]
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.4,
+          12,
+          1.4,
+          16,
+          6,
+          20,
+          24
+        ]
       }
     },
     {
@@ -109,8 +290,23 @@
       "source-layer": "boundaries",
       "paint": {
         "line-color": "#5d5878",
-        "line-dasharray": [3, 2],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 10, 1.4]
+        "line-dasharray": [
+          3,
+          2
+        ],
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          3,
+          0.6,
+          10,
+          1.4
+        ]
       }
     },
     {
@@ -119,9 +315,35 @@
       "source": "protomaps",
       "source-layer": "places",
       "layout": {
-        "text-field": ["coalesce", ["get", "name:en"], ["get", "name"]],
-        "text-font": ["Noto Sans Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 11, 8, 14, 13, 18],
+        "text-field": [
+          "coalesce",
+          [
+            "get",
+            "name:en"
+          ],
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          3,
+          11,
+          8,
+          14,
+          13,
+          18
+        ],
         "text-max-width": 7
       },
       "paint": {

@@ -79,6 +79,15 @@ function applySlots(base: unknown, s: Slots): unknown {
         layer.paint['fill-outline-color'] = shade(s.gebaeude, -0.2)
         delete layer.paint['fill-pattern']
         break
+      case 'buildings-3d':
+        // Keep the height ramp, recoloured: taller reads lighter.
+        layer.paint['fill-extrusion-color'] = [
+          'interpolate', ['linear'],
+          ['case', ['has', 'height'], ['get', 'height'], 8],
+          0, s.gebaeude, 60, shade(s.gebaeude, 0.25),
+        ]
+        delete layer.paint['fill-extrusion-pattern']
+        break
       case 'places-labels':
         layer.paint['text-color'] = s.schrift
         layer.paint['text-halo-color'] = halo
