@@ -67,6 +67,11 @@ export class PoiIndex {
   private db: Database | null = null;
   /** Columns actually present — the DB may predate the detail fields. */
   private columns: string[] = [];
+  /** FTS5 index present? Without it search() falls back to a LIKE scan,
+   *  which is a ~0.8s SYNCHRONOUS bbox scan in dense areas — bun:sqlite
+   *  blocks the event loop for the whole scan, so every concurrent request
+   *  stalls behind it. */
+  private hasFts = false;
 
   constructor(path: string) {
     if (!existsSync(path)) return;
@@ -75,6 +80,9 @@ export class PoiIndex {
       this.columns = (this.db.query("PRAGMA table_info(pois)").all() as Array<{ name: string }>)
         .map((c) => c.name);
       if (!this.columns.includes("name")) this.db = null;
+      this.hasFts = !!this.db?.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pois_fts'",
+      ).get();
     } catch {
       this.db = null;
     }
@@ -146,14 +154,38 @@ export class PoiIndex {
   search(q: string, lat: number, lon: number, limit = 8): PoiResult[] {
     if (!this.db) return [];
     const { dLat, dLon } = degBox(lat, 40_000);
-    const rows = this.db
-      .query(
-        `SELECT ${this.selectList} FROM pois
-         WHERE (name LIKE ?1 OR brand LIKE ?1)
-           AND lat BETWEEN ?2 AND ?3 AND lon BETWEEN ?4 AND ?5
-         LIMIT 800`,
-      )
-      .all(`%${q}%`, lat - dLat, lat + dLat, lon - dLon, lon + dLon) as PoiRow[];
+    let rows: PoiRow[];
+    if (this.hasFts) {
+      // Per-token prefix match ("rhein park" -> "rhein"* AND "park"*),
+      // resolved through the FTS index in ~ms instead of LIKE-scanning
+      // every row in a 40km box. Loses only the old tier-4 mid-word
+      // substring hits ("Bikerewerkstatt" for "rewe") — junk by design.
+      const ftsq = q
+        .replace(/['"*^]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((t) => `"${t}"*`)
+        .join(" ");
+      if (!ftsq) return [];
+      rows = this.db
+        .query(
+          `SELECT ${this.selectList.split(", ").map((c) => `p.${c}`).join(", ")}
+           FROM pois_fts f JOIN pois p ON p.rowid = f.poi_id
+           WHERE pois_fts MATCH ?1
+             AND p.lat BETWEEN ?2 AND ?3 AND p.lon BETWEEN ?4 AND ?5
+           LIMIT 800`,
+        )
+        .all(ftsq, lat - dLat, lat + dLat, lon - dLon, lon + dLon) as PoiRow[];
+    } else {
+      rows = this.db
+        .query(
+          `SELECT ${this.selectList} FROM pois
+           WHERE (name LIKE ?1 OR brand LIKE ?1)
+             AND lat BETWEEN ?2 AND ?3 AND lon BETWEEN ?4 AND ?5
+           LIMIT 800`,
+        )
+        .all(`%${q}%`, lat - dLat, lat + dLat, lon - dLon, lon + dLon) as PoiRow[];
+    }
     const needle = q.toLowerCase().trim();
     const esc = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return rows

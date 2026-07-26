@@ -98,6 +98,20 @@ db = sqlite3.connect(sys.argv[1])
 db.execute("CREATE INDEX IF NOT EXISTS idx_pois_bbox ON pois(lat, lon)")
 db.execute("CREATE INDEX IF NOT EXISTS idx_pois_cat  ON pois(cat, lat, lon)")
 db.execute("CREATE INDEX IF NOT EXISTS idx_pois_name ON pois(name)")
+# FTS5 name/brand index: search() resolves per-token prefix queries in ~ms.
+# Without it the API falls back to a LIKE bbox scan (~0.8s in dense areas,
+# and bun:sqlite is synchronous, so that scan blocks the whole event loop).
+# FTS5-less sqlite builds just lose the fast path, never the build.
+try:
+    # STANDALONE fts5, not content='pois': this file is written by DuckDB's
+    # sqlite backend (non-sequential rowids), and external-content vtabs on it
+    # throw SQLITE_CORRUPT_VTAB. Standalone costs a few MB of duplicated text.
+    db.execute("DROP TABLE IF EXISTS pois_fts")
+    db.execute("CREATE VIRTUAL TABLE pois_fts USING fts5(name, brand, poi_id UNINDEXED)")
+    db.execute("INSERT INTO pois_fts (name, brand, poi_id) SELECT name, coalesce(brand,''), rowid FROM pois")
+    print("fts rows:", db.execute("select count(*) from pois_fts").fetchone()[0])
+except sqlite3.OperationalError as e:
+    print("WARN: FTS5 unavailable, LIKE fallback stays:", e)
 db.commit()
 print("rows:", db.execute("select count(*) from pois").fetchone()[0])
 db.close()

@@ -26,9 +26,26 @@ services:
       UPDATE_STRATEGY: DISABLED   # updates re-download GBs; refresh manually
       JAVA_PARAMS: -Xmx4g
     volumes:
-      - ./photon-data:/photon/photon_data
+      # MOUNT PATH MATTERS: this image keeps its index at /photon/data —
+      # mounting at /photon/photon_data (the old value) left the 9.8G index
+      # in the container layer, where any recreate silently deleted it and
+      # forced a full re-download. Discovered 2026-07-26.
+      - ./photon-data:/photon/data
     ports:
       - "100.93.237.25:2322:2322"
+
+  # Keeps the Photon Lucene index resident in the host page cache. On the
+  # NAS's spinning disks a COLD index costs 2.4-5.1s of seeks for any search
+  # term not queried before; warm pages answer in ~20ms. One sequential pass
+  # (~84s cold, near-instant when already cached) repeated hourly keeps other
+  # workloads from evicting it.
+  photon-warmer:
+    image: busybox:stable
+    container_name: apps-nas-maps-photon-warmer
+    restart: unless-stopped
+    volumes:
+      - ./photon-data:/data:ro
+    command: sh -c 'while true; do find /data -type f -exec cat {} + > /dev/null 2>&1; sleep 3600; done'
 
   # Self-hosted routing engine. First start downloads germany-latest.osm.pbf
   # (~4 GB) and builds routing tiles (takes a while); the API's route chain
