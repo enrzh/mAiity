@@ -66,28 +66,93 @@
       }
     },
     {
-      "id": "landuse-park",
+      "id": "landuse",
       "type": "fill",
       "source": "protomaps",
       "source-layer": "landuse",
-      "filter": [
-        "match",
-        [
-          "get",
-          "kind"
-        ],
-        [
-          "park",
-          "grass",
-          "garden",
-          "recreation_ground",
-          "pitch"
-        ],
-        true,
-        false
-      ],
       "paint": {
-        "fill-color": "#12301f",
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "park",
+            "garden",
+            "village_green",
+            "recreation_ground",
+            "playground",
+            "pitch"
+          ],
+          "#12301f",
+          [
+            "grass",
+            "meadow",
+            "grassland"
+          ],
+          "#0e2418",
+          [
+            "forest",
+            "wood",
+            "scrub",
+            "nature_reserve"
+          ],
+          "#102b17",
+          [
+            "farmland",
+            "allotments"
+          ],
+          "#14210f",
+          [
+            "cemetery"
+          ],
+          "#16261c",
+          [
+            "wetland"
+          ],
+          "#0c2422",
+          [
+            "residential"
+          ],
+          "#120e26",
+          [
+            "commercial"
+          ],
+          "#1a1030",
+          [
+            "industrial",
+            "railway",
+            "brownfield",
+            "quarry"
+          ],
+          "#1c1526",
+          [
+            "school",
+            "university",
+            "college"
+          ],
+          "#141a33",
+          [
+            "hospital"
+          ],
+          "#251024",
+          [
+            "aerodrome"
+          ],
+          "#131b2e",
+          [
+            "beach",
+            "sand"
+          ],
+          "#2c2a1e",
+          [
+            "pedestrian",
+            "platform"
+          ],
+          "#171330",
+          "rgba(0,0,0,0)"
+        ],
         "fill-opacity": 0.9
       }
     },
@@ -108,10 +173,177 @@
       ]
     },
     {
-      "id": "roads-asphalt",
+      "id": "roads-minor-asphalt",
       "type": "line",
       "source": "protomaps",
       "source-layer": "roads",
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "minor_road",
+          "other"
+        ],
+        true,
+        false
+      ],
+      "minzoom": 11,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-pattern": "gta-asphalt",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          11,
+          0.6,
+          13,
+          2.5,
+          16,
+          9.0,
+          20,
+          26.0
+        ]
+      }
+    },
+    {
+      "id": "roads-medium-asphalt",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "major_road"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "kind_detail"
+          ],
+          [
+            "secondary",
+            "secondary_link",
+            "tertiary",
+            "tertiary_link"
+          ],
+          true,
+          false
+        ]
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-pattern": "gta-asphalt",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          9,
+          1.2,
+          12,
+          4.0,
+          16,
+          13.0,
+          20,
+          36.0
+        ]
+      }
+    },
+    {
+      "id": "roads-major-asphalt",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "major_road"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "kind_detail"
+          ],
+          [
+            "secondary",
+            "secondary_link",
+            "tertiary",
+            "tertiary_link"
+          ],
+          false,
+          true
+        ]
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-pattern": "gta-asphalt",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          7,
+          1.8,
+          12,
+          5.5,
+          16,
+          17.0,
+          20,
+          46.0
+        ]
+      }
+    },
+    {
+      "id": "roads-motorway-asphalt",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "highway"
+      ],
       "layout": {
         "line-cap": "round",
         "line-join": "round"
@@ -128,46 +360,101 @@
             "zoom"
           ],
           6,
-          2,
+          2.4,
           12,
-          6,
+          7.0,
           16,
+          22.0,
           20,
-          20,
-          52
+          56.0
         ]
       }
     },
     {
-      "id": "roads-neon",
+      "id": "roads-aeroway",
       "type": "line",
       "source": "protomaps",
       "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "aeroway"
+      ],
+      "minzoom": 10,
       "layout": {
-        "line-cap": "round",
-        "line-join": "round"
+        "line-cap": "butt",
+        "line-join": "miter"
       },
       "paint": {
-        "line-color": [
-          "match",
+        "line-color": "#141c33",
+        "line-width": [
+          "interpolate",
           [
-            "get",
-            "kind"
+            "linear"
           ],
           [
-            "highway"
+            "zoom"
           ],
-          "#ff2fb9",
+          10,
           [
-            "major_road"
+            "match",
+            [
+              "get",
+              "kind_detail"
+            ],
+            "runway",
+            1.2,
+            0.5
           ],
-          "#21e5ff",
+          14,
           [
-            "medium_road"
+            "match",
+            [
+              "get",
+              "kind_detail"
+            ],
+            "runway",
+            6,
+            2
           ],
-          "#8b6bff",
-          "#3d4a63"
+          18,
+          [
+            "match",
+            [
+              "get",
+              "kind_detail"
+            ],
+            "runway",
+            40,
+            10
+          ]
         ],
+        "line-opacity": 0.9
+      }
+    },
+    {
+      "id": "roads-path",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "path"
+      ],
+      "minzoom": 13,
+      "layout": {
+        "line-cap": "butt",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-color": "#2e3d5e",
         "line-width": [
           "interpolate",
           [
@@ -177,14 +464,61 @@
           [
             "zoom"
           ],
-          6,
-          0.5,
-          12,
-          1.4,
+          13,
+          0.3,
           16,
-          3.5,
+          1.5,
           20,
-          8
+          4.0
+        ],
+        "line-dasharray": [
+          2,
+          1.5
+        ]
+      }
+    },
+    {
+      "id": "roads-minor-neon",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "match",
+        [
+          "get",
+          "kind"
+        ],
+        [
+          "minor_road",
+          "other"
+        ],
+        true,
+        false
+      ],
+      "minzoom": 11,
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#3d4a63",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          11,
+          0.2,
+          13,
+          0.8,
+          16,
+          2.2,
+          20,
+          5.5
         ],
         "line-blur": [
           "interpolate",
@@ -199,6 +533,241 @@
           16,
           2
         ]
+      }
+    },
+    {
+      "id": "roads-medium-neon",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "major_road"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "kind_detail"
+          ],
+          [
+            "secondary",
+            "secondary_link",
+            "tertiary",
+            "tertiary_link"
+          ],
+          true,
+          false
+        ]
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#8b6bff",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          9,
+          0.4,
+          12,
+          1.2,
+          16,
+          2.8,
+          20,
+          6.5
+        ],
+        "line-blur": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          10,
+          0.4,
+          16,
+          2
+        ]
+      }
+    },
+    {
+      "id": "roads-major-neon",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "major_road"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "kind_detail"
+          ],
+          [
+            "secondary",
+            "secondary_link",
+            "tertiary",
+            "tertiary_link"
+          ],
+          false,
+          true
+        ]
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#21e5ff",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          7,
+          0.6,
+          12,
+          1.6,
+          16,
+          3.5,
+          20,
+          8.0
+        ],
+        "line-blur": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          10,
+          0.4,
+          16,
+          2
+        ]
+      }
+    },
+    {
+      "id": "roads-motorway-neon",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "highway"
+      ],
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      },
+      "paint": {
+        "line-color": "#ff2fb9",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          6,
+          0.8,
+          12,
+          2.0,
+          16,
+          4.5,
+          20,
+          10.0
+        ],
+        "line-blur": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          10,
+          0.4,
+          16,
+          2
+        ]
+      }
+    },
+    {
+      "id": "roads-rail",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "filter": [
+        "==",
+        [
+          "get",
+          "kind"
+        ],
+        "rail"
+      ],
+      "minzoom": 11,
+      "layout": {
+        "line-cap": "butt",
+        "line-join": "miter"
+      },
+      "paint": {
+        "line-color": "#223052",
+        "line-width": [
+          "interpolate",
+          [
+            "exponential",
+            1.5
+          ],
+          [
+            "zoom"
+          ],
+          11,
+          0.4,
+          16,
+          1.6,
+          20,
+          4.0
+        ],
+        "line-dasharray": [
+          4,
+          3
+        ],
+        "line-opacity": 0.8
       }
     },
     {
@@ -258,7 +827,41 @@
         ],
         "fill-extrusion-opacity": 0.95,
         "fill-extrusion-vertical-gradient": true
-      }
+      },
+      "filter": [
+        "!",
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "kind"
+            ],
+            "building"
+          ],
+          [
+            "has",
+            "layer"
+          ],
+          [
+            ">=",
+            [
+              "case",
+              [
+                "has",
+                "height"
+              ],
+              [
+                "get",
+                "height"
+              ],
+              0
+            ],
+            80
+          ]
+        ]
+      ]
     },
     {
       "id": "buildings-flat",
@@ -269,6 +872,39 @@
       "paint": {
         "fill-color": "#1b1440",
         "fill-outline-color": "#ff2fb9"
+      }
+    },
+    {
+      "id": "buildings-edges",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 15,
+      "filter": [
+        "==",
+        [
+          "geometry-type"
+        ],
+        "Polygon"
+      ],
+      "paint": {
+        "line-color": "#0e0a26",
+        "line-width": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          15,
+          0.4,
+          17,
+          0.8,
+          20,
+          1.4
+        ],
+        "line-opacity": 0.9
       }
     },
     {
@@ -284,6 +920,136 @@
         ],
         "line-width": 1,
         "line-opacity": 0.55
+      }
+    },
+    {
+      "id": "roads-labels",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "roads",
+      "minzoom": 14.5,
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "highway",
+            "major_road",
+            "minor_road"
+          ],
+          true,
+          false
+        ],
+        [
+          "has",
+          "name"
+        ]
+      ],
+      "layout": {
+        "symbol-placement": "line",
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          14.5,
+          10,
+          18,
+          13
+        ],
+        "text-padding": 4,
+        "text-letter-spacing": 0.05
+      },
+      "paint": {
+        "text-color": "#d8f6ff",
+        "text-halo-color": "#0a0620",
+        "text-halo-width": 1.3
+      }
+    },
+    {
+      "id": "landmarks-labels",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "pois",
+      "minzoom": 13,
+      "filter": [
+        "all",
+        [
+          "has",
+          "name"
+        ],
+        [
+          "match",
+          [
+            "get",
+            "kind"
+          ],
+          [
+            "attraction",
+            "monument",
+            "castle",
+            "place_of_worship",
+            "museum",
+            "viewpoint",
+            "ruins",
+            "archaeological_site",
+            "fort",
+            "tower"
+          ],
+          true,
+          false
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "concat",
+          "✦ ",
+          [
+            "get",
+            "name"
+          ]
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          13,
+          10.5,
+          16,
+          12.5
+        ],
+        "text-max-width": 9,
+        "text-anchor": "top",
+        "text-offset": [
+          0,
+          0.4
+        ]
+      },
+      "paint": {
+        "text-color": "#21e5ff",
+        "text-halo-color": "#0d0a19",
+        "text-halo-width": 1.4
       }
     },
     {
@@ -321,9 +1087,9 @@
           13,
           18
         ],
+        "text-max-width": 7,
         "text-letter-spacing": 0.16,
-        "text-transform": "uppercase",
-        "text-max-width": 7
+        "text-transform": "uppercase"
       },
       "paint": {
         "text-color": "#ffe9fb",

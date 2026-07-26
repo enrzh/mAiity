@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "sanandreas",
+  "name": "San Andreas",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Staubige 90er-Westcoast: Smog, Wüste, Lowrider-Asphalt.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "supports3D": true,
+  "preview": { "colors": ["#cfc2a2", "#8d8560", "#c1a389"] }
+}

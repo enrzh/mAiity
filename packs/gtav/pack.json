@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "gtav",
+  "name": "Los Santos",
+  "version": "1.0.0",
+  "author": "aiity",
+  "description": "Sonnenverbranntes SoCal: Asphalt, Palmen, Glastürme.",
+  "styleFile": "style.json",
+  "capability": "offline",
+  "supports3D": true,
+  "preview": { "colors": ["#e9dcc0", "#4faaa5", "#7fabd1"] }
+}
