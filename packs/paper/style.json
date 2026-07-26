@@ -786,14 +786,60 @@
         "fill-extrusion-height": [
           "case",
           [
-            "has",
-            "height"
+            "all",
+            [
+              "==",
+              [
+                "get",
+                "kind"
+              ],
+              "building"
+            ],
+            [
+              ">",
+              [
+                "case",
+                [
+                  "has",
+                  "height"
+                ],
+                [
+                  "get",
+                  "height"
+                ],
+                9
+              ],
+              4
+            ]
           ],
           [
-            "get",
-            "height"
+            "-",
+            [
+              "case",
+              [
+                "has",
+                "height"
+              ],
+              [
+                "get",
+                "height"
+              ],
+              9
+            ],
+            1.2
           ],
-          8
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ]
         ],
         "fill-extrusion-base": [
           "case",
@@ -844,6 +890,115 @@
           ]
         ]
       ]
+    },
+    {
+      "id": "buildings-roof-3d",
+      "type": "fill-extrusion",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 14,
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "building"
+        ],
+        [
+          ">",
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ],
+          4
+        ],
+        [
+          "!",
+          [
+            "all",
+            [
+              "has",
+              "layer"
+            ],
+            [
+              ">=",
+              [
+                "case",
+                [
+                  "has",
+                  "height"
+                ],
+                [
+                  "get",
+                  "height"
+                ],
+                9
+              ],
+              80
+            ]
+          ]
+        ]
+      ],
+      "paint": {
+        "fill-extrusion-color": [
+          "step",
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ],
+          "#a8906a",
+          25,
+          "#c3b795"
+        ],
+        "fill-extrusion-base": [
+          "-",
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
+          ],
+          1.2
+        ],
+        "fill-extrusion-height": [
+          "case",
+          [
+            "has",
+            "height"
+          ],
+          [
+            "get",
+            "height"
+          ],
+          9
+        ],
+        "fill-extrusion-opacity": 0.95
+      }
     },
     {
       "id": "buildings-edges",

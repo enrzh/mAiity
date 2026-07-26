@@ -107,6 +107,24 @@ let quartz: TileDraw = { ctx, rect, scale, rnd in
     }
 }
 
+/// Roof shingles: offset courses of dark red-brown blocks.
+let shingles: TileDraw = { ctx, rect, scale, rnd in
+    ctx.setFillColor(rgb(0x6b3328)); ctx.fill(rect)
+    let rows = 8
+    let h = rect.height / CGFloat(rows)
+    let w = rect.width / 8
+    for r in 0..<rows {
+        let off = (r % 2 == 0) ? 0.0 : w / 2
+        for c in -1..<9 {
+            let shade: UInt32 = [0x7a3b2e, 0x8a453a, 0x93524a, 0x6f382c][Int(rnd.next() * 4) % 4]
+            ctx.setFillColor(rgb(shade))
+            ctx.fill(CGRect(x: rect.minX + CGFloat(c) * w + off + scale * 0.4,
+                            y: rect.minY + CGFloat(r) * h + scale * 0.4,
+                            width: w - scale * 0.8, height: h - scale * 0.8))
+        }
+    }
+}
+
 // ---- GTA: asphalt, neon grid ----------------------------------------------
 
 /// Asphalt: dark speckled tarmac.
@@ -165,6 +183,7 @@ let tiles: [Tile] = {
             Tile(name: "mc-sand",  draw: blockFace([0xdbcf9a, 0xe5daa8, 0xd0c48d, 0xeae0b5])),
             Tile(name: "mc-dirt",  draw: blockFace([0x8b5a2b, 0x7a4e24, 0x9b6733, 0x6d4520])),
             Tile(name: "mc-quartz", draw: quartz),
+            Tile(name: "mc-shingle", draw: shingles),
         ]
     default: // gta
         return [
