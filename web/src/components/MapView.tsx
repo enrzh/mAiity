@@ -109,6 +109,19 @@ export function showUserDot(m: MLMap, at: [number, number]) {
   userDot.setLngLat(at).addTo(m)
 }
 
+/// A fixed ~900ms for every camera jump, regardless of size, meant tiles for
+/// a 10-zoom-level jump had exactly as long to load as a 2-level one. When
+/// they didn't make it in time, MapLibre filled the gap with whatever coarser
+/// zoom was already cached — and this archive's low-zoom water is generalized
+/// aggressively enough that the gap-filler could look like a flood. Scaling
+/// duration with the actual jump size gives real jumps (world view -> street
+/// level) enough time for intermediate zooms to load along the way, so the
+/// final frame is far more likely to already have the correct tile.
+function flyDuration(m: MLMap, toZoom: number, base = 700): number {
+  const delta = Math.abs(toZoom - m.getZoom())
+  return Math.round(base + delta * 90)
+}
+
 /** Centre on the user, showing the dot. */
 export function locateUser() {
   const m = liveMap.current
@@ -117,7 +130,7 @@ export function locateUser() {
     (p) => {
       const here: [number, number] = [p.coords.longitude, p.coords.latitude]
       showUserDot(m, here)
-      m.flyTo({ center: here, zoom: 15, duration: 900 })
+      m.flyTo({ center: here, zoom: 15, duration: flyDuration(m, 15) })
     },
     () => { /* permission denied — nothing to centre on */ },
     { enableHighAccuracy: true, timeout: 8000 },
@@ -164,6 +177,16 @@ export function MapView() {
       hash: true,
       attributionControl: { compact: true },
       maxPitch: 85, // near-horizon 3D views
+      // Low-zoom water polygons in this archive are heavily generalized (a
+      // lake/river system can simplify to a shape covering an entire tile).
+      // MapLibre briefly renders a cached tile from a DIFFERENT zoom as a
+      // placeholder while the ideal one loads — normally unnoticeable, but
+      // with data this coarse that placeholder looks like a flood. Keeping
+      // more zoom levels' worth of tiles resident means a "zoom out then
+      // back in" is more likely to find something close to the real zoom
+      // already cached, instead of falling all the way back to z5-ish data.
+      maxTileCacheZoomLevels: 8,
+      maxTileCacheSize: 300,
     })
     styleRef.current = appRef.current.activeStyleUrl
     // NOTE: no built-in NavigationControl/GeolocateControl — they render in
@@ -215,7 +238,7 @@ export function MapView() {
         (pos) => {
           const here: [number, number] = [pos.coords.longitude, pos.coords.latitude]
           showUserDot(m, here)
-          if (!userMoved) m.easeTo({ center: here, zoom: 15, duration: 800 })
+          if (!userMoved) m.easeTo({ center: here, zoom: 15, duration: flyDuration(m, 15) })
         },
         () => { /* denied/unavailable — keep the current view */ },
         { timeout: 8000, maximumAge: 300_000 },
@@ -292,10 +315,11 @@ export function MapView() {
     selMarker.current = new Marker({ color: '#e74c3c' })
       .setLngLat([app.selected.lon, app.selected.lat])
       .addTo(map)
+    const targetZoom = Math.max(map.getZoom(), 14)
     map.flyTo({
       center: [app.selected.lon, app.selected.lat],
-      zoom: Math.max(map.getZoom(), 14),
-      duration: 900,
+      zoom: targetZoom,
+      duration: flyDuration(map, targetZoom),
       padding: framePad(0),
     })
   }, [map, app.selected])
