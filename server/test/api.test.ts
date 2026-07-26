@@ -214,7 +214,7 @@ describe("geocode", () => {
     const app = await makeApp();
     const payload = JSON.stringify({ results: [{ name: "Berlin", label: "Berlin, Deutschland", lat: 52.52, lon: 13.405, kind: "city" }] });
     app.db.query(`INSERT INTO geocode_cache (key, response, created_at) VALUES (?, ?, ?)`)
-      .run("s|berlin|de|8", payload, Math.floor(Date.now() / 1000));
+      .run("s2|berlin|de|8", payload, Math.floor(Date.now() / 1000));
     const res = await app.inject({ method: "GET", url: "/maps/api/geocode?q=Berlin" });
     expect(res.statusCode).toBe(200);
     expect(res.json().results[0].name).toBe("Berlin");

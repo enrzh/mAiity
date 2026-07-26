@@ -13,6 +13,55 @@ const stub = Bun.serve({
     if (url.pathname === "/api") {
       const q = url.searchParams.get("q") ?? "";
       if (q.includes("Nowhere")) return Response.json({ features: [] });
+      // Place-filtered (unbiased) sub-query: the admin place itself.
+      if (url.searchParams.getAll("osm_tag").includes("place")) {
+        if (q === "Hamburg") {
+          return Response.json({
+            features: [{
+              geometry: { coordinates: [10.0, 53.55] },
+              properties: {
+                name: "Hamburg", country: "Deutschland",
+                osm_key: "place", osm_value: "city",
+                extent: [9.7, 53.7, 10.3, 53.4],
+              },
+            }],
+          });
+        }
+        return Response.json({ features: [] });
+      }
+      if (q === "Paris") {
+        // Germany-only index: just a prefix-similar hamlet.
+        return Response.json({
+          features: [{
+            geometry: { coordinates: [7.1, 51.0] },
+            properties: { name: "Parishof", country: "Deutschland", osm_key: "place", osm_value: "hamlet" },
+          }],
+        });
+      }
+      if (q === "Kiosk") {
+        return Response.json({
+          features: [{
+            geometry: { coordinates: [6.79, 51.21] },
+            properties: { name: "Kiosk", city: "Neuss", country: "Deutschland", osm_key: "amenity", osm_value: "kiosk" },
+          }],
+        });
+      }
+      // Biased query for a city name: nearby noise outranks the city,
+      // exactly the failure mode the dual-query merge must correct.
+      if (q === "Hamburg" && url.searchParams.get("lat")) {
+        return Response.json({
+          features: [
+            {
+              geometry: { coordinates: [6.79, 51.22] },
+              properties: { name: "Hamburger Straße", city: "Düsseldorf", country: "Deutschland", osm_key: "highway", osm_value: "residential" },
+            },
+            {
+              geometry: { coordinates: [6.80, 51.21] },
+              properties: { name: "Hamburg Grill", city: "Düsseldorf", country: "Deutschland", osm_key: "amenity", osm_value: "restaurant" },
+            },
+          ],
+        });
+      }
       return Response.json({
         features: [{
           geometry: { coordinates: [13.405, 52.52] },
@@ -33,7 +82,37 @@ const stub = Bun.serve({
 });
 afterAll(() => stub.stop());
 
+const worldStub = Bun.serve({
+  port: 0,
+  fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname !== "/api") return new Response("nf", { status: 404 });
+    const q = url.searchParams.get("q") ?? "";
+    if (!url.searchParams.getAll("osm_tag").includes("place")) return Response.json({ features: [] });
+    if (q === "Paris") {
+      return Response.json({
+        features: [{
+          geometry: { coordinates: [2.35, 48.85] },
+          properties: { name: "Paris", country: "Frankreich", osm_key: "place", osm_value: "city", extent: [2.2, 48.9, 2.5, 48.8] },
+        }],
+      });
+    }
+    if (q === "Kiosk") {
+      // A tiny village that happens to share the query's name.
+      return Response.json({
+        features: [{
+          geometry: { coordinates: [-3.5, 50.8] },
+          properties: { name: "Kiosk", country: "Vereinigtes Königreich", osm_key: "place", osm_value: "village" },
+        }],
+      });
+    }
+    return Response.json({ features: [] });
+  },
+});
+afterAll(() => worldStub.stop());
+
 const STUB = `http://127.0.0.1:${stub.port}`;
+const WORLD = `http://127.0.0.1:${worldStub.port}`;
 const DEAD = "http://127.0.0.1:9";
 
 async function makeApp(urls: string[]) {
@@ -121,5 +200,44 @@ describe("geocoder chain", () => {
     expect(res.json().results[0].name).toContain("Stub");
     expect((await app.inject({ method: "GET", url: "/maps/api/nearby?cat=discos&lat=52.5&lon=13.4" })).statusCode).toBe(400);
     expect((await app.inject({ method: "GET", url: "/maps/api/nearby?cat=cafe&lat=999&lon=0" })).statusCode).toBe(400);
+  });
+});
+
+describe("place-aware ranking", () => {
+  test("city outranks nearby similarly-named noise under bias", async () => {
+    const app = await makeApp([STUB]);
+    const res = await app.inject({ method: "GET", url: "/maps/api/geocode?q=Hamburg&lat=51.2&lon=6.78" });
+    expect(res.statusCode).toBe(200);
+    const rs = res.json().results;
+    expect(rs[0].name).toBe("Hamburg");
+    expect(rs[0].kind).toBe("city");
+    expect(rs[0].extent).toEqual([9.7, 53.7, 10.3, 53.4]);
+    // The nearby noise is still offered, just below the city.
+    expect(rs.some((r: { name: string }) => r.name === "Hamburger Straße")).toBe(true);
+  });
+
+  test("unbiased query skips the place sub-query and still works", async () => {
+    const app = await makeApp([STUB]);
+    const res = await app.inject({ method: "GET", url: "/maps/api/geocode?q=Hamburg" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().results.length).toBeGreaterThan(0);
+  });
+});
+
+describe("worldwide place fallback", () => {
+  test("foreign city beats prefix-similar local hamlet", async () => {
+    const app = await makeApp([STUB, WORLD]);
+    const res = await app.inject({ method: "GET", url: "/maps/api/geocode?q=Paris&lat=51.2&lon=6.78" });
+    const rs = res.json().results;
+    expect(rs[0].name).toBe("Paris");
+    expect(rs[0].kind).toBe("city");
+  });
+
+  test("tiny faraway place never outranks the exact local POI", async () => {
+    const app = await makeApp([STUB, WORLD]);
+    const res = await app.inject({ method: "GET", url: "/maps/api/geocode?q=Kiosk&lat=51.2&lon=6.78" });
+    const rs = res.json().results;
+    expect(rs[0].kind).toBe("kiosk");
+    expect(rs[0].label).toContain("Neuss");
   });
 });

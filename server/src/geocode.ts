@@ -29,7 +29,18 @@ interface GeoResult {
   lon: number;
   kind: string;
   osmId?: number;
+  /** Admin-place size: country 0 … suburb 6. Only set for place results. */
+  placeRank?: number;
+  /** [minLon, maxLat, maxLon, minLat] bbox from Photon, for zoom-to-fit. */
+  extent?: [number, number, number, number];
 }
+
+/// Smaller = bigger place. Used to float "Berlin the city" above
+/// "Berliner Straße 3km away" when the query names a place.
+const PLACE_RANK: Record<string, number> = {
+  country: 0, state: 1, region: 2, county: 2, city: 3, municipality: 4,
+  town: 4, borough: 5, village: 5, hamlet: 6, suburb: 6, quarter: 6,
+};
 
 /** Photon GeoJSON → compact results the clients render directly. */
 function normalize(json: unknown): GeoResult[] {
@@ -55,13 +66,23 @@ function normalize(json: unknown): GeoResult[] {
     ]
       .filter((s) => s && String(s).trim())
       .join(", ");
+    const osmKey = p.osm_key as string | undefined;
+    const osmValue = (p.osm_value as string) ?? (p.type as string) ?? "place";
+    const rank =
+      (osmKey === "place" || osmKey === "boundary") && osmValue in PLACE_RANK
+        ? PLACE_RANK[osmValue]
+        : undefined;
     out.push({
       name,
       label,
       lat: coords[1],
       lon: coords[0],
-      kind: (p.osm_value as string) ?? (p.type as string) ?? "place",
+      kind: osmValue,
       osmId: p.osm_id as number | undefined,
+      ...(rank !== undefined ? { placeRank: rank } : {}),
+      ...(Array.isArray(p.extent) && p.extent.length === 4
+        ? { extent: p.extent as [number, number, number, number] }
+        : {}),
     });
   }
   return out;
@@ -93,9 +114,13 @@ export function registerGeocodeRoutes(
 
   async function fetchOne(base: string, path: string): Promise<{ results: GeoResult[] } | null> {
     try {
-      const res = await throttled(base, () =>
-        fetch(`${base}${path}`, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(6000) })
-      );
+      // The throttle is fair-use spacing for PUBLIC upstreams. Our own
+      // Photon (first in the chain) is unlimited — and the dual
+      // biased+unbiased queries run in parallel, which the 250ms spacing
+      // would otherwise serialize.
+      const doFetch = () =>
+        fetch(`${base}${path}`, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(6000) });
+      const res = base === geocoderUrls[0] ? await doFetch() : await throttled(base, doFetch);
       if (!res.ok) return null;
       return { results: normalize(await res.json()) };
     } catch {
@@ -124,20 +149,59 @@ export function registerGeocodeRoutes(
     });
   }
 
+  /// Camera bias makes Photon score NEARBY similarly-named things (streets,
+  /// stores) above the city/country the user actually typed. So each upstream
+  /// gets TWO parallel queries — biased (nearby wins) and unbiased,
+  /// place-filtered (admin places by global importance) — and admin places
+  /// whose folded name matches the query float to the top, largest first.
+  function placeBoost(results: GeoResult[], query: string): GeoResult[] {
+    const fq = fold(query);
+    // Only SIGNIFICANT places (country…municipality) may leapfrog nearby
+    // hits. A hamlet in Devon happens to be named "Rewe" — exactly matching
+    // the query must not put it above the REWE supermarket next door.
+    const score = (r: GeoResult) => {
+      const fn = fold(r.name);
+      const significant = (r.placeRank ?? 9) <= 4;
+      if (significant && fn === fq) return 0;
+      if (significant && fn.startsWith(fq)) return 1;
+      if (fn === fq) return 2; // exact POIs and exact small places alike
+      return 3;
+    };
+    return results
+      .map((r, i) => ({ r, s: score(r), i }))
+      .sort((a, b) =>
+        a.s - b.s ||
+        // Place size only breaks ties among the boosted place tiers;
+        // within ordinary tiers the source order (nearby-first) stands.
+        (a.s <= 1 ? (a.r.placeRank ?? 9) - (b.r.placeRank ?? 9) : 0) ||
+        a.i - b.i)
+      .map((x) => x.r);
+  }
+
+  function dedupByLabel(results: GeoResult[]): GeoResult[] {
+    const seen = new Set<string>();
+    return results.filter((r) => {
+      const k = `${(r.name ?? "").toLowerCase()}|${(r.label ?? "").toLowerCase()}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
   /// Upstream CHAIN: e.g. self-hosted Photon (Germany, unlimited) first, the
   /// public instance as worldwide fallback. Next upstream is tried when one
   /// is down, empty, OR its matches don't cover the query; only a full-chain
   /// failure is a 502.
   async function cachedFetch(
     key: string,
-    path: string,
     query: string | null,
+    fetcher: (base: string) => Promise<{ results: GeoResult[] } | null>,
   ): Promise<{ results: GeoResult[] } | null> {
     const hit = getCached.get(key) as { response: string; createdAt: number } | null;
     if (hit && now() - hit.createdAt < CACHE_TTL_S) return JSON.parse(hit.response);
     let best: { results: GeoResult[] } | null = null;
     for (const base of geocoderUrls) {
-      const payload = await fetchOne(base, path);
+      const payload = await fetcher(base);
       if (payload && (best === null || payload.results.length > 0)) best = payload;
       if (payload && coversQuery(payload.results, query)) { best = payload; break; }
     }
@@ -175,25 +239,58 @@ export function registerGeocodeRoutes(
         biasKey = `|${la.toFixed(1)},${lo.toFixed(1)}`;
       }
     }
-    const key = `s|${q.toLowerCase()}|${lang}|${limit}${biasKey}`;
-    const raw = await cachedFetch(key, `/api?${params}`, q);
+    // s2: dual-query + place-boost ordering — must not serve s1-era cache rows.
+    const key = `s2|${q.toLowerCase()}|${lang}|${limit}${biasKey}`;
+    const hasBias = biasKey !== "";
+    const placeParams = new URLSearchParams({ q, lang, limit: "6" });
+    placeParams.append("osm_tag", "place");
+    const raw = await cachedFetch(key, q, async (base) => {
+      const [biased, places] = await Promise.all([
+        fetchOne(base, `/api?${params}`),
+        hasBias ? fetchOne(base, `/api?${placeParams}`) : Promise.resolve(null),
+      ]);
+      if (!biased && !places) return null;
+      return {
+        results: placeBoost(
+          dedupByLabel([...(biased?.results ?? []), ...(places?.results ?? [])]),
+          q,
+        ),
+      };
+    });
     if (!raw) return reply.code(502).send({ error: "geocoder_unavailable" });
+
+    // Foreign places: the Germany-only index has no "Frankreich" the country,
+    // but it DOES have a bench named "Frankreich" — an exact-name match that
+    // convinces the coverage check, so the worldwide fallback never fires.
+    // When nothing place-ranked matches the query name, ask the fallback
+    // upstream's place-filtered endpoint directly (cached, rare, throttled).
+    let results = raw.results;
+    const fq2 = fold(q);
+    // EXACT match on a significant place only — "Parishof" (hamlet) must
+    // not suppress the worldwide lookup for "Paris".
+    const hasPlaceMatch = results.some(
+      (r) => (r.placeRank ?? 9) <= 4 && fold(r.name) === fq2,
+    );
+    if (!hasPlaceMatch && geocoderUrls.length > 1) {
+      const pKey = `s2p|${q.toLowerCase()}|${lang}`;
+      const pParams = new URLSearchParams({ q, lang, limit: "4" });
+      pParams.append("osm_tag", "place");
+      const fallbackBase = geocoderUrls[geocoderUrls.length - 1];
+      const places = await cachedFetch(pKey, null, (base) =>
+        base === fallbackBase ? fetchOne(base, `/api?${pParams}`) : Promise.resolve(null),
+      );
+      if (places && places.results.length > 0) {
+        results = placeBoost(dedupByLabel([...results, ...places.results]), q);
+      }
+    }
+    const rawMerged = { results };
 
     // Collapse identical entries. OSM models one park as several objects
     // (polygon + entrances), so "Rheinpark, Düsseldorf" came back three times
     // and ate the slots that should have shown three different cities.
     // Keyed on name+label, NOT coordinates: same name in a different city is a
     // genuinely different place and must survive.
-    const byLabel = new Set<string>();
-    const payload = {
-      ...raw,
-      results: raw.results.filter((r) => {
-        const k = `${(r.name ?? "").toLowerCase()}|${(r.label ?? "").toLowerCase()}`;
-        if (byLabel.has(k)) return false;
-        byLabel.add(k);
-        return true;
-      }),
-    };
+    const payload = { results: dedupByLabel(rawMerged.results) };
 
     // Blend in nearby brand/POI matches the address geocoder misses entirely
     // ("REWE", "Späti"), keeping geocoder hits first.
@@ -223,7 +320,7 @@ export function registerGeocodeRoutes(
     // Not a POI — give back the address so the panel still says something.
     const key = `r|${la.toFixed(5)},${lo.toFixed(5)}|de`;
     const params = new URLSearchParams({ lat: la.toFixed(6), lon: lo.toFixed(6), lang: "de" });
-    const payload = await cachedFetch(key, `/reverse?${params}`, null);
+    const payload = await cachedFetch(key, null, (base) => fetchOne(base, `/reverse?${params}`));
     const first = payload?.results[0];
     if (!first) return reply.code(404).send({ error: "not_found" });
     return { place: { ...first, street: null, phone: null, website: null, openingHours: null }, source: "geocoder" };
@@ -265,7 +362,7 @@ export function registerGeocodeRoutes(
     });
     // query=null → no token-coverage check (POI names rarely contain the term),
     // but an empty local result still falls through to the next upstream.
-    const payload = await cachedFetch(key, `/api?${params}`, null);
+    const payload = await cachedFetch(key, null, (base) => fetchOne(base, `/api?${params}`));
     if (!payload) return reply.code(502).send({ error: "geocoder_unavailable" });
     return payload;
   });
@@ -277,7 +374,7 @@ export function registerGeocodeRoutes(
       return reply.code(400).send({ error: "invalid_coordinates" });
     const key = `r|${la.toFixed(5)},${lo.toFixed(5)}|${lang}`;
     const params = new URLSearchParams({ lat: la.toFixed(6), lon: lo.toFixed(6), lang });
-    const payload = await cachedFetch(key, `/reverse?${params}`, null);
+    const payload = await cachedFetch(key, null, (base) => fetchOne(base, `/reverse?${params}`));
     if (!payload) return reply.code(502).send({ error: "geocoder_unavailable" });
     return payload;
   });

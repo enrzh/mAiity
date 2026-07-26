@@ -315,13 +315,24 @@ export function MapView() {
     selMarker.current = new Marker({ color: '#e74c3c' })
       .setLngLat([app.selected.lon, app.selected.lat])
       .addTo(map)
-    const targetZoom = Math.max(map.getZoom(), 14)
-    map.flyTo({
-      center: [app.selected.lon, app.selected.lat],
-      zoom: targetZoom,
-      duration: flyDuration(map, targetZoom),
-      padding: framePad(0),
-    })
+    // Places zoom to their real size: a country fills the viewport via its
+    // bbox instead of dropping the camera onto one street at z14.
+    if (app.selected.extent) {
+      const [w, n, e, sth] = app.selected.extent
+      map.fitBounds([[w, sth], [e, n]], { padding: framePad(60), duration: 900, maxZoom: 15 })
+    } else {
+      const kindZoom: Record<string, number> = {
+        country: 5.5, state: 7, county: 9, city: 11, municipality: 11.5,
+        town: 12.5, village: 13.5, suburb: 13.5,
+      }
+      const targetZoom = kindZoom[app.selected.kind ?? ''] ?? Math.max(map.getZoom(), 14)
+      map.flyTo({
+        center: [app.selected.lon, app.selected.lat],
+        zoom: targetZoom,
+        duration: flyDuration(map, targetZoom),
+        padding: framePad(0),
+      })
+    }
   }, [map, app.selected])
 
   // Route line: keep a ref for style.load re-adds, sync on route changes.

@@ -28,7 +28,7 @@ export function SearchBar() {
       return
     }
     suppressRef.current = null
-    if (query.length < 3) {
+    if (query.length < 2) {
       // Invalidate any in-flight request — a stale response must not reopen
       // the dropdown, and the spinner must not stick.
       seq.current++
@@ -41,23 +41,28 @@ export function SearchBar() {
     const mySeq = ++seq.current
     setBusy(true)
     setError(false)
+    // Abort the previous in-flight request instead of letting it finish and
+    // be discarded — frees the connection and cuts typeahead latency.
+    const ctrl = new AbortController()
     const t = setTimeout(async () => {
       try {
         // Bias to what the user is looking at. Without this, "Rheinpark"
         // ranked by global importance — a park 400km away could outrank the
-        // one on screen.
+        // one on screen. (City/country queries are protected from over-biasing
+        // server-side by the place-boost re-rank.)
         const c = liveMap.current?.getCenter()
-        const res = await api.geocode(query, c ? { lat: c.lat, lon: c.lng } : undefined)
+        const res = await api.geocode(query, c ? { lat: c.lat, lon: c.lng } : undefined, ctrl.signal)
         if (seq.current !== mySeq) return // stale — a newer query is running
         setResults(res)
         setOpen(true)
-      } catch {
+      } catch (e) {
+        if ((e as Error)?.name === 'AbortError') return
         if (seq.current === mySeq) { setResults([]); setError(true); setOpen(true) }
       } finally {
         if (seq.current === mySeq) setBusy(false)
       }
-    }, 350)
-    return () => clearTimeout(t)
+    }, 200)
+    return () => { clearTimeout(t); ctrl.abort() }
   }, [q])
 
   // Click-away closes the dropdown.

@@ -6,7 +6,11 @@ import {
   type RouteMode, type RouteResult, type User,
 } from './lib/api'
 
-export interface Place { name: string; label: string; lat: number; lon: number }
+export interface Place {
+  name: string; label: string; lat: number; lon: number
+  /** From search hits: result kind + admin bbox for zoom-to-fit. */
+  kind?: string; extent?: [number, number, number, number]
+}
 
 export type LoadStatus = 'loading' | 'ready' | 'error'
 
@@ -213,7 +217,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelected(p)
   }, [])
   const selectResult = useCallback((r: GeoResult) => {
-    const place = { name: r.name, label: r.label, lat: r.lat, lon: r.lon }
+    const place = { name: r.name, label: r.label, lat: r.lat, lon: r.lon, kind: r.kind, extent: r.extent }
     if (pickingRef.current) { setRouteStartRef.current(place); return }
     if (routeRef.current) { routeSeq.current++; setRoute(null) }
     setSelected(place)

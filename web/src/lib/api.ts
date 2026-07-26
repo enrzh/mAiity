@@ -20,6 +20,10 @@ export interface GeoResult {
   name: string; label: string; lat: number; lon: number; kind: string
   /** Metres from the query point, when the API had one. */
   distanceM?: number
+  /** Admin-place size (country 0 … suburb 6) — set for city/country hits. */
+  placeRank?: number
+  /** [minLon, maxLat, maxLon, minLat] — zoom-to-fit for places. */
+  extent?: [number, number, number, number]
 }
 export interface PlaceDetails extends GeoResult {
   street?: string | null
@@ -169,10 +173,10 @@ export const api = {
     return (await res.json()).packs
   },
 
-  async geocode(q: string, bias?: { lat: number; lon: number }): Promise<GeoResult[]> {
+  async geocode(q: string, bias?: { lat: number; lon: number }, signal?: AbortSignal): Promise<GeoResult[]> {
     const p = new URLSearchParams({ q, limit: '7' })
     if (bias) { p.set('lat', String(bias.lat)); p.set('lon', String(bias.lon)) }
-    const res = await fetch(`${API}/geocode?${p}`)
+    const res = await fetch(`${API}/geocode?${p}`, { signal })
     if (!res.ok) return parseError(res)
     return (await res.json()).results
   },
