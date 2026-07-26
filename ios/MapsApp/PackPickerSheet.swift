@@ -40,7 +40,7 @@ struct PackPickerSheet: View {
                             if pack.isCustom {
                                 Button(role: .destructive) {
                                     Task { await model.removePack(pack.id) }
-                                } label: { Label("Löschen", systemImage: "trash") }
+                                } label: { Label(L.t("delete"), systemImage: "trash") }
                             }
                         }
                     }
@@ -49,20 +49,20 @@ struct PackPickerSheet: View {
                     Button {
                         showInstall = true
                     } label: {
-                        Label("Texture-Pack installieren", systemImage: "plus")
+                        Label(L.t("pack-install-title"), systemImage: "plus")
                     }
                     .disabled(model.user == nil)
                 } footer: {
                     if model.user == nil {
-                        Text("Zum Installieren eigener Packs anmelden.")
+                        Text(L.t("packs-signin-hint"))
                     }
                 }
             }
-            .navigationTitle("Karten-Stil")
+            .navigationTitle(L.t("map-style"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Fertig") { dismiss() }
+                    Button(L.t("done")) { dismiss() }
                 }
             }
             .sheet(isPresented: $showInstall) { InstallPackSheet() }

@@ -12,21 +12,23 @@ struct InstallPackSheet: View {
     @State private var busy = false
     @State private var error: String?
 
-    enum Source: String, CaseIterable {
-        case url = "Von URL"
-        case json = "JSON einfügen"
+    enum Source: CaseIterable {
+        case url, json
+
+        var label: String { L.t(self == .url ? "tab-from-url" : "tab-paste-json") }
     }
 
-    private static let errorText: [String: String] = [
-        "invalid_name": "Bitte einen Namen (max. 60 Zeichen) angeben.",
-        "invalid_url": "Die URL ist ungültig.",
-        "url_must_be_https": "Nur https-URLs sind erlaubt.",
-        "style_not_json": "Das ist kein gültiges JSON.",
-        "style_version_must_be_8": "Der Style muss \"version\": 8 haben.",
-        "style_layers_missing": "Dem Style fehlt das \"layers\"-Array.",
-        "style_sources_missing": "Dem Style fehlt das \"sources\"-Objekt.",
-        "style_too_large": "Der Style ist zu groß (max. 512 KB).",
-        "pack_limit_reached": "Maximal 20 eigene Packs.",
+    /// Server error code → localization key.
+    private static let errorKeys: [String: String] = [
+        "invalid_name": "err-invalid-name",
+        "invalid_url": "err-invalid-url",
+        "url_must_be_https": "err-url-https",
+        "style_not_json": "err-style-not-json",
+        "style_version_must_be_8": "err-style-version",
+        "style_layers_missing": "err-style-layers",
+        "style_sources_missing": "err-style-sources",
+        "style_too_large": "err-style-too-large",
+        "pack_limit_reached": "err-pack-limit",
     ]
 
     private var valid: Bool {
@@ -37,12 +39,12 @@ struct InstallPackSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    TextField("Name (z. B. Neon Nights)", text: $name)
+                Section(L.t("name")) {
+                    TextField(L.t("pack-install-name-placeholder"), text: $name)
                 }
                 Section {
-                    Picker("Quelle", selection: $source) {
-                        ForEach(Source.allCases, id: \.self) { Text($0.rawValue) }
+                    Picker("", selection: $source) {
+                        ForEach(Source.allCases, id: \.self) { Text($0.label) }
                     }
                     .pickerStyle(.segmented)
                     if source == .url {
@@ -50,13 +52,15 @@ struct InstallPackSheet: View {
                             .keyboardType(.URL)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
+                            .accessibilityLabel(L.t("style-url-label"))
                     } else {
                         TextEditor(text: $json)
                             .font(.system(.caption, design: .monospaced))
                             .frame(height: 160)
+                            .accessibilityLabel(L.t("style-json-label"))
                     }
                 } footer: {
-                    Text("Ein Pack ist ein MapLibre-Style (style.json). Packs können externe Kacheln/Schriften laden — nur aus vertrauenswürdigen Quellen installieren.")
+                    Text(L.t("pack-install-hint"))
                 }
                 if let error {
                     Section { Text(error).foregroundStyle(.red).font(.footnote) }
@@ -66,16 +70,16 @@ struct InstallPackSheet: View {
                         submit()
                     } label: {
                         if busy { ProgressView().frame(maxWidth: .infinity) }
-                        else { Text("Installieren").frame(maxWidth: .infinity).fontWeight(.semibold) }
+                        else { Text(L.t("install")).frame(maxWidth: .infinity).fontWeight(.semibold) }
                     }
                     .disabled(busy || !valid)
                 }
             }
-            .navigationTitle("Texture-Pack")
+            .navigationTitle(L.t("pack-install-title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Button(L.t("cancel")) { dismiss() }
                 }
             }
         }
@@ -94,9 +98,9 @@ struct InstallPackSheet: View {
                 )
                 dismiss()
             } catch let e as APIClient.APIError {
-                error = Self.errorText[e.code] ?? "Installation fehlgeschlagen — bitte erneut versuchen."
+                error = L.t(Self.errorKeys[e.code] ?? "pack-install-failed")
             } catch {
-                self.error = "Installation fehlgeschlagen — bitte erneut versuchen."
+                self.error = L.t("pack-install-failed")
             }
             busy = false
         }

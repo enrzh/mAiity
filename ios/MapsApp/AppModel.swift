@@ -16,15 +16,38 @@ struct RouteUI: Equatable {
     enum Status: Equatable { case loading, ready, error }
 }
 
+/// Which side panel occupies the contextual sheet slot (mirrors the web
+/// Shell's `Panel` type). Selecting a place, starting a route, or loading
+/// category results closes it — one thing at a time, like Maps.
+enum SheetPanel {
+    case none, saved, packs
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     @Published var user: User?
     @Published var packs: [Pack] = []
     @Published var customPacks: [Pack] = []
-    @Published var route: RouteUI?
+    @Published var route: RouteUI? {
+        didSet { if route != nil { panel = .none } }
+    }
     @Published var pickingStart = false
-    @Published var pois: [GeoResult] = []
+    @Published var pois: [GeoResult] = [] {
+        didSet { if !pois.isEmpty { panel = .none } }
+    }
     @Published var activeCategory: String?
+    /// Contextual side panel (saved places / map styles) in the sheet.
+    @Published var panel: SheetPanel = .none
+    /// UI language ("maps.lang" in UserDefaults, same key @AppStorage uses).
+    /// Published so every view re-renders live on switch.
+    @Published var lang: String = L.current {
+        didSet { UserDefaults.standard.set(lang, forKey: "maps.lang") }
+    }
+
+    func setLang(_ code: String) {
+        guard L.supported.contains(code) else { return }
+        lang = code
+    }
     @Published var recents: [GeoResult] = []
     /// Live turn-by-turn session (nil when not navigating).
     @Published var nav: NavState?
@@ -44,7 +67,9 @@ final class AppModel: ObservableObject {
         didSet { UserDefaults.standard.set(activePackId, forKey: "maps.activePack") }
     }
     @Published var bookmarks: [Bookmark] = []
-    @Published var selected: Place?
+    @Published var selected: Place? {
+        didSet { if selected != nil { panel = .none } }
+    }
     @Published var searchResults: [GeoResult] = []
     @Published var searchQuery = "" {
         didSet { if !suppressSearch { scheduleSearch() } }
@@ -123,7 +148,7 @@ final class AppModel: ObservableObject {
     func locateOnStartup() async {
         guard let loc = await LocationService.shared.currentLocation() else { return }
         startupLocation = CameraEvent(place: Place(
-            name: "Mein Standort", label: "", lat: loc.latitude, lon: loc.longitude))
+            name: L.t("my-location"), label: "", lat: loc.latitude, lon: loc.longitude))
     }
 
     private func loadUserData() async {
@@ -159,20 +184,16 @@ final class AppModel: ObservableObject {
             authError = Self.errorText(e.code)
             return false
         } catch {
-            authError = "Etwas ist schiefgelaufen — bitte erneut versuchen."
+            authError = L.t("err-unknown")
             return false
         }
     }
 
     static func errorText(_ code: String) -> String {
-        switch code {
-        case "invalid_email": return "Bitte eine gültige E-Mail-Adresse eingeben."
-        case "password_too_short": return "Passwort muss mindestens 8 Zeichen haben."
-        case "email_taken": return "Diese E-Mail ist bereits registriert."
-        case "invalid_credentials": return "E-Mail oder Passwort ist falsch."
-        case "too_many_requests": return "Zu viele Versuche — bitte kurz warten."
-        default: return "Etwas ist schiefgelaufen — bitte erneut versuchen."
-        }
+        let known = ["invalid_email", "password_too_short", "email_taken",
+                     "invalid_credentials", "too_many_requests"]
+        guard known.contains(code) else { return L.t("err-unknown") }
+        return L.t("err-\(code.replacingOccurrences(of: "_", with: "-"))")
     }
 
     func logout() async {
@@ -223,7 +244,7 @@ final class AppModel: ObservableObject {
         if let r = await APIClient.shared.reverse(lat: lat, lon: lon) {
             place = Place(name: r.name, label: r.label, lat: r.lat, lon: r.lon)
         } else {
-            place = Place(name: String(format: "%.5f, %.5f", lat, lon), label: "Unbekannter Ort", lat: lat, lon: lon)
+            place = Place(name: String(format: "%.5f, %.5f", lat, lon), label: L.t("unknown-place"), lat: lat, lon: lon)
         }
         if pickingStart { setRouteStart(place); return }
         selected = place
@@ -366,7 +387,7 @@ final class AppModel: ObservableObject {
         // Left the line — recompute from where we actually are (rate-limited).
         if off, Date().timeIntervalSince(rerouteGuard) > 12 {
             rerouteGuard = Date()
-            setRouteStart(Place(name: "Aktuelle Position", label: "", lat: loc.latitude, lon: loc.longitude))
+            setRouteStart(Place(name: L.t("current-position"), label: "", lat: loc.latitude, lon: loc.longitude))
         }
 
         // Follow camera: heading from the route direction at our position.
@@ -428,7 +449,7 @@ final class AppModel: ObservableObject {
             } else {
                 if !Task.isCancelled {
                     self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .error,
-                                         errorText: "Standort nicht verfügbar — Startpunkt wählen oder Standortzugriff erlauben.")
+                                         errorText: L.t("route-err-no-location"))
                 }
                 return
             }
@@ -440,12 +461,12 @@ final class AppModel: ObservableObject {
                 }
             } catch let e as APIClient.APIError where e.code == "no_route_found" {
                 if !Task.isCancelled {
-                    self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .error, errorText: "Keine Route gefunden.")
+                    self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .error, errorText: L.t("route-err-not-found"))
                 }
             } catch {
                 if !Task.isCancelled {
                     self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .error,
-                                         errorText: "Routenberechnung derzeit nicht verfügbar.")
+                                         errorText: L.t("route-err-unavailable"))
                 }
             }
         }

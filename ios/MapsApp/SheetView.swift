@@ -1,7 +1,10 @@
 import SwiftUI
 
-/// Apple-Maps-style always-presented bottom sheet: search, results, selected
-/// place, saved places, packs, account.
+/// Apple-Maps-style always-presented bottom sheet. Below the always-visible
+/// search field it renders exactly ONE contextual body, using the same
+/// precedence chain as the web Shell (App.tsx):
+/// nav > route > selected place > saved panel > packs panel > search results
+/// > category results > default (categories + recents + secondary actions).
 struct SheetView: View {
     @EnvironmentObject private var model: AppModel
     @Binding var detent: PresentationDetent
@@ -13,19 +16,7 @@ struct SheetView: View {
         NavigationStack {
             List {
                 searchSection
-                if let nav = model.nav { navigationSection(nav) }
-                if model.route == nil && model.nav == nil { categorySection }
-                if model.route != nil { routeSection }
-                if let place = model.selected { placeSection(place) }
-                if !model.searchResults.isEmpty { resultsSection }
-                if model.searchQuery.isEmpty && model.searchResults.isEmpty
-                    && !model.recents.isEmpty && model.route == nil && model.selected == nil {
-                    recentsSection
-                }
-                if !model.pois.isEmpty && model.route == nil { poiSection }
-                savedSection
-                packsSection
-                accountSection
+                contextualBody
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -39,13 +30,39 @@ struct SheetView: View {
         }
     }
 
-    // MARK: Sections
+    /// One thing at a time, like Maps — the web Shell's precedence chain.
+    @ViewBuilder
+    private var contextualBody: some View {
+        if let nav = model.nav {
+            navigationSection(nav)
+        } else if model.route != nil {
+            routeSection
+        } else if let place = model.selected {
+            placeSection(place)
+        } else if model.panel == .saved {
+            savedSection
+        } else if model.panel == .packs {
+            packsSection
+        } else if !model.searchResults.isEmpty {
+            resultsSection
+        } else if !model.pois.isEmpty {
+            poiSection
+        } else {
+            categorySection
+            if model.searchQuery.isEmpty && !model.recents.isEmpty {
+                recentsSection
+            }
+            secondarySection
+        }
+    }
+
+    // MARK: Search
 
     private var searchSection: some View {
         Section {
             HStack {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Ort, Adresse suchen …", text: $model.searchQuery)
+                TextField(L.t("search-placeholder"), text: $model.searchQuery)
                     .focused($searchFocused)
                     .autocorrectionDisabled()
                     .submitLabel(.search)
@@ -57,21 +74,27 @@ struct SheetView: View {
                     Button {
                         model.searchQuery = ""
                         model.searchResults = []
-                    } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, height: 44)
+                    }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(L.t("search-clear"))
                 }
             }
         }
     }
 
     private var resultsSection: some View {
-        Section("Ergebnisse") {
+        Section(L.t("results")) {
             ForEach(model.searchResults) { r in
                 Button { pick(r) } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(r.name).fontWeight(.semibold)
                         Text(r.label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
                     }
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
                 .buttonStyle(.plain)
             }
@@ -79,13 +102,14 @@ struct SheetView: View {
     }
 
     private var recentsSection: some View {
-        Section("Zuletzt gesucht") {
+        Section(L.t("recent-searches")) {
             ForEach(model.recents) { r in
                 Button { model.select(result: r); detent = .height(220) } label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(r.name).fontWeight(.medium)
                         Text(r.label).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
                 .buttonStyle(.plain)
             }
@@ -103,14 +127,17 @@ struct SheetView: View {
                             detent = .medium
                             model.showCategory(cat)
                         } label: {
-                            HStack(spacing: 4) {
-                                Text(cat.emoji)
+                            HStack(spacing: 6) {
+                                Image(systemName: cat.symbol)
+                                    .font(.footnote)
+                                    .foregroundStyle(cat.tint)
                                 Text(cat.label).font(.caption).fontWeight(.medium)
                                 if model.activeCategory == cat.id {
                                     Image(systemName: "xmark").font(.caption2)
                                 }
                             }
-                            .padding(.vertical, 7).padding(.horizontal, 11)
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 44)
                             .background(
                                 Capsule().fill(model.activeCategory == cat.id
                                     ? Color.accentColor.opacity(0.18)
@@ -126,12 +153,13 @@ struct SheetView: View {
                     }
                 }
             }
-            .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+            .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
+            .listRowBackground(Color.clear)
         }
     }
 
     private var poiSection: some View {
-        Section("In der Nähe") {
+        Section {
             ForEach(model.pois) { p in
                 Button {
                     let place = Place(name: p.name, label: p.label, lat: p.lat, lon: p.lon)
@@ -150,8 +178,24 @@ struct SheetView: View {
                                 .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
                         }
                     }
+                    .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
+            }
+        } header: {
+            HStack {
+                Text(L.t("results"))
+                Spacer()
+                Button {
+                    model.clearPois()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44, alignment: .trailing)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.t("close"))
             }
         }
     }
@@ -170,17 +214,12 @@ struct SheetView: View {
                         if let m = nav.toManeuverM {
                             Text(Self.fmtDist(Int(m))).font(.title.bold()).monospacedDigit()
                         }
-                        Text(next?.instruction ?? steps[safe: nav.stepIndex]?.instruction ?? "Weiter")
+                        Text(next?.instruction ?? steps[safe: nav.stepIndex]?.instruction ?? L.t("nav-continue"))
                             .font(.callout)
                     }
-                    Spacer()
-                    Button { model.stopNavigation() } label: {
-                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
                 }
                 if nav.offRoute {
-                    Label("Abseits der Route — neu berechnen …", systemImage: "exclamationmark.triangle.fill")
+                    Label(L.t("off-route"), systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
                 HStack {
@@ -189,6 +228,18 @@ struct SheetView: View {
                     Text(Self.fmtDist(Int(nav.remainingM))).foregroundStyle(.secondary).monospacedDigit()
                 }
                 .font(.subheadline)
+
+                // Prominent end button — leaving navigation must never require
+                // hunting for a small ⨯.
+                Button(role: .destructive) {
+                    model.stopNavigation()
+                } label: {
+                    Label(L.t("nav-stop"), systemImage: "xmark.circle.fill")
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .fontWeight(.semibold)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
             }
         }
     }
@@ -208,13 +259,14 @@ struct SheetView: View {
                                 Image(systemName: "location.circle")
                                     .font(.caption).foregroundStyle(.secondary)
                                 if model.pickingStart {
-                                    Text("Startpunkt wählen: suchen oder Karte antippen …")
+                                    Text(L.t("route-pick-start"))
                                         .font(.subheadline).foregroundStyle(.blue)
                                 } else {
-                                    Text(route.from?.name ?? "Mein Standort")
+                                    Text(route.from?.name ?? L.t("my-location"))
                                         .font(.subheadline)
                                 }
                             }
+                            .frame(minHeight: 32, alignment: .leading)
                         }
                         .buttonStyle(.plain)
                         HStack(spacing: 6) {
@@ -224,25 +276,30 @@ struct SheetView: View {
                         }
                     }
                     Spacer()
-                    VStack(spacing: 10) {
+                    VStack(spacing: 4) {
                         Button {
                             model.clearRoute()
                         } label: {
-                            Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 44, height: 44)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(L.t("close"))
                         if route.from != nil {
                             Button {
                                 model.swapRoute()
                             } label: {
-                                Image(systemName: "arrow.up.arrow.down").font(.footnote)
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .font(.footnote)
+                                    .frame(width: 44, height: 44)
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel("Start und Ziel tauschen")
+                            .accessibilityLabel(L.t("route-swap"))
                         }
                     }
                 }
-                Picker("Modus", selection: Binding(
+                Picker("", selection: Binding(
                     get: { route.mode },
                     set: { model.setRouteMode($0) }
                 )) {
@@ -254,9 +311,9 @@ struct SheetView: View {
 
                 switch route.status {
                 case .loading:
-                    HStack { Spacer(); ProgressView("Route wird berechnet …"); Spacer() }
+                    HStack { Spacer(); ProgressView(L.t("route-loading")); Spacer() }
                 case .error:
-                    Text(route.errorText ?? "Fehler").foregroundStyle(.red).font(.footnote)
+                    Text(route.errorText ?? L.t("err-unknown")).foregroundStyle(.red).font(.footnote)
                 case .ready:
                     if let r = route.result {
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -267,8 +324,8 @@ struct SheetView: View {
                             model.startNavigation()
                             detent = .height(220)
                         } label: {
-                            Label("Navigation starten", systemImage: "location.north.line.fill")
-                                .frame(maxWidth: .infinity).fontWeight(.semibold)
+                            Label(L.t("nav-start"), systemImage: "location.north.line.fill")
+                                .frame(maxWidth: .infinity, minHeight: 32).fontWeight(.semibold)
                         }
                         .buttonStyle(.borderedProminent)
                         ForEach(Array(r.steps.enumerated()), id: \.offset) { i, step in
@@ -299,9 +356,11 @@ struct SheetView: View {
         return min < 60 ? "\(min) min" : "\(min / 60) h \(min % 60) min"
     }
 
+    // MARK: Selected place
+
     private func placeSection(_ place: Place) -> some View {
         Section {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 4) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(place.name).font(.headline)
                     Text(place.label).font(.footnote).foregroundStyle(.secondary)
@@ -316,9 +375,10 @@ struct SheetView: View {
                     Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
                         .font(.title2)
                         .foregroundStyle(.blue)
+                        .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Route hierhin")
+                .accessibilityLabel(L.t("route-to-here"))
                 ShareLink(
                     item: URL(string: "https://maps.aiity.de/maps/?p=\(String(format: "%.5f,%.5f", place.lat, place.lon)),\(place.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!,
                     subject: Text(place.name)
@@ -326,9 +386,10 @@ struct SheetView: View {
                     Image(systemName: "square.and.arrow.up")
                         .font(.title3)
                         .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Ort teilen")
+                .accessibilityLabel(L.t("share-place"))
                 Button {
                     Task {
                         let ok = await model.toggleBookmark(place)
@@ -338,24 +399,32 @@ struct SheetView: View {
                     Image(systemName: model.bookmarkFor(place) != nil ? "star.fill" : "star")
                         .font(.title2)
                         .foregroundStyle(.yellow)
+                        .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(L.t(model.bookmarkFor(place) != nil ? "saved-remove" : "save-place"))
                 Button {
                     model.selected = nil
                 } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(L.t("close"))
             }
         }
     }
 
+    // MARK: Saved panel
+
     private var savedSection: some View {
-        Section("Gespeicherte Orte") {
+        Section {
             if model.user == nil {
-                Button("Anmelden, um Orte zu speichern") { showAuth = true }
+                Button(L.t("saved-signin-hint")) { showAuth = true }
+                    .frame(minHeight: 44, alignment: .leading)
             } else if model.bookmarks.isEmpty {
-                Text("Noch nichts gespeichert.").foregroundStyle(.secondary)
+                Text(L.t("saved-empty")).foregroundStyle(.secondary)
             } else {
                 ForEach(model.bookmarks) { b in
                     Button {
@@ -369,6 +438,7 @@ struct SheetView: View {
                             Text(String(format: "%.3f, %.3f", b.lat, b.lon))
                                 .font(.caption2).foregroundStyle(.tertiary)
                         }
+                        .frame(minHeight: 44)
                     }
                     .buttonStyle(.plain)
                 }
@@ -377,11 +447,15 @@ struct SheetView: View {
                     Task { for id in ids { await model.removeBookmark(id) } }
                 }
             }
+        } header: {
+            panelHeader(L.t("saved-places"))
         }
     }
 
+    // MARK: Packs panel
+
     private var packsSection: some View {
-        Section("Karten-Stil") {
+        Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(model.allPacks) { pack in
@@ -401,7 +475,8 @@ struct SheetView: View {
                                 }
                                 Text(pack.name).font(.caption).fontWeight(.medium).lineLimit(1)
                             }
-                            .padding(.vertical, 8).padding(.horizontal, 14)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 48)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(model.activePackId == pack.id ? Color.accentColor.opacity(0.18) : Color(.secondarySystemBackground))
@@ -417,7 +492,7 @@ struct SheetView: View {
                                 Button(role: .destructive) {
                                     Task { await model.removePack(pack.id) }
                                 } label: {
-                                    Label("Pack entfernen", systemImage: "trash")
+                                    Label(L.t("delete"), systemImage: "trash")
                                 }
                             }
                         }
@@ -431,9 +506,10 @@ struct SheetView: View {
                             Image(systemName: "plus")
                                 .font(.system(size: 13, weight: .semibold))
                                 .frame(height: 14)
-                            Text("Installieren").font(.caption).fontWeight(.medium)
+                            Text(L.t("install")).font(.caption).fontWeight(.medium)
                         }
-                        .padding(.vertical, 8).padding(.horizontal, 14)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 48)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .strokeBorder(style: StrokeStyle(lineWidth: 1.2, dash: [4, 3]))
@@ -443,33 +519,106 @@ struct SheetView: View {
                     .buttonStyle(.plain)
                 }
             }
+        } header: {
+            panelHeader(L.t("map-style"))
         }
     }
 
-    private var accountSection: some View {
+    /// Panel title row with a close/back affordance (web panels have onClose).
+    private func panelHeader(_ title: String) -> some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Button {
+                model.panel = .none
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44, alignment: .trailing)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(L.t("close"))
+        }
+    }
+
+    // MARK: Default state secondary actions
+
+    /// One compact row: saved places, map style, and a "More" menu holding
+    /// account + language — mirrors the web rail controls without stacking
+    /// permanent sections into the sheet.
+    private var secondarySection: some View {
         Section {
+            HStack(spacing: 10) {
+                secondaryButton(symbol: "star", title: L.t("saved-places")) {
+                    model.panel = .saved
+                    if detent == .height(96) { detent = .medium }
+                }
+                secondaryButton(symbol: "paintpalette", title: L.t("map-style")) {
+                    model.panel = .packs
+                    if detent == .height(96) { detent = .medium }
+                }
+                moreMenu
+            }
+            .listRowInsets(EdgeInsets(top: 2, leading: 12, bottom: 2, trailing: 12))
+            .listRowBackground(Color.clear)
+        }
+    }
+
+    private func secondaryButton(symbol: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            secondaryLabel(symbol: symbol, title: title)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var moreMenu: some View {
+        Menu {
             if let user = model.user {
-                HStack {
-                    Image(systemName: "person.crop.circle.fill").font(.title2).foregroundStyle(.blue)
-                    VStack(alignment: .leading) {
-                        Text(user.displayName ?? user.email ?? "Konto").fontWeight(.medium)
-                        if user.displayName != nil, let email = user.email {
-                            Text(email).font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Button("Abmelden", role: .destructive) {
+                Section(user.displayName ?? user.email ?? L.t("account")) {
+                    Button(role: .destructive) {
                         Task { await model.logout() }
+                    } label: {
+                        Label(L.t("sign-out"), systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             } else {
                 Button {
                     showAuth = true
                 } label: {
-                    Label("Anmelden oder registrieren", systemImage: "person.crop.circle")
+                    Label(L.t("sign-in"), systemImage: "person.crop.circle")
                 }
             }
+            Picker(selection: Binding(get: { model.lang }, set: { model.setLang($0) })) {
+                ForEach(L.languages) { l in
+                    Text(l.name).tag(l.id)
+                }
+            } label: {
+                Label(L.t("language"), systemImage: "globe")
+            }
+            .pickerStyle(.menu)
+        } label: {
+            secondaryLabel(symbol: "ellipsis.circle", title: L.t("more"))
         }
+        .accessibilityLabel(L.t("more"))
+    }
+
+    private func secondaryLabel(symbol: String, title: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, minHeight: 56)
+        .background(
+            RoundedRectangle(cornerRadius: 14).fill(Color(.secondarySystemBackground))
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private func pick(_ r: GeoResult) {

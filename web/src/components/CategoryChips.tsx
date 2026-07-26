@@ -49,7 +49,9 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
             variant={active ? 'default' : 'secondary'}
             className={cn(
               'h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-medium shadow-sm',
-              !active && 'border-border/60 bg-background/95 backdrop-blur hover:bg-accent',
+              // Solid: chips sit on the solid rail/sheet (and read fine as
+              // solid pills in the collapsed overlay too) — no blur here.
+              !active && 'border-border/60 bg-background hover:bg-accent',
             )}
             onClick={() => pick(c.id)}
           >

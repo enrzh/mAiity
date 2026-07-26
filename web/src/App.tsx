@@ -25,9 +25,20 @@ import { AuthModal } from './components/AuthModal'
 type Panel = 'none' | 'saved' | 'packs'
 
 /// Layout: a Google-Maps-style left rail that owns search and all contextual
-/// content, with the map as the hero to its right. Surfaces use a single
-/// material (blurred, hairline-bordered, generously padded) rather than a
-/// scatter of floating cards.
+/// content, with the map as the hero to its right.
+///
+/// Surface tokens: the rail/sheet are SOLID panels (bg-background, border,
+/// shadow-xl) — blur is reserved for chrome that truly floats over the map
+/// (MapControls, the collapsed search overlay, the search-area pill), where
+/// it earns its cost. Shadow scale: floating=shadow-lg, panels=shadow-xl.
+
+/// Mobile bottom-sheet detents. peek shows search+chips, half/full open the
+/// contextual content. Heights resolved lazily (vh depends on the viewport).
+type Detent = 'peek' | 'half' | 'full'
+const DETENTS: Detent[] = ['peek', 'half', 'full']
+function detentPx(d: Detent): number {
+  return d === 'peek' ? 130 : Math.round(window.innerHeight * (d === 'half' ? 0.45 : 0.85))
+}
 
 /// One control stack, bottom-right. The MapLibre built-ins are disabled so
 /// nothing stacks on top of these (they shared the same corner).
@@ -159,10 +170,39 @@ function Shell() {
   const [collapsed, setCollapsed] = useState(false)
   const railRef = useRef<HTMLElement>(null)
   const [sheetH, setSheetH] = useState(0)
+  // Mobile sheet detent + live height while the grabber is being dragged.
+  const [detent, setDetent] = useState<Detent>('peek')
+  const [dragH, setDragH] = useState<number | null>(null)
+  const dragFrom = useRef<{ y: number; h: number } | null>(null)
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.
     if (collapsed) setCollapsed(false)
+    // On mobile, the peek sheet has no room for panel content — lift it.
+    setDetent((d) => (d === 'peek' ? 'half' : d))
     setPanel((cur) => (cur === p ? 'none' : p))
+  }
+
+  // Drag on the handle, snap to the nearest detent on release. Plain pointer
+  // events (with capture) — no library needed for three snap points.
+  const onHandleDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragFrom.current = { y: e.clientY, h: railRef.current?.offsetHeight ?? detentPx(detent) }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onHandleMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const from = dragFrom.current
+    if (!from) return
+    const h = from.h + (from.y - e.clientY)
+    setDragH(Math.min(detentPx('full'), Math.max(detentPx('peek'), h)))
+  }
+  const onHandleUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const from = dragFrom.current
+    if (!from) return
+    dragFrom.current = null
+    const h = from.h + (from.y - e.clientY)
+    let best: Detent = 'peek'
+    for (const d of DETENTS) if (Math.abs(detentPx(d) - h) < Math.abs(detentPx(best) - h)) best = d
+    setDetent(best)
+    setDragH(null) // hand height control back to the detent (animated)
   }
 
   // A place or route takes over the rail; side panels step aside.
@@ -173,6 +213,12 @@ function Shell() {
   // open they loaded into a slot BELOW it in the precedence chain, so the
   // chips looked broken. One thing at a time, like Maps.
   useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
+  // New contextual content while the mobile sheet is at peek would be
+  // invisible — lift to half so a tap on the map/chips visibly answers.
+  useEffect(() => {
+    if (app.selected || app.route || app.pois.length > 0)
+      setDetent((d) => (d === 'peek' ? 'half' : d))
+  }, [app.selected, app.route, app.pois])
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on
   // desktop — on mobile the rail is a bottom sheet, not a left panel.
@@ -219,8 +265,13 @@ function Shell() {
       {/* ---- Rail ------------------------------------------------------ */}
       <aside
         ref={railRef}
+        // Height is detent-driven on mobile only; md:h-full wins on desktop
+        // (its @media rule comes later in the sheet than the base class).
+        style={{ '--detent-h': `${dragH ?? detentPx(detent)}px` } as React.CSSProperties}
         className={cn(
-          'absolute inset-x-0 bottom-0 z-30 flex max-h-[58%] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background/85 p-3 shadow-2xl backdrop-blur-2xl',
+          'absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background p-3 shadow-xl',
+          // Snapping animates; while the finger drives, height tracks it raw.
+          dragH === null && 'transition-[height] duration-300 ease-out',
           // The rail OVERLAYS the map on desktop instead of taking width from
           // it (this is what Google does). Collapsing then changes no layout,
           // so the GL canvas is never resized — animating the width made the
@@ -228,11 +279,23 @@ function Shell() {
           // buffer resize clears and repaints, which is the flicker.
           // Sliding on transform keeps it on the compositor: no layout, no
           // ResizeObserver, no tile refetch.
-          'md:absolute md:inset-y-0 md:left-0 md:right-auto md:h-full md:w-[392px] md:max-h-none md:rounded-none md:border-r md:border-t-0 md:p-4 md:shadow-xl',
+          'md:absolute md:inset-y-0 md:left-0 md:right-auto md:h-full md:w-[392px] md:rounded-none md:border-r md:border-t-0 md:p-4',
           'md:transition-transform md:duration-300 md:ease-out md:will-change-transform',
           collapsed ? 'md:-translate-x-full' : 'md:translate-x-0',
         )}
       >
+        {/* Grabber — the visible drag affordance for the mobile detents. */}
+        <div
+          className="-mb-2 -mt-1.5 flex shrink-0 cursor-grab touch-none justify-center py-1 active:cursor-grabbing md:hidden"
+          onPointerDown={onHandleDown}
+          onPointerMove={onHandleMove}
+          onPointerUp={onHandleUp}
+          onPointerCancel={onHandleUp}
+          aria-hidden
+        >
+          <div className="h-1.5 w-10 rounded-full bg-muted-foreground/25" />
+        </div>
+
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1"><SearchBar /></div>
           <RailControls panel={panel} toggle={toggle} />
@@ -240,8 +303,15 @@ function Shell() {
 
         <CategoryChips getCenter={() => centerOf(liveMap.current)} />
 
-        {/* Contextual content — one thing at a time, like Maps. */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {/* Contextual content — one thing at a time, like Maps. At peek the
+            sheet is search+chips only, so its clipped remainder must not
+            become a scroll trap; it scrolls in half/full (and on desktop). */}
+        <div
+          className={cn(
+            'min-h-0 flex-1 overscroll-contain',
+            detent === 'peek' ? 'overflow-y-hidden md:overflow-y-auto' : 'overflow-y-auto',
+          )}
+        >
           {app.navigating ? <NavigationPanel />
             : app.route ? <RoutePanel />
             : app.selected ? <PlaceCard />
@@ -284,7 +354,8 @@ function Shell() {
           aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
           title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
           className={cn(
-            'absolute top-1/2 z-40 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background/90 text-muted-foreground shadow-md backdrop-blur transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
+            // Solid like the rail it rides — it moves as one piece with it.
+            'absolute top-1/2 z-40 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background text-muted-foreground shadow-lg transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
             collapsed ? 'md:left-0' : 'md:left-[392px]',
           )}
         >
@@ -295,7 +366,7 @@ function Shell() {
         <MapControls />
         {app.packsError && app.packs.length === 0 && (
           <div
-            className="absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive shadow-lg backdrop-blur"
+            className="absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-background px-4 py-2.5 text-sm text-destructive shadow-lg"
             role="alert"
           >
             {t('map-load-failed')}

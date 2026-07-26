@@ -17,9 +17,10 @@ struct AuthSheet: View {
     @State private var password = ""
     @State private var busy = false
 
-    enum Mode: String, CaseIterable {
-        case login = "Anmelden"
-        case register = "Registrieren"
+    enum Mode: CaseIterable {
+        case login, register
+
+        var label: String { L.t(self == .login ? "sign-in" : "register") }
     }
 
     var body: some View {
@@ -41,16 +42,16 @@ struct AuthSheet: View {
 
                 Section {
                     Picker("", selection: $mode) {
-                        ForEach(Mode.allCases, id: \.self) { Text($0.rawValue) }
+                        ForEach(Mode.allCases, id: \.self) { Text($0.label) }
                     }
                     .pickerStyle(.segmented)
 
-                    TextField("E-Mail", text: $email)
+                    TextField(L.t("email"), text: $email)
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
                         .autocapitalization(.none)
                         .autocorrectionDisabled()
-                    SecureField("Passwort (min. 8 Zeichen)", text: $password)
+                    SecureField(L.t("password-min8"), text: $password)
                         .textContentType(mode == .login ? .password : .newPassword)
 
                     if let error = model.authError {
@@ -61,16 +62,16 @@ struct AuthSheet: View {
                         submit()
                     } label: {
                         if busy { ProgressView().frame(maxWidth: .infinity) }
-                        else { Text(mode.rawValue).frame(maxWidth: .infinity).fontWeight(.semibold) }
+                        else { Text(mode.label).frame(maxWidth: .infinity).fontWeight(.semibold) }
                     }
                     .disabled(busy || email.isEmpty || password.count < 8)
                 }
             }
-            .navigationTitle("Konto")
+            .navigationTitle(L.t("account"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Abbrechen") { dismiss() }
+                    Button(L.t("cancel")) { dismiss() }
                 }
             }
         }

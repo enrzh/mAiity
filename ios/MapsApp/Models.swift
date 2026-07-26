@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Codable mirrors of the maps API. One source of truth: server/src/*.ts.
 
@@ -81,13 +82,7 @@ struct Place: Equatable {
 enum RouteMode: String, Codable, CaseIterable {
     case car, bike, foot
 
-    var label: String {
-        switch self {
-        case .car: return "Auto"
-        case .bike: return "Rad"
-        case .foot: return "Zu Fuß"
-        }
-    }
+    var label: String { L.t("mode-\(rawValue)") }
 
     var symbol: String {
         switch self {
@@ -100,18 +95,22 @@ enum RouteMode: String, Codable, CaseIterable {
 
 struct NearbyCategory: Identifiable, Equatable {
     let id: String
-    let label: String
-    let emoji: String
+    /// SF Symbol name (categories use symbols, not emoji, so they render
+    /// crisply and adopt tint/dynamic type).
+    let symbol: String
+    let tint: Color
+
+    var label: String { L.t("cat-\(id)") }
 
     static let all: [NearbyCategory] = [
-        .init(id: "restaurant", label: "Restaurants", emoji: "🍽️"),
-        .init(id: "cafe", label: "Cafés", emoji: "☕"),
-        .init(id: "supermarket", label: "Supermärkte", emoji: "🛒"),
-        .init(id: "fuel", label: "Tankstellen", emoji: "⛽"),
-        .init(id: "pharmacy", label: "Apotheken", emoji: "💊"),
-        .init(id: "hotel", label: "Hotels", emoji: "🛏️"),
-        .init(id: "parking", label: "Parken", emoji: "🅿️"),
-        .init(id: "atm", label: "Geldautomaten", emoji: "🏧"),
+        .init(id: "restaurant", symbol: "fork.knife", tint: .orange),
+        .init(id: "cafe", symbol: "cup.and.saucer.fill", tint: .brown),
+        .init(id: "supermarket", symbol: "cart.fill", tint: .green),
+        .init(id: "fuel", symbol: "fuelpump.fill", tint: .blue),
+        .init(id: "pharmacy", symbol: "cross.case.fill", tint: .red),
+        .init(id: "hotel", symbol: "bed.double.fill", tint: .purple),
+        .init(id: "parking", symbol: "parkingsign", tint: .indigo),
+        .init(id: "atm", symbol: "creditcard.fill", tint: .teal),
     ]
 }
 

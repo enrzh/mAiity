@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol } from 'pmtiles'
 import { api } from '../lib/api'
 import { makeT } from '../lib/i18n'
+import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { useApp } from '../state'
 
 maplibregl.addProtocol('pmtiles', new Protocol().tile)
@@ -119,6 +120,7 @@ export function showUserDot(m: MLMap, at: [number, number]) {
   if (!userDot) {
     const el = document.createElement('div')
     el.className = 'maps-user-dot'
+    el.style.background = MARKER_COLORS.user // token, not CSS — one source of truth
     userDot = new Marker({ element: el })
   }
   userDot.setLngLat(at).addTo(m)
@@ -334,9 +336,10 @@ export function MapView() {
     selMarker.current?.remove()
     selMarker.current = null
     if (!app.selected) return
-    selMarker.current = new Marker({ color: '#e74c3c' })
+    selMarker.current = new Marker({ color: MARKER_COLORS.selected, scale: MARKER_SCALES.selected })
       .setLngLat([app.selected.lon, app.selected.lat])
       .addTo(map)
+    selMarker.current.getElement().style.filter = MARKER_STROKES.selected
     // Places zoom to their real size: a country fills the viewport via its
     // bbox instead of dropping the camera onto one street at z14.
     if (app.selected.extent) {
@@ -373,12 +376,16 @@ export function MapView() {
     m.addLayer({
       id: 'route-casing', type: 'line', source: 'route',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#1d4ed8', 'line-width': 9, 'line-opacity': 0.35 },
+      paint: {
+        'line-color': MARKER_COLORS.routeCasing,
+        'line-width': ROUTE_STYLE.casingWidth,
+        'line-opacity': ROUTE_STYLE.casingOpacity,
+      },
     })
     m.addLayer({
       id: 'route-line', type: 'line', source: 'route',
       layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: { 'line-color': '#3b82f6', 'line-width': 5 },
+      paint: { 'line-color': MARKER_COLORS.route, 'line-width': ROUTE_STYLE.lineWidth },
     })
   }
   const routeGeometry = app.route?.status === 'ready' ? app.route.result?.geometry ?? null : null
@@ -407,7 +414,7 @@ export function MapView() {
     if (app.pois.length === 0) return
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     for (const p of app.pois) {
-      const mk = new Marker({ color: '#0d9488', scale: 0.75 })
+      const mk = new Marker({ color: MARKER_COLORS.poi, scale: MARKER_SCALES.poi })
         .setLngLat([p.lon, p.lat])
         .addTo(map)
       mk.getElement().style.cursor = 'pointer'
@@ -431,7 +438,7 @@ export function MapView() {
     for (const b of app.bookmarks) {
       seen.add(b.id)
       if (bmMarkers.current.has(b.id)) continue
-      const mk = new Marker({ color: '#f1c40f', scale: 0.85 })
+      const mk = new Marker({ color: MARKER_COLORS.bookmark, scale: MARKER_SCALES.bookmark })
         .setLngLat([b.lon, b.lat])
         .addTo(map)
       mk.getElement().style.cursor = 'pointer'

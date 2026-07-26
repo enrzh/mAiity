@@ -30,26 +30,31 @@ struct MapScreen: View {
                 LineStyleLayer(identifier: "route-line", source: routeSource)
                     .lineCap(.round)
                     .lineJoin(.round)
-                    .lineColor(UIColor(red: 0.23, green: 0.51, blue: 0.96, alpha: 1))
-                    .lineWidth(5)
+                    .lineColor(MapTokens.route)
+                    .lineWidth(MapTokens.routeWidth)
                 // POI category results (teal).
                 CircleStyleLayer(identifier: "pois", source: poiSource)
-                    .radius(6)
-                    .color(UIColor(red: 0.05, green: 0.58, blue: 0.53, alpha: 1))
-                    .strokeWidth(1.5)
-                    .strokeColor(.white)
+                    .radius(MapTokens.poiRadius)
+                    .color(MapTokens.poi)
+                    .strokeWidth(MapTokens.poiStrokeWidth)
+                    .strokeColor(MapTokens.markerStroke)
                 // Saved places (gold).
                 CircleStyleLayer(identifier: "bookmarks", source: bookmarkSource)
-                    .radius(7)
-                    .color(UIColor(red: 0.95, green: 0.77, blue: 0.06, alpha: 1))
-                    .strokeWidth(2)
-                    .strokeColor(.white)
-                // Selected place (red, on top).
+                    .radius(MapTokens.bookmarkRadius)
+                    .color(MapTokens.bookmark)
+                    .strokeWidth(MapTokens.bookmarkStrokeWidth)
+                    .strokeColor(MapTokens.markerStroke)
+                // Selected place (red, on top). Bigger AND a wider white ring
+                // than the rest — colour is not the only differentiator.
                 CircleStyleLayer(identifier: "selected", source: selectedSource)
-                    .radius(9)
-                    .color(UIColor(red: 0.91, green: 0.30, blue: 0.24, alpha: 1))
-                    .strokeWidth(2.5)
-                    .strokeColor(.white)
+                    .radius(MapTokens.selectedRadius)
+                    .color(MapTokens.selected)
+                    .strokeWidth(MapTokens.selectedStrokeWidth)
+                    .strokeColor(MapTokens.markerStroke)
+            }
+            // Localize base-map labels to the UI language once the style is in.
+            .onMapStyleLoaded { style in
+                Self.applyLabelLanguage(style, lang: model.lang)
             }
             // Show the NATIVE location puck (halo + heading) as soon as we're
             // authorized. Without this the puck only appears once the camera
@@ -60,6 +65,11 @@ struct MapScreen: View {
                 let wanted = location.isAuthorized
                 if controller.mapView.showsUserLocation != wanted {
                     controller.mapView.showsUserLocation = wanted
+                }
+                // Re-apply label language when it changes (this closure runs
+                // on every SwiftUI update; the helper only writes on change).
+                if let style = controller.mapView.style {
+                    Self.applyLabelLanguage(style, lang: model.lang)
                 }
             }
             .onTapMapGesture { context in
@@ -73,10 +83,10 @@ struct MapScreen: View {
                 VStack(spacing: 10) {
                     mapButton(
                         symbol: model.activePackId == "light" ? "paintpalette" : "paintpalette.fill",
-                        label: "Karten-Stil"
+                        label: L.t("map-style")
                     ) { model.showPackPicker = true }
 
-                    mapButton(symbol: is3D ? "cube.fill" : "cube", label: "3D-Ansicht") {
+                    mapButton(symbol: is3D ? "cube.fill" : "cube", label: L.t("view-3d")) {
                         is3D.toggle()
                         camera = .center(lastCenter, zoom: is3D ? 16 : 14,
                                          pitch: is3D ? 60 : 0,
@@ -85,7 +95,7 @@ struct MapScreen: View {
 
                     mapButton(
                         symbol: location.isAuthorized ? "location.fill" : "location",
-                        label: "Mein Standort"
+                        label: L.t("my-location")
                     ) {
                         location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
                         location.requestOrTrack()
@@ -147,15 +157,41 @@ struct MapScreen: View {
             VStack(spacing: 14) {
                 Image(systemName: "wifi.exclamationmark")
                     .font(.largeTitle).foregroundStyle(.secondary)
-                Text("Karte konnte nicht geladen werden.")
+                Text(L.t("map-load-failed"))
                     .font(.subheadline).foregroundStyle(.secondary)
-                Button("Erneut versuchen") {
+                Button(L.t("retry")) {
                     Task { await model.boot() }
                 }
                 .buttonStyle(.borderedProminent)
             }
         } else {
             ProgressView().task { await model.boot() }
+        }
+    }
+
+    /// Point base-map labels at `name:<lang>` with a `name` fallback, same as
+    /// the web app. Only writes when the expression actually changes so the
+    /// per-update call from unsafeMapViewControllerModifier stays cheap.
+    static func applyLabelLanguage(_ style: MLNStyle, lang: String) {
+        let localized = NSExpression(
+            format: "mgl_coalesce({%@, %@})",
+            NSExpression(forKeyPath: "name:\(lang)"),
+            NSExpression(forKeyPath: "name")
+        )
+        if let places = style.layer(withIdentifier: "places-labels") as? MLNSymbolStyleLayer,
+           places.text != localized {
+            places.text = localized
+        }
+        // Landmarks carry a "✦ " prefix in the shared style — preserve it by
+        // joining the prefix with the localized name.
+        let landmarkText = NSExpression(
+            format: "mgl_join({%@, %@})",
+            NSExpression(forConstantValue: "✦ "),
+            localized
+        )
+        if let landmarks = style.layer(withIdentifier: "landmarks-labels") as? MLNSymbolStyleLayer,
+           landmarks.text != landmarkText {
+            landmarks.text = landmarkText
         }
     }
 
