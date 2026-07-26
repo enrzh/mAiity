@@ -853,7 +853,7 @@
           ],
           0
         ],
-        "fill-extrusion-opacity": 0.95,
+        "fill-extrusion-opacity": 1,
         "fill-extrusion-vertical-gradient": true
       },
       "filter": [
@@ -983,21 +983,25 @@
             ],
             9
           ],
-          1.2
+          1.15
         ],
         "fill-extrusion-height": [
-          "case",
+          "+",
           [
-            "has",
-            "height"
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            9
           ],
-          [
-            "get",
-            "height"
-          ],
-          9
+          0.05
         ],
-        "fill-extrusion-opacity": 0.95
+        "fill-extrusion-opacity": 1
       }
     },
     {
