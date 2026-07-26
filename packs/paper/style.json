@@ -19,7 +19,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#b9cdc5"
+        "background-color": "#c9bd9f"
       }
     },
     {
@@ -107,87 +107,6 @@
       "source-layer": "water",
       "paint": {
         "fill-color": "#b9cdc5"
-      }
-    },
-    {
-      "id": "buildings",
-      "type": "fill",
-      "source": "protomaps",
-      "source-layer": "buildings",
-      "minzoom": 13,
-      "paint": {
-        "fill-pattern": "pencil-hatch",
-        "fill-opacity": [
-          "interpolate",
-          [
-            "linear"
-          ],
-          [
-            "zoom"
-          ],
-          13,
-          0,
-          15,
-          0.9
-        ]
-      },
-      "maxzoom": 14
-    },
-    {
-      "id": "buildings-3d",
-      "type": "fill-extrusion",
-      "source": "protomaps",
-      "source-layer": "buildings",
-      "minzoom": 14,
-      "paint": {
-        "fill-extrusion-color": [
-          "interpolate",
-          [
-            "linear"
-          ],
-          [
-            "case",
-            [
-              "has",
-              "height"
-            ],
-            [
-              "get",
-              "height"
-            ],
-            8
-          ],
-          0,
-          "#e0d5b8",
-          60,
-          "#f0e7cf"
-        ],
-        "fill-extrusion-height": [
-          "case",
-          [
-            "has",
-            "height"
-          ],
-          [
-            "get",
-            "height"
-          ],
-          8
-        ],
-        "fill-extrusion-base": [
-          "case",
-          [
-            "has",
-            "min_height"
-          ],
-          [
-            "get",
-            "min_height"
-          ],
-          0
-        ],
-        "fill-extrusion-opacity": 0.95,
-        "fill-extrusion-vertical-gradient": true
       }
     },
     {
@@ -280,6 +199,87 @@
           20,
           24
         ]
+      }
+    },
+    {
+      "id": "buildings",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 13,
+      "paint": {
+        "fill-pattern": "pencil-hatch",
+        "fill-opacity": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "zoom"
+          ],
+          13,
+          0,
+          15,
+          0.9
+        ]
+      },
+      "maxzoom": 14
+    },
+    {
+      "id": "buildings-3d",
+      "type": "fill-extrusion",
+      "source": "protomaps",
+      "source-layer": "buildings",
+      "minzoom": 14,
+      "paint": {
+        "fill-extrusion-color": [
+          "interpolate",
+          [
+            "linear"
+          ],
+          [
+            "case",
+            [
+              "has",
+              "height"
+            ],
+            [
+              "get",
+              "height"
+            ],
+            8
+          ],
+          0,
+          "#e0d5b8",
+          60,
+          "#f0e7cf"
+        ],
+        "fill-extrusion-height": [
+          "case",
+          [
+            "has",
+            "height"
+          ],
+          [
+            "get",
+            "height"
+          ],
+          8
+        ],
+        "fill-extrusion-base": [
+          "case",
+          [
+            "has",
+            "min_height"
+          ],
+          [
+            "get",
+            "min_height"
+          ],
+          0
+        ],
+        "fill-extrusion-opacity": 0.95,
+        "fill-extrusion-vertical-gradient": true
       }
     },
     {

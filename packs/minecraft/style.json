@@ -30,7 +30,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-pattern": "mc-water"
+        "background-pattern": "mc-grass"
       }
     },
     {

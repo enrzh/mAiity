@@ -67,7 +67,10 @@ function applySlots(base: unknown, s: Slots): unknown {
   for (const layer of style.layers) {
     layer.paint = layer.paint ?? {}
     switch (layer.id) {
-      case 'background': layer.paint['background-color'] = s.wasser; break
+      // Land tone, NOT water — background shows through whenever a tile
+      // hasn't finished painting yet (streaming in new tiles, a pan gap),
+      // so a water-colored backdrop made every loading gap look flooded.
+      case 'background': layer.paint['background-color'] = s.land; break
       case 'water': layer.paint['fill-color'] = s.wasser; break
       case 'earth': layer.paint['fill-color'] = s.land; delete layer.paint['fill-pattern']; break
       case 'landcover':
