@@ -12,6 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { ApiError } from '../lib/api'
+import { type TKey } from '../lib/i18n'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 import { PackEditor } from './PackEditor'
 
@@ -19,6 +21,7 @@ import { PackEditor } from './PackEditor'
 /// your own packs (URL to a style.json, or paste the style itself).
 export function PackSwitcher({ onClose }: { onClose: () => void }) {
   const app = useApp()
+  const t = useT()
   const [installOpen, setInstallOpen] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
 
@@ -26,16 +29,16 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
     <>
       <Card className="gap-2 border-border/60 py-4 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between px-4">
-          <CardTitle className="text-base">Karten-Stil</CardTitle>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Schließen">
+          <CardTitle className="text-base">{t('map-style')}</CardTitle>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t('close')}>
             <X className="size-4" />
           </Button>
         </CardHeader>
         <CardContent className="px-3">
           {app.packs.length === 0 ? (
             <div className="space-y-3 p-2 text-center text-sm text-muted-foreground">
-              <p>{app.packsError ? 'Stile konnten nicht geladen werden.' : 'Lade Stile …'}</p>
-              {app.packsError && <Button onClick={() => app.loadPacks()}>Erneut versuchen</Button>}
+              <p>{app.packsError ? t('styles-load-failed') : t('styles-loading')}</p>
+              {app.packsError && <Button onClick={() => app.loadPacks()}>{t('retry')}</Button>}
             </div>
           ) : (
             <ul className="space-y-2">
@@ -56,7 +59,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                         ))}
                       </span>
                     ) : (
-                      <Badge variant="secondary" className="px-1.5 text-[10px]">Eigenes</Badge>
+                      <Badge variant="secondary" className="px-1.5 text-[10px]">{t('badge-custom')}</Badge>
                     )}
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-sm font-semibold">{p.name}</span>
@@ -68,8 +71,8 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                     <Button
                       variant="ghost" size="icon-sm"
                       className="text-muted-foreground/60 hover:text-destructive"
-                      aria-label={`${p.name} entfernen`}
-                      onClick={() => app.removePack(p.id).catch(() => toast.error('Entfernen fehlgeschlagen.'))}
+                      aria-label={`${p.name} ${t('remove')}`}
+                      onClick={() => app.removePack(p.id).catch(() => toast.error(t('pack-remove-failed')))}
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -86,7 +89,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                 setEditorOpen(true)
               }}
             >
-              <Palette className="size-4" /> Erstellen
+              <Palette className="size-4" /> {t('create')}
             </Button>
             <Button
               variant="outline" className="flex-1"
@@ -95,7 +98,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                 setInstallOpen(true)
               }}
             >
-              <Plus className="size-4" /> Installieren
+              <Plus className="size-4" /> {t('install')}
             </Button>
           </div>
         </CardContent>
@@ -108,6 +111,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
 
 function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const app = useApp()
+  const t = useT()
   const [tab, setTab] = useState<'url' | 'json'>('url')
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -115,16 +119,16 @@ function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const ERROR_TEXT: Record<string, string> = {
-    invalid_name: 'Bitte einen Namen (max. 60 Zeichen) angeben.',
-    invalid_url: 'Die URL ist ungültig.',
-    url_must_be_https: 'Nur https-URLs sind erlaubt.',
-    style_not_json: 'Das ist kein gültiges JSON.',
-    style_version_must_be_8: 'Der Style muss "version": 8 haben (MapLibre Style Spec).',
-    style_layers_missing: 'Dem Style fehlt das "layers"-Array.',
-    style_sources_missing: 'Dem Style fehlt das "sources"-Objekt.',
-    style_too_large: 'Der Style ist zu groß (max. 512 KB).',
-    pack_limit_reached: 'Maximal 20 eigene Packs.',
+  const ERROR_KEY: Record<string, TKey> = {
+    invalid_name: 'err-invalid-name',
+    invalid_url: 'err-invalid-url',
+    url_must_be_https: 'err-url-https',
+    style_not_json: 'err-style-not-json',
+    style_version_must_be_8: 'err-style-version',
+    style_layers_missing: 'err-style-layers',
+    style_sources_missing: 'err-style-sources',
+    style_too_large: 'err-style-too-large',
+    pack_limit_reached: 'err-pack-limit',
   }
 
   const submit = async () => {
@@ -136,12 +140,12 @@ function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
           ? { name: name.trim(), styleUrl: url.trim() }
           : { name: name.trim(), styleJson: json },
       )
-      toast.success('Pack installiert und aktiviert.')
+      toast.success(t('pack-installed'))
       onOpenChange(false)
       setName(''); setUrl(''); setJson('')
     } catch (e) {
       const code = e instanceof ApiError ? e.code : 'unknown'
-      setError(ERROR_TEXT[code] ?? 'Installation fehlgeschlagen — bitte erneut versuchen.')
+      setError(t(ERROR_KEY[code] ?? 'pack-install-failed'))
     } finally {
       setBusy(false)
     }
@@ -153,31 +157,30 @@ function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle>Texture-Pack installieren</DialogTitle>
+          <DialogTitle>{t('pack-install-title')}</DialogTitle>
           <DialogDescription>
-            Ein Pack ist ein MapLibre-Style (style.json) — per URL oder direkt eingefügt.
-            Es wird mit deinem Konto synchronisiert.
+            {t('pack-install-subtitle')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="pack-name">Name</Label>
-            <Input id="pack-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="z. B. Neon Nights" />
+            <Label htmlFor="pack-name">{t('name')}</Label>
+            <Input id="pack-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t('pack-install-name-placeholder')} />
           </div>
           <Tabs value={tab} onValueChange={(v) => setTab(v as 'url' | 'json')}>
             <TabsList className="w-full">
-              <TabsTrigger value="url" className="flex-1">Von URL</TabsTrigger>
-              <TabsTrigger value="json" className="flex-1">JSON einfügen</TabsTrigger>
+              <TabsTrigger value="url" className="flex-1">{t('tab-from-url')}</TabsTrigger>
+              <TabsTrigger value="json" className="flex-1">{t('tab-paste-json')}</TabsTrigger>
             </TabsList>
           </Tabs>
           {tab === 'url' ? (
             <div className="space-y-2">
-              <Label htmlFor="pack-url">Style-URL (https)</Label>
+              <Label htmlFor="pack-url">{t('style-url-label')}</Label>
               <Input id="pack-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/style.json" />
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="pack-json">style.json Inhalt</Label>
+              <Label htmlFor="pack-json">{t('style-json-label')}</Label>
               <textarea
                 id="pack-json"
                 value={json}
@@ -188,11 +191,11 @@ function InstallDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Hinweis: Packs können externe Kacheln/Schriften laden. Installiere nur Styles aus Quellen, denen du vertraust.
+            {t('pack-install-hint')}
           </p>
           {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
           <Button className="w-full" disabled={busy || !valid} onClick={submit}>
-            {busy ? '…' : 'Installieren'}
+            {busy ? '…' : t('install')}
           </Button>
         </div>
       </DialogContent>

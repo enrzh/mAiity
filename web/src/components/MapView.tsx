@@ -3,6 +3,7 @@ import maplibregl, { Map as MLMap, Marker, type GeoJSONSource } from 'maplibre-g
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol } from 'pmtiles'
 import { api } from '../lib/api'
+import { makeT } from '../lib/i18n'
 import { useApp } from '../state'
 
 maplibregl.addProtocol('pmtiles', new Protocol().tile)
@@ -95,6 +96,20 @@ function framePad(base: number) {
  *  null while TERRAIN_ENABLED is false and would report 3D as permanently off. */
 export function is3DActive(): boolean {
   return (liveMap.current?.getPitch() ?? 0) > 5
+}
+
+/// Rewrite label layers to the chosen language. The tiles carry
+/// name:<lang> for 40+ languages on places — without this, city names
+/// render in each country's LOCAL language (Warszawa, København) and the
+/// map reads inconsistently. Street names stay local on purpose: that is
+/// what the signs on the ground say.
+export function applyMapLanguage(m: MLMap, lang: string) {
+  const localized = ["coalesce", ["get", `name:${lang}`], ["get", "name"]]
+  try {
+    if (m.getLayer('places-labels')) m.setLayoutProperty('places-labels', 'text-field', localized)
+    if (m.getLayer('landmarks-labels'))
+      m.setLayoutProperty('landmarks-labels', 'text-field', ["concat", "✦ ", localized])
+  } catch { /* style mid-swap — the style.load hook re-applies */ }
 }
 
 /// Persistent "you are here" dot — the built-in GeolocateControl only shows
@@ -203,7 +218,7 @@ export function MapView() {
       appRef.current.select(
         r
           ? { name: r.name, label: r.label, lat: r.lat, lon: r.lon }
-          : { name: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, label: 'Unbekannter Ort', lat, lon: lng },
+          : { name: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, label: makeT(appRef.current.lang)('unknown-place'), lat, lon: lng },
       )
     })
 
@@ -213,6 +228,7 @@ export function MapView() {
     // every setStyle (pack switch) from the current routeRef.
     m.on('style.load', () => {
       styleReadyRef.current = true
+      applyMapLanguage(m, appRef.current.lang)
       syncRouteLayers(m)
       // A style swap drops sources/terrain — restore the 3D scenery if it
       // was engaged, so pack switching doesn't silently flatten the map.
@@ -277,6 +293,12 @@ export function MapView() {
       setMap(null)
     }
   }, [ready])
+
+  // Language switch — relabel in place, no style reload needed.
+  useEffect(() => {
+    if (!map || !styleReadyRef.current) return
+    applyMapLanguage(map, app.lang)
+  }, [map, app.lang])
 
   // Pack switching — camera survives setStyle; DOM markers survive too.
   // styleRef re-commits on successful load; ANY error during the load window

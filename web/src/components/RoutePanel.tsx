@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import type { RouteMode } from '../lib/api'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`)
@@ -16,6 +17,7 @@ const fmtDur = (s: number) => {
 /// Directions: mode tabs, summary, scrollable turn-by-turn list.
 export function RoutePanel() {
   const app = useApp()
+  const t = useT()
   const route = app.route
   if (!route) return null
 
@@ -28,13 +30,13 @@ export function RoutePanel() {
             <button
               className="flex w-full items-center gap-2 rounded-lg bg-muted/50 px-2.5 py-1.5 text-left text-sm hover:bg-accent"
               onClick={app.beginPickStart}
-              title="Startpunkt ändern — dann Ort suchen oder Karte antippen"
+              title={t('route-change-start')}
             >
               <LocateFixed className="size-3.5 shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate">
                 {app.pickingStart
-                  ? <span className="text-primary">Startpunkt wählen: suchen oder Karte antippen …</span>
-                  : route.from?.name ?? 'Mein Standort'}
+                  ? <span className="text-primary">{t('route-pick-start')}</span>
+                  : route.from?.name ?? t('my-location')}
               </span>
             </button>
             {/* Destination row */}
@@ -44,11 +46,11 @@ export function RoutePanel() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <Button variant="ghost" size="icon-sm" onClick={app.clearRoute} aria-label="Route schließen">
+            <Button variant="ghost" size="icon-sm" onClick={app.clearRoute} aria-label={t('route-close')}>
               <X className="size-4" />
             </Button>
             {route.from && (
-              <Button variant="ghost" size="icon-sm" onClick={app.swapRoute} aria-label="Start und Ziel tauschen" title="Start und Ziel tauschen">
+              <Button variant="ghost" size="icon-sm" onClick={app.swapRoute} aria-label={t('route-swap')} title={t('route-swap')}>
                 <ArrowUpDown className="size-4" />
               </Button>
             )}
@@ -57,18 +59,18 @@ export function RoutePanel() {
 
         <Tabs value={route.mode} onValueChange={(v) => app.setRouteMode(v as RouteMode)}>
           <TabsList className="w-full">
-            <TabsTrigger value="car" className="flex-1" aria-label="Auto"><Car className="size-4" /></TabsTrigger>
-            <TabsTrigger value="bike" className="flex-1" aria-label="Fahrrad"><Bike className="size-4" /></TabsTrigger>
-            <TabsTrigger value="foot" className="flex-1" aria-label="Zu Fuß"><Footprints className="size-4" /></TabsTrigger>
+            <TabsTrigger value="car" className="flex-1" aria-label={t('mode-car')}><Car className="size-4" /></TabsTrigger>
+            <TabsTrigger value="bike" className="flex-1" aria-label={t('mode-bike')}><Bike className="size-4" /></TabsTrigger>
+            <TabsTrigger value="foot" className="flex-1" aria-label={t('mode-foot')}><Footprints className="size-4" /></TabsTrigger>
           </TabsList>
         </Tabs>
 
         {route.status === 'loading' ? (
           <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Route wird berechnet …
+            <Loader2 className="size-4 animate-spin" /> {t('route-loading')}
           </div>
         ) : route.status === 'error' ? (
-          <p className="py-2 text-center text-sm text-destructive">{route.errorText}</p>
+          <p className="py-2 text-center text-sm text-destructive">{t(route.errorKey ?? 'err-unknown')}</p>
         ) : route.result ? (
           <>
             <div className="flex items-baseline gap-3">
@@ -76,7 +78,7 @@ export function RoutePanel() {
               <span className="text-sm text-muted-foreground">{fmtDist(route.result.distanceM)}</span>
             </div>
             <Button className="w-full gap-2" onClick={app.startNavigation}>
-              <Navigation2 className="size-4" /> Navigation starten
+              <Navigation2 className="size-4" /> {t('nav-start')}
             </Button>
             <Separator />
             <ol className="space-y-2 pr-1 text-sm">

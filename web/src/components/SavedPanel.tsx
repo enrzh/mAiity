@@ -2,25 +2,27 @@ import { Star, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
 /// Floating list of saved places. Click → jump; trash → optimistic delete.
 export function SavedPanel({ onClose }: { onClose: () => void }) {
   const app = useApp()
+  const t = useT()
 
   return (
     <Card className="gap-2 border-border/60 py-4 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between px-4">
-        <CardTitle className="text-base">Gespeicherte Orte</CardTitle>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Schließen">
+        <CardTitle className="text-base">{t('saved-places')}</CardTitle>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t('close')}>
           <X className="size-4" />
         </Button>
       </CardHeader>
       <CardContent className="px-3">
         {!app.user ? (
           <div className="space-y-3 p-2 text-center text-sm text-muted-foreground">
-            <p>Melde dich an, um Orte zu speichern und auf allen Geräten zu sehen.</p>
-            <Button onClick={() => { onClose(); app.setAuthOpen(true) }}>Anmelden</Button>
+            <p>{t('saved-signin-hint')}</p>
+            <Button onClick={() => { onClose(); app.setAuthOpen(true) }}>{t('sign-in')}</Button>
           </div>
         ) : app.bookmarksStatus === 'loading' ? (
           <div className="space-y-2 p-1">
@@ -29,12 +31,12 @@ export function SavedPanel({ onClose }: { onClose: () => void }) {
           </div>
         ) : app.bookmarksStatus === 'error' ? (
           <div className="space-y-3 p-2 text-center text-sm text-muted-foreground">
-            <p>Gespeicherte Orte konnten nicht geladen werden.</p>
-            <Button onClick={() => app.loadBookmarks()}>Erneut versuchen</Button>
+            <p>{t('saved-load-failed')}</p>
+            <Button onClick={() => app.loadBookmarks()}>{t('retry')}</Button>
           </div>
         ) : app.bookmarks.length === 0 ? (
           <p className="p-2 text-center text-sm text-muted-foreground">
-            Noch nichts gespeichert. Suche einen Ort und tippe auf den Stern.
+            {t('saved-empty')}
           </p>
         ) : (
           <ul className="space-y-0.5">
@@ -55,7 +57,7 @@ export function SavedPanel({ onClose }: { onClose: () => void }) {
                   className="text-muted-foreground/60 hover:text-destructive"
                   disabled={app.pendingDeletes.has(b.id)}
                   onClick={() => { void app.removeBookmark(b.id) }}
-                  aria-label={`${b.name} löschen`}
+                  aria-label={`${b.name} ${t('delete')}`}
                 >
                   <Trash2 className="size-4" />
                 </Button>

@@ -46,15 +46,16 @@ export interface RouteResult {
 }
 export type RouteMode = 'car' | 'bike' | 'foot'
 
+// Labels live in the i18n dictionaries under `labelKey`.
 export const NEARBY_CATEGORIES = [
-  { id: 'restaurant', label: 'Restaurants', emoji: '🍽️' },
-  { id: 'cafe', label: 'Cafés', emoji: '☕' },
-  { id: 'supermarket', label: 'Supermärkte', emoji: '🛒' },
-  { id: 'fuel', label: 'Tankstellen', emoji: '⛽' },
-  { id: 'pharmacy', label: 'Apotheken', emoji: '💊' },
-  { id: 'hotel', label: 'Hotels', emoji: '🛏️' },
-  { id: 'parking', label: 'Parken', emoji: '🅿️' },
-  { id: 'atm', label: 'Geldautomaten', emoji: '🏧' },
+  { id: 'restaurant', labelKey: 'cat-restaurant', emoji: '🍽️' },
+  { id: 'cafe', labelKey: 'cat-cafe', emoji: '☕' },
+  { id: 'supermarket', labelKey: 'cat-supermarket', emoji: '🛒' },
+  { id: 'fuel', labelKey: 'cat-fuel', emoji: '⛽' },
+  { id: 'pharmacy', labelKey: 'cat-pharmacy', emoji: '💊' },
+  { id: 'hotel', labelKey: 'cat-hotel', emoji: '🛏️' },
+  { id: 'parking', labelKey: 'cat-parking', emoji: '🅿️' },
+  { id: 'atm', labelKey: 'cat-atm', emoji: '🏧' },
 ] as const
 export type NearbyCategory = (typeof NEARBY_CATEGORIES)[number]['id']
 

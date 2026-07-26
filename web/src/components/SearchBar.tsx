@@ -3,6 +3,7 @@ import { Loader2, Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { api, type GeoResult } from '../lib/api'
+import { useT } from '../lib/useT'
 import { liveMap } from './MapView'
 import { useApp } from '../state'
 
@@ -10,6 +11,7 @@ import { useApp } from '../state'
 /// "search unavailable"; Enter only picks from a live, open result list.
 export function SearchBar() {
   const app = useApp()
+  const t = useT()
   const [q, setQ] = useState('')
   const [results, setResults] = useState<GeoResult[]>([])
   const [open, setOpen] = useState(false)
@@ -123,14 +125,14 @@ export function SearchBar() {
             if (e.key === 'Enter' && open && !busy && !error && results.length > 0) pick(results[0])
             if (e.key === 'Escape') { setOpen(false); setResults([]) }
           }}
-          placeholder="Ort, Adresse suchen …"
-          aria-label="Suche"
+          placeholder={t('search-placeholder')}
+          aria-label={t('search')}
         />
         {q && (
           <Button
             variant="ghost" size="icon-sm"
             className="absolute right-1.5 top-1/2 size-7 -translate-y-1/2 rounded-full text-muted-foreground"
-            onClick={clear} aria-label="Suche löschen"
+            onClick={clear} aria-label={t('search-clear')}
           >
             <X className="size-4" />
           </Button>
@@ -139,7 +141,7 @@ export function SearchBar() {
       {!open && showRecents && (
         <ul className="absolute z-30 mt-2 w-full rounded-xl border bg-popover p-1.5 shadow-xl">
           <li className="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Zuletzt gesucht
+            {t('recent-searches')}
           </li>
           {recents().map((r, i) => (
             <li key={`${r.lat},${r.lon},${i}`}>
@@ -161,10 +163,10 @@ export function SearchBar() {
         >
           {error ? (
             <li className="px-3 py-2.5 text-sm text-muted-foreground">
-              Suche derzeit nicht verfügbar — bitte später erneut versuchen.
+              {t('search-unavailable')}
             </li>
           ) : results.length === 0 ? (
-            <li className="px-3 py-2.5 text-sm text-muted-foreground">Keine Ergebnisse.</li>
+            <li className="px-3 py-2.5 text-sm text-muted-foreground">{t('no-results')}</li>
           ) : (
             results.map((r, i) => (
               <li key={`${r.lat},${r.lon},${i}`}>

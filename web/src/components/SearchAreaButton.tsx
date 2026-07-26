@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { liveMap } from './MapView'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 import type { NearbyCategory } from '../lib/api'
 
@@ -10,6 +11,7 @@ import type { NearbyCategory } from '../lib/api'
 /// viewport rather than a radius around a stale point.
 export function SearchAreaButton() {
   const app = useApp()
+  const t = useT()
   const [moved, setMoved] = useState(false)
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function SearchAreaButton() {
             { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() })
         }}
       >
-        <RotateCw className="size-4" /> Diesen Bereich durchsuchen
+        <RotateCw className="size-4" /> {t('search-this-area')}
       </Button>
     </div>
   )

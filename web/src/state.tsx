@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
+import { makeT, type TKey } from './lib/i18n'
 import {
   api, session, styleUrlFor,
   type Bookmark, type GeoResult, type NearbyCategory, type Pack,
@@ -20,7 +21,8 @@ export interface RouteState {
   to: Place
   mode: RouteMode
   status: 'loading' | 'ready' | 'error'
-  errorText?: string
+  /** i18n key — the panel translates at render time so language switches apply. */
+  errorKey?: TKey
   result?: RouteResult
 }
 
@@ -39,6 +41,9 @@ interface AppState {
   pickingStart: boolean
   pois: GeoResult[]
   activeCategory: string | null
+  /** UI + map-label language (ISO 639-1). */
+  lang: string
+  setLang: (l: string) => void
   is3D: boolean
   toggle3D: () => void
   navigating: boolean
@@ -97,6 +102,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pickingStart, setPickingStart] = useState(false)
   const [pois, setPois] = useState<GeoResult[]>([])
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  // Map-label + UI language. Tiles carry name:<lang> for 40+ languages.
+  const [lang, setLangState] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('maps.lang')
+      if (saved) return saved
+    } catch { /* private mode */ }
+    const nav = (navigator.language || 'de').slice(0, 2).toLowerCase()
+    return ['de', 'en', 'fr', 'es', 'it', 'nl', 'pl', 'tr'].includes(nav) ? nav : 'en'
+  })
+  const setLang = useCallback((l: string) => {
+    setLangState(l)
+    try { localStorage.setItem('maps.lang', l) } catch { /* best-effort */ }
+  }, [])
   const [is3D, setIs3D] = useState(false)
   const [navigating, setNavigating] = useState(false)
 
@@ -104,6 +122,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // bookmark mutation counter — stale fetches must never clobber newer state.
   const epoch = useRef(0)
   const bmVersion = useRef(0)
+
+  // Language mirror for callbacks with empty dep arrays (toasts fire in the
+  // language active at the moment they appear).
+  const langRef = useRef(lang)
+  langRef.current = lang
+  const tr = useCallback((k: TKey) => makeT(langRef.current)(k), [])
 
   const notify = useCallback((msg: string) => { toast.error(msg) }, [])
 
@@ -232,7 +256,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return
     // URLSearchParams already decoded — decoding again crashes on literal '%'.
     const name = nameParts.join(',') || `${lat.toFixed(5)}, ${lon.toFixed(5)}`
-    setSelected({ name, label: 'Geteilter Ort', lat, lon })
+    setSelected({ name, label: tr('shared-place'), lat, lon })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -269,12 +293,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (status !== 404) { // 404 = already gone, that's fine
         bmVersion.current++
         setBookmarks((bs) => [b, ...bs])
-        notify('Löschen fehlgeschlagen — bitte erneut versuchen.')
+        notify(tr('delete-failed'))
       }
     } finally {
       setPendingDeletes((s) => { const n = new Set(s); n.delete(b.id); return n })
     }
-  }, [notify])
+  }, [notify, tr])
 
   const removeBookmark = useCallback(async (id: string) => {
     const b = bookmarks.find((x) => x.id === id)
@@ -305,7 +329,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (seq !== routeSeq.current) return
         setRoute({
           from: fromPlace, to, mode, status: 'error',
-          errorText: 'Standort nicht verfügbar — Startpunkt wählen oder Standortzugriff erlauben.',
+          errorKey: 'route-err-no-location',
         })
         return
       }
@@ -319,9 +343,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const code = (e as { code?: string })?.code
       setRoute({
         from: fromPlace, to, mode, status: 'error',
-        errorText: code === 'no_route_found'
-          ? 'Keine Route gefunden.'
-          : 'Routenberechnung derzeit nicht verfügbar.',
+        errorKey: code === 'no_route_found' ? 'route-err-not-found' : 'route-err-unavailable',
       })
     }
   }, [])
@@ -362,13 +384,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const results = await api.nearby(cat, center.lat, center.lon, bounds)
       if (seq !== poiSeq.current) return
       setPois(results)
-      if (results.length === 0) toast.info('Nichts in der Nähe gefunden.')
+      if (results.length === 0) toast.info(tr('nearby-none'))
     } catch {
       if (seq !== poiSeq.current) return
       setPois([])
-      toast.error('Suche derzeit nicht verfügbar.')
+      toast.error(tr('nearby-unavailable'))
     }
-  }, [])
+  }, [tr])
   const clearPois = useCallback(() => { poiSeq.current++; setPois([]); setActiveCategory(null) }, [])
 
   // ---- Custom packs (the install feature) ----------------------------------
@@ -402,6 +424,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppState = {
     user, bookmarks, bookmarksStatus, pendingDeletes, packs: allPacks, packsError,
     activePack, activeStyleUrl, selected, authOpen, route, pickingStart, pois, activeCategory,
+    lang, setLang,
     is3D, toggle3D: () => setIs3D((v) => !v),
     navigating,
     startNavigation: () => setNavigating(true),

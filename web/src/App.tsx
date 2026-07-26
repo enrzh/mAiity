@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, ChevronLeft, ChevronRight, Crosshair, LogOut, Minus, Palette, Plus, Star, User } from 'lucide-react'
+import { Box, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -8,6 +8,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/useT'
 import { AppProvider, useApp } from './state'
 import { MapView, liveMap, locateUser, railInset, set3D, zoomBy } from './components/MapView'
 import { CategoryChips, centerOf } from './components/CategoryChips'
@@ -32,6 +33,7 @@ type Panel = 'none' | 'saved' | 'packs'
 /// nothing stacks on top of these (they shared the same corner).
 function MapControls() {
   const app = useApp()
+  const t = useT()
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
@@ -44,27 +46,55 @@ function MapControls() {
         variant={app.is3D ? 'default' : 'ghost'}
         className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
         onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
-        aria-label="3D-Ansicht" aria-pressed={app.is3D} title="3D-Ansicht"
+        aria-label={t('view-3d')} aria-pressed={app.is3D} title={t('view-3d')}
       >
         <Box className="size-5" />
       </Button>
       <Button variant="ghost" className={btn} onClick={locateUser}
-        aria-label="Mein Standort" title="Mein Standort">
+        aria-label={t('my-location')} title={t('my-location')}>
         <Crosshair className="size-5" />
       </Button>
       {/* Zoom pair, joined like a segmented control. */}
       <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/80 shadow-lg backdrop-blur-xl">
         <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
-          onClick={() => zoomBy(1)} aria-label="Vergrößern" title="Vergrößern">
+          onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
           <Plus className="size-5" />
         </Button>
         <Separator />
         <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
-          onClick={() => zoomBy(-1)} aria-label="Verkleinern" title="Verkleinern">
+          onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
           <Minus className="size-5" />
         </Button>
       </div>
     </div>
+  )
+}
+
+const LANGS: Array<[string, string]> = [
+  ['de', 'Deutsch'], ['en', 'English'], ['fr', 'Français'], ['es', 'Español'],
+  ['it', 'Italiano'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['tr', 'Türkçe'],
+]
+
+function LanguageMenu({ size }: { size: string }) {
+  const app = useApp()
+  const t = useT()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className={cn(size, 'shrink-0 rounded-xl')}
+          aria-label={t('language')} title={t('language')}>
+          <Globe className="size-5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        {LANGS.map(([code, label]) => (
+          <DropdownMenuItem key={code} onClick={() => app.setLang(code)}>
+            <span className="flex-1">{label}</span>
+            {app.lang === code && <Check className="size-4" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -74,6 +104,7 @@ function RailControls({
   panel, toggle, compact = false,
 }: { panel: Panel; toggle: (p: Panel) => void; compact?: boolean }) {
   const app = useApp()
+  const t = useT()
   const size = compact ? 'size-9' : 'size-10'
   return (
     <>
@@ -81,7 +112,7 @@ function RailControls({
         variant="ghost" size="icon"
         className={cn(size, 'shrink-0 rounded-xl', panel === 'packs' && 'bg-accent text-accent-foreground')}
         onClick={() => toggle('packs')}
-        aria-label="Karten-Stil" aria-pressed={panel === 'packs'} title="Karten-Stil"
+        aria-label={t('map-style')} aria-pressed={panel === 'packs'} title={t('map-style')}
       >
         <Palette className="size-5" />
       </Button>
@@ -89,14 +120,15 @@ function RailControls({
         variant="ghost" size="icon"
         className={cn(size, 'shrink-0 rounded-xl', panel === 'saved' && 'bg-accent text-accent-foreground')}
         onClick={() => toggle('saved')}
-        aria-label="Gespeicherte Orte" aria-pressed={panel === 'saved'} title="Gespeicherte Orte"
+        aria-label={t('saved-places')} aria-pressed={panel === 'saved'} title={t('saved-places')}
       >
         <Star className="size-5" />
       </Button>
+      <LanguageMenu size={size} />
       {app.user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className={cn(size, 'shrink-0 rounded-xl font-semibold')} aria-label={`Konto: ${app.user.email ?? ''}`}>
+            <Button className={cn(size, 'shrink-0 rounded-xl font-semibold')} aria-label={`${t('account')}: ${app.user.email ?? ''}`}>
               {(app.user.email ?? '?')[0].toUpperCase()}
             </Button>
           </DropdownMenuTrigger>
@@ -104,14 +136,14 @@ function RailControls({
             <DropdownMenuLabel className="truncate">{app.user.displayName ?? app.user.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => app.logout()}>
-              <LogOut className="size-4" /> Abmelden
+              <LogOut className="size-4" /> {t('sign-out')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
         <Button
           variant="ghost" size="icon" className={cn(size, 'shrink-0 rounded-xl')}
-          onClick={() => app.setAuthOpen(true)} aria-label="Anmelden" title="Anmelden"
+          onClick={() => app.setAuthOpen(true)} aria-label={t('sign-in')} title={t('sign-in')}
         >
           <User className="size-5" />
         </Button>
@@ -122,6 +154,7 @@ function RailControls({
 
 function Shell() {
   const app = useApp()
+  const t = useT()
   const [panel, setPanel] = useState<Panel>('none')
   const [collapsed, setCollapsed] = useState(false)
   const railRef = useRef<HTMLElement>(null)
@@ -136,6 +169,10 @@ function Shell() {
   useEffect(() => { if (app.selected || app.route) setPanel('none') }, [app.selected, app.route])
   // Selecting something while collapsed should reveal it, like Maps does.
   useEffect(() => { if (app.selected || app.route) setCollapsed(false) }, [app.selected, app.route])
+  // Category results must take over the rail: with the packs/saved panel
+  // open they loaded into a slot BELOW it in the precedence chain, so the
+  // chips looked broken. One thing at a time, like Maps.
+  useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on
   // desktop — on mobile the rail is a bottom sheet, not a left panel.
@@ -244,8 +281,8 @@ function Shell() {
             longer sit at the map's left edge. */}
         <button
           onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
-          title={collapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
+          aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
+          title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
           className={cn(
             'absolute top-1/2 z-40 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background/90 text-muted-foreground shadow-md backdrop-blur transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
             collapsed ? 'md:left-0' : 'md:left-[392px]',
@@ -261,8 +298,8 @@ function Shell() {
             className="absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive shadow-lg backdrop-blur"
             role="alert"
           >
-            Karte konnte nicht geladen werden.
-            <Button size="sm" variant="destructive" onClick={() => app.loadPacks()}>Erneut versuchen</Button>
+            {t('map-load-failed')}
+            <Button size="sm" variant="destructive" onClick={() => app.loadPacks()}>{t('retry')}</Button>
           </div>
         )}
       </main>
@@ -276,13 +313,14 @@ function Shell() {
 /** Quiet default state — hints without shouting. */
 function EmptyRail() {
   const app = useApp()
+  const t = useT()
   return (
     <div className="hidden h-full flex-col justify-end gap-1 px-1 pb-1 md:flex">
       <p className="text-sm font-medium text-foreground/80">
-        {app.user ? `Willkommen zurück` : 'Karte erkunden'}
+        {app.user ? t('welcome-back') : t('explore-map')}
       </p>
       <p className="text-[13px] leading-relaxed text-muted-foreground">
-        Suche einen Ort, tippe auf die Karte für Details, oder wähle eine Kategorie.
+        {t('empty-hint')}
       </p>
     </div>
   )

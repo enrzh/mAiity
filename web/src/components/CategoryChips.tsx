@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { NEARBY_CATEGORIES, type NearbyCategory } from '../lib/api'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 import type { Map as MLMap } from 'maplibre-gl'
 
@@ -24,6 +25,7 @@ const ICONS: Record<string, LucideIcon> = {
 /// "In der Nähe" browsing — one tap shows a category around the map center.
 export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; lon: number } | null }) {
   const app = useApp()
+  const t = useT()
   if (app.route) return null
 
   const pick = (cat: NearbyCategory) => {
@@ -52,7 +54,7 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
             onClick={() => pick(c.id)}
           >
             <Icon className="size-3.5" />
-            {c.label}
+            {t(c.labelKey)}
             {active && <X className="size-3 opacity-70" />}
           </Button>
         )

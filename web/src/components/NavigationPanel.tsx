@@ -6,6 +6,7 @@ import { liveMap, showUserDot } from './MapView'
 import {
   OFF_ROUTE_M, bearing, currentStep, metresToNextManeuver, snapToRoute, type LngLat,
 } from '../lib/navigation'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m / 10) * 10} m`)
@@ -19,6 +20,7 @@ const fmtEta = (s: number) => {
 /// tracks at whatever rate the device actually produces fixes.
 export function NavigationPanel() {
   const app = useApp()
+  const t = useT()
   const route = app.route
   const geometry = (route?.result?.geometry ?? []) as LngLat[]
   const steps = route?.result?.steps ?? []
@@ -60,7 +62,7 @@ export function NavigationPanel() {
         setOffRoute(isOff)
         if (isOff && !rerouting.current && route) {
           rerouting.current = true
-          app.setRouteStart({ name: 'Aktuelle Position', label: '', lat: pos[1], lon: pos[0] })
+          app.setRouteStart({ name: t('current-position'), label: '', lat: pos[1], lon: pos[0] })
           setTimeout(() => { rerouting.current = false }, 12_000) // don't thrash
         }
       },
@@ -87,17 +89,17 @@ export function NavigationPanel() {
               <div className="text-2xl font-bold leading-none tabular-nums">{fmtDist(toManeuver)}</div>
             )}
             <p className="mt-1 text-[15px] font-medium leading-snug">
-              {next?.instruction ?? step?.instruction ?? 'Weiter'}
+              {next?.instruction ?? step?.instruction ?? t('nav-continue')}
             </p>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={app.stopNavigation} aria-label="Navigation beenden">
+          <Button variant="ghost" size="icon-sm" onClick={app.stopNavigation} aria-label={t('nav-stop')}>
             <X className="size-4" />
           </Button>
         </div>
 
         {offRoute && (
           <p className="flex items-center gap-2 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-[13px] text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="size-4 shrink-0" /> Abseits der Route — neu berechnen …
+            <AlertTriangle className="size-4 shrink-0" /> {t('off-route')}
           </p>
         )}
 
@@ -110,7 +112,7 @@ export function NavigationPanel() {
         </div>
 
         {next && steps[stepIdx + 2] && (
-          <p className="truncate text-xs text-muted-foreground">danach: {steps[stepIdx + 2].instruction}</p>
+          <p className="truncate text-xs text-muted-foreground">{t('nav-then')} {steps[stepIdx + 2].instruction}</p>
         )}
       </CardContent>
     </Card>

@@ -7,14 +7,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ApiError } from '../lib/api'
+import { type TKey } from '../lib/i18n'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
-const ERROR_TEXT: Record<string, string> = {
-  invalid_email: 'Bitte eine gültige E-Mail-Adresse eingeben.',
-  password_too_short: 'Passwort muss mindestens 8 Zeichen haben.',
-  email_taken: 'Diese E-Mail ist bereits registriert.',
-  invalid_credentials: 'E-Mail oder Passwort ist falsch.',
-  too_many_requests: 'Zu viele Versuche — bitte kurz warten.',
+const ERROR_KEY: Record<string, TKey> = {
+  invalid_email: 'err-invalid-email',
+  password_too_short: 'err-password-too-short',
+  email_taken: 'err-email-taken',
+  invalid_credentials: 'err-invalid-credentials',
+  too_many_requests: 'err-too-many-requests',
 }
 
 /// Radix Dialog: focus trap, Escape and unmount-on-close come for free.
@@ -29,6 +31,7 @@ export function AuthModal() {
 
 function AuthDialogContent() {
   const app = useApp()
+  const t = useT()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,7 +47,7 @@ function AuthDialogContent() {
       else await app.register(email, password)
     } catch (err) {
       const code = err instanceof ApiError ? err.code : 'unknown'
-      setError(ERROR_TEXT[code] ?? 'Etwas ist schiefgelaufen — bitte erneut versuchen.')
+      setError(t(ERROR_KEY[code] ?? 'err-unknown'))
     } finally {
       setBusy(false)
     }
@@ -53,20 +56,20 @@ function AuthDialogContent() {
   return (
     <DialogContent className="sm:max-w-[380px]">
       <DialogHeader>
-        <DialogTitle>{mode === 'login' ? 'Anmelden' : 'Konto erstellen'}</DialogTitle>
+        <DialogTitle>{mode === 'login' ? t('sign-in') : t('create-account')}</DialogTitle>
         <DialogDescription>
-          Orte speichern und auf allen Geräten synchronisieren.
+          {t('auth-subtitle')}
         </DialogDescription>
       </DialogHeader>
       <Tabs value={mode} onValueChange={(v) => { setMode(v as 'login' | 'register'); setError('') }}>
         <TabsList className="w-full">
-          <TabsTrigger value="login" className="flex-1">Anmelden</TabsTrigger>
-          <TabsTrigger value="register" className="flex-1">Registrieren</TabsTrigger>
+          <TabsTrigger value="login" className="flex-1">{t('sign-in')}</TabsTrigger>
+          <TabsTrigger value="register" className="flex-1">{t('register')}</TabsTrigger>
         </TabsList>
       </Tabs>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="auth-email">E-Mail</Label>
+          <Label htmlFor="auth-email">{t('email')}</Label>
           <Input
             id="auth-email" type="email" value={email} required
             autoComplete="email" autoFocus
@@ -74,7 +77,7 @@ function AuthDialogContent() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="auth-password">Passwort</Label>
+          <Label htmlFor="auth-password">{t('password')}</Label>
           <Input
             id="auth-password" type="password" value={password} required minLength={8}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -83,11 +86,11 @@ function AuthDialogContent() {
         </div>
         {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
         <Button type="submit" className="w-full" disabled={busy}>
-          {busy ? '…' : mode === 'login' ? 'Anmelden' : 'Konto erstellen'}
+          {busy ? '…' : mode === 'login' ? t('sign-in') : t('create-account')}
         </Button>
         {mode === 'register' && (
           <p className="text-center text-xs text-muted-foreground">
-            Weitere Anmelde-Optionen (Apple, Google) folgen in der App.
+            {t('auth-more-options')}
           </p>
         )}
       </form>

@@ -886,11 +886,22 @@
       "source-layer": "buildings",
       "minzoom": 15,
       "filter": [
-        "==",
+        "all",
         [
-          "geometry-type"
+          "==",
+          [
+            "geometry-type"
+          ],
+          "Polygon"
         ],
-        "Polygon"
+        [
+          "==",
+          [
+            "get",
+            "kind"
+          ],
+          "building"
+        ]
       ],
       "paint": {
         "line-color": "#2b1d10",
@@ -909,7 +920,7 @@
           20,
           1.4
         ],
-        "line-opacity": 0.9
+        "line-opacity": 0.45
       }
     },
     {

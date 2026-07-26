@@ -2,6 +2,7 @@ import { MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NEARBY_CATEGORIES } from '../lib/api'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
 export const fmtDistance = (m?: number) =>
@@ -11,8 +12,10 @@ export const fmtDistance = (m?: number) =>
 /// beside the pins so you can scan without hunting on the map.
 export function PoiResults() {
   const app = useApp()
+  const t = useT()
   if (app.pois.length === 0) return null
-  const label = NEARBY_CATEGORIES.find((c) => c.id === app.activeCategory)?.label ?? 'Ergebnisse'
+  const key = NEARBY_CATEGORIES.find((c) => c.id === app.activeCategory)?.labelKey
+  const label = key ? t(key) : t('results')
 
   return (
     <Card className="gap-0 border-border/60 py-0 shadow-none">
@@ -21,7 +24,7 @@ export function PoiResults() {
           <h2 className="text-[13px] font-semibold text-muted-foreground">
             {label} · {app.pois.length}
           </h2>
-          <Button variant="ghost" size="icon-sm" onClick={app.clearPois} aria-label="Ergebnisse schließen">
+          <Button variant="ghost" size="icon-sm" onClick={app.clearPois} aria-label={t('results-close')}>
             <X className="size-3.5" />
           </Button>
         </div>

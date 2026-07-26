@@ -7,6 +7,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '../lib/api'
+import { type TKey } from '../lib/i18n'
+import { useT } from '../lib/useT'
 import { useApp } from '../state'
 
 /// Create a texture pack with color pickers — no JSON knowledge needed.
@@ -31,13 +33,13 @@ const DEFAULTS: Slots = {
   schrift: '#3d3d3d',
 }
 
-const SLOT_LABELS: Record<keyof Slots, string> = {
-  wasser: 'Wasser',
-  land: 'Land',
-  gruen: 'Grünflächen',
-  strassen: 'Straßen',
-  gebaeude: 'Gebäude',
-  schrift: 'Beschriftung',
+const SLOT_LABELS: Record<keyof Slots, TKey> = {
+  wasser: 'slot-water',
+  land: 'slot-land',
+  gruen: 'slot-green',
+  strassen: 'slot-roads',
+  gebaeude: 'slot-buildings',
+  schrift: 'slot-labels',
 }
 
 /** Lighten (f>0) or darken (f<0) a #rrggbb color. */
@@ -103,6 +105,7 @@ function applySlots(base: unknown, s: Slots): unknown {
 
 export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const app = useApp()
+  const t = useT()
   const [name, setName] = useState('')
   const [slots, setSlots] = useState<Slots>(DEFAULTS)
   const [busy, setBusy] = useState(false)
@@ -120,13 +123,13 @@ export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange
       if (!Array.isArray((base as { layers?: unknown })?.layers)) throw new Error('template invalid')
       const styled = applySlots(base, slots)
       await app.installPack({ name: name.trim(), styleJson: JSON.stringify(styled) })
-      toast.success('Pack erstellt und aktiviert.')
+      toast.success(t('pack-created'))
       onOpenChange(false)
       setName('')
       setSlots(DEFAULTS)
     } catch (e) {
       const code = e instanceof ApiError ? e.code : 'unknown'
-      toast.error(code === 'pack_limit_reached' ? 'Maximal 20 eigene Packs.' : 'Erstellen fehlgeschlagen.')
+      toast.error(code === 'pack_limit_reached' ? t('err-pack-limit') : t('pack-create-failed'))
     } finally {
       setBusy(false)
     }
@@ -136,15 +139,15 @@ export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Eigenes Pack erstellen</DialogTitle>
+          <DialogTitle>{t('pack-editor-title')}</DialogTitle>
           <DialogDescription>
-            Farben wählen — fertig ist dein Texture-Pack. Es wird mit deinem Konto synchronisiert.
+            {t('pack-editor-subtitle')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="editor-name">Name</Label>
-            <Input id="editor-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="z. B. Mitternacht" />
+            <Label htmlFor="editor-name">{t('name')}</Label>
+            <Input id="editor-name" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={t('pack-editor-name-placeholder')} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             {(Object.keys(SLOT_LABELS) as Array<keyof Slots>).map((k) => (
@@ -154,9 +157,9 @@ export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange
                   value={slots[k]}
                   onChange={set(k)}
                   className="size-8 shrink-0 cursor-pointer appearance-none rounded-lg border-0 bg-transparent p-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-lg [&::-webkit-color-swatch]:border [&::-webkit-color-swatch]:border-black/10"
-                  aria-label={SLOT_LABELS[k]}
+                  aria-label={t(SLOT_LABELS[k])}
                 />
-                <span className="text-sm font-medium">{SLOT_LABELS[k]}</span>
+                <span className="text-sm font-medium">{t(SLOT_LABELS[k])}</span>
               </label>
             ))}
           </div>
@@ -173,7 +176,7 @@ export function PackEditor({ open, onOpenChange }: { open: boolean; onOpenChange
             </div>
           </div>
           <Button className="w-full" disabled={busy || !name.trim()} onClick={submit}>
-            {busy ? '…' : 'Erstellen und aktivieren'}
+            {busy ? '…' : t('pack-create-activate')}
           </Button>
         </div>
       </DialogContent>
