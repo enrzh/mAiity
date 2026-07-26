@@ -98,7 +98,14 @@
       "source-layer": "water",
       "paint": {
         "fill-pattern": "gta-water"
-      }
+      },
+      "filter": [
+        "==",
+        [
+          "geometry-type"
+        ],
+        "Polygon"
+      ]
     },
     {
       "id": "roads-asphalt",

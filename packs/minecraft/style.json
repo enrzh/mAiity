@@ -122,7 +122,14 @@
       "source-layer": "water",
       "paint": {
         "fill-pattern": "mc-water"
-      }
+      },
+      "filter": [
+        "==",
+        [
+          "geometry-type"
+        ],
+        "Polygon"
+      ]
     },
     {
       "id": "roads-casing",

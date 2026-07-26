@@ -107,7 +107,14 @@
       "source-layer": "water",
       "paint": {
         "fill-color": "#a5cae8"
-      }
+      },
+      "filter": [
+        "==",
+        [
+          "geometry-type"
+        ],
+        "Polygon"
+      ]
     },
     {
       "id": "roads-casing",
