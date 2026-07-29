@@ -21,6 +21,7 @@ struct MapScreen: View {
         span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
     )
     @State private var is3D = false
+    @State private var selectedMarkerID: String?
 
     var body: some View {
         if model.activePackId == "light" {
@@ -31,7 +32,7 @@ struct MapScreen: View {
     }
 
     private var appleMap: some View {
-        Map(position: $position) {
+        Map(position: $position, selection: $selectedMarkerID) {
             if location.isAuthorized {
                 UserAnnotation()
             }
@@ -39,16 +40,19 @@ struct MapScreen: View {
             ForEach(model.pois) { place in
                 Marker(place.name, coordinate: coordinate(place.lat, place.lon))
                     .tint(.teal)
+                    .tag("poi:\(place.id)")
             }
 
             ForEach(model.bookmarks) { bookmark in
                 Marker(bookmark.name, coordinate: coordinate(bookmark.lat, bookmark.lon))
                     .tint(.yellow)
+                    .tag("bookmark:\(bookmark.id)")
             }
 
             if let selected = model.selected {
                 Marker(selected.name, coordinate: coordinate(selected.lat, selected.lon))
                     .tint(.red)
+                    .tag("selected")
             }
 
             if let geometry = model.route?.result?.geometry, geometry.count > 1 {
@@ -57,6 +61,7 @@ struct MapScreen: View {
             }
         }
         .mapStyle(selectedMapStyle)
+        .preferredColorScheme(preferredMapColorScheme)
         .mapScope(mapScope)
         .mapControls {
             MapCompass(scope: mapScope)
@@ -74,6 +79,25 @@ struct MapScreen: View {
         .onChange(of: model.selected) { _, place in
             guard let place else { return }
             position = .region(regionAround(place.lat, place.lon, span: 0.08))
+        }
+        .onChange(of: selectedMarkerID) { _, markerID in
+            guard let markerID else { return }
+            if markerID.hasPrefix("poi:") {
+                let id = String(markerID.dropFirst(4))
+                if let place = model.pois.first(where: { $0.id == id }) {
+                    model.select(result: place)
+                }
+            } else if markerID.hasPrefix("bookmark:") {
+                let id = String(markerID.dropFirst(9))
+                if let bookmark = model.bookmarks.first(where: { $0.id == id }) {
+                    model.selected = Place(
+                        name: bookmark.name,
+                        label: bookmark.note,
+                        lat: bookmark.lat,
+                        lon: bookmark.lon
+                    )
+                }
+            }
         }
         .onChange(of: model.cameraTarget) { _, target in
             guard let place = target?.place else { return }
@@ -122,7 +146,24 @@ struct MapScreen: View {
         }
     }
 
-    private var selectedMapStyle: MapStyle { .standard(elevation: .realistic) }
+    private var selectedMapStyle: MapStyle {
+        switch model.appleMapType {
+        case "satellite":
+            return .imagery(elevation: .realistic)
+        case "hybrid":
+            return .hybrid(elevation: .realistic)
+        default:
+            return .standard(elevation: .realistic)
+        }
+    }
+
+    private var preferredMapColorScheme: ColorScheme? {
+        switch model.appleColorScheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
 
     private func coordinate(_ lat: Double, _ lon: Double) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: lat, longitude: lon)

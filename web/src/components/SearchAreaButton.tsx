@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { liveMap } from './MapView'
+import { activeMapViewport } from '../maps/rendererController'
 import { useT } from '../lib/useT'
 import { useApp } from '../state'
 import type { NearbyCategory } from '../lib/api'
@@ -36,12 +37,22 @@ export function SearchAreaButton() {
         className="pointer-events-auto gap-2 rounded-full px-4 shadow-lg"
         onClick={() => {
           const m = liveMap.current
-          if (!m) return
-          const b = m.getBounds(), c = m.getCenter()
+          const viewport = activeMapViewport()
+          if (!viewport) return
           setMoved(false)
           void app.showCategory(app.activeCategory as NearbyCategory,
-            { lat: c.lat, lon: c.lng },
-            { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() })
+            viewport.center,
+            m ? {
+              west: m.getBounds().getWest(),
+              south: m.getBounds().getSouth(),
+              east: m.getBounds().getEast(),
+              north: m.getBounds().getNorth(),
+            } : {
+              west: viewport.center.lon - viewport.longitudeDelta / 2,
+              south: viewport.center.lat - viewport.latitudeDelta / 2,
+              east: viewport.center.lon + viewport.longitudeDelta / 2,
+              north: viewport.center.lat + viewport.latitudeDelta / 2,
+            })
         }}
       >
         <RotateCw className="size-4" /> {t('search-this-area')}

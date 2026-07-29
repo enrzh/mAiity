@@ -6,6 +6,10 @@ import {
   type Bookmark, type GeoResult, type NearbyCategory, type Pack,
   type RouteMode, type RouteResult, type User,
 } from './lib/api'
+import { readMapPreferences, writeMapPreferences } from './maps/providerPreferences'
+import type {
+  AppleColorScheme, AppleMapType, AppleOverlayTone, MapPreferences, MapProvider,
+} from './maps/types'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -33,6 +37,8 @@ interface AppState {
   pendingDeletes: Set<string>
   packs: Pack[]
   packsError: boolean
+  mapPreferences: MapPreferences
+  mapProvider: MapProvider
   activePack: string
   activeStyleUrl: string | null
   selected: Place | null
@@ -56,6 +62,13 @@ interface AppState {
   logout: () => Promise<void>
   select: (place: Place | null) => void
   selectResult: (r: GeoResult) => void
+  setMapProvider: (provider: MapProvider) => void
+  setAppleAppearance: (patch: Partial<{
+    appleMapType: AppleMapType
+    appleColorScheme: AppleColorScheme
+    appleOverlayTone: AppleOverlayTone
+  }>) => void
+  setCustomPack: (id: string) => void
   setActivePack: (id: string) => void
   loadPacks: () => void
   loadBookmarks: () => void
@@ -85,8 +98,6 @@ export const useApp = () => {
   return v
 }
 
-const PACK_KEY = 'maps.activePack'
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
@@ -94,7 +105,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set())
   const [packs, setPacks] = useState<Pack[]>([])
   const [packsError, setPacksError] = useState(false)
-  const [activePack, setActive] = useState<string>(() => localStorage.getItem(PACK_KEY) ?? 'light')
+  const [mapPreferences, setMapPreferences] = useState<MapPreferences>(() => readMapPreferences())
   const [selected, setSelected] = useState<Place | null>(null)
   const [authOpen, setAuthOpen] = useState(false)
   const [customPacks, setCustomPacks] = useState<Pack[]>([])
@@ -131,9 +142,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const notify = useCallback((msg: string) => { toast.error(msg) }, [])
 
-  const applyPack = useCallback((id: string) => {
-    setActive(id)
-    localStorage.setItem(PACK_KEY, id)
+  const applyPreferences = useCallback((next: MapPreferences) => {
+    setMapPreferences(next)
+    writeMapPreferences(next)
   }, [])
 
   const loadPacks = useCallback(() => {
@@ -186,7 +197,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadBookmarks()
       loadCustomPacks()
       const s = await api.settings().catch(() => null)
-      if (e === epoch.current && s?.activePack) applyPack(s.activePack)
+      if (e === epoch.current && s?.activePack) {
+        const current = readMapPreferences()
+        const provider: MapProvider = s.activePack === 'light' ? 'apple' : 'custom'
+        applyPreferences({
+          ...current,
+          provider,
+          customPackId: provider === 'custom' ? s.activePack : current.customPackId,
+        })
+      }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -200,11 +219,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Server settings win when they exist; only seed them on true first login.
     const s = await api.settings().catch(() => null)
     if (s?.activePack) {
-      applyPack(s.activePack)
+      const provider: MapProvider = s.activePack === 'light' ? 'apple' : 'custom'
+      applyPreferences({
+        ...mapPreferences,
+        provider,
+        customPackId: provider === 'custom' ? s.activePack : mapPreferences.customPackId,
+      })
     } else {
-      api.saveSettings({ activePack: localStorage.getItem(PACK_KEY) ?? 'light' }).catch(() => {})
+      api.saveSettings({
+        activePack: mapPreferences.provider === 'apple' ? 'light' : mapPreferences.customPackId,
+      }).catch(() => {})
     }
-  }, [loadBookmarks, loadCustomPacks, applyPack])
+  }, [loadBookmarks, loadCustomPacks, applyPreferences, mapPreferences])
 
   const login = useCallback(async (email: string, password: string) => {
     await afterAuth((await session.login(email, password)).user)
@@ -227,18 +253,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCustomPacks([])
       setBookmarksStatus('ready')
       // A custom pack can't render without the account context list — fall back.
-      if ((localStorage.getItem(PACK_KEY) ?? '').startsWith('u-')) applyPack('light')
+      if (mapPreferences.customPackId.startsWith('u-')) {
+        applyPreferences({ ...mapPreferences, provider: 'apple', customPackId: 'dark' })
+      }
     }
-  }, [applyPack])
+  }, [applyPreferences, mapPreferences])
 
-  const setActivePack = useCallback((id: string) => {
-    applyPack(id)
+  const persistProvider = useCallback((preferences: MapPreferences) => {
     if (user) {
-      api.saveSettings({ activePack: id }).catch((e) => {
+      api.saveSettings({
+        activePack: preferences.provider === 'apple' ? 'light' : preferences.customPackId,
+      }).catch((e) => {
         if (e?.status === 401) setUser(null)
       })
     }
-  }, [user, applyPack])
+  }, [user])
+
+  const setMapProvider = useCallback((provider: MapProvider) => {
+    const next = { ...mapPreferences, provider }
+    applyPreferences(next)
+    persistProvider(next)
+  }, [applyPreferences, mapPreferences, persistProvider])
+
+  const setAppleAppearance = useCallback((patch: Partial<{
+    appleMapType: AppleMapType
+    appleColorScheme: AppleColorScheme
+    appleOverlayTone: AppleOverlayTone
+  }>) => {
+    applyPreferences({ ...mapPreferences, ...patch })
+  }, [applyPreferences, mapPreferences])
+
+  const setCustomPack = useCallback((id: string) => {
+    const next = { ...mapPreferences, provider: 'custom' as const, customPackId: id }
+    applyPreferences(next)
+    persistProvider(next)
+  }, [applyPreferences, mapPreferences, persistProvider])
+
+  const setActivePack = useCallback((id: string) => {
+    if (id === 'light') setMapProvider('apple')
+    else setCustomPack(id)
+  }, [setCustomPack, setMapProvider])
 
   // While picking a route start, any place selection becomes the start point.
   // (Ref indirection: setRouteStart is declared further down in this body.)
@@ -410,32 +464,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const installPack = useCallback(async (body: { name: string; styleUrl?: string; styleJson?: string }) => {
     const created = await api.installPack(body)
     setCustomPacks((ps) => [created, ...ps])
-    applyPack(created.id)
-    if (user) api.saveSettings({ activePack: created.id }).catch(() => {})
-  }, [applyPack, user])
+    setCustomPack(created.id)
+  }, [setCustomPack])
 
   const removePack = useCallback(async (id: string) => {
     await api.deletePack(id)
     setCustomPacks((ps) => ps.filter((p) => p.id !== id))
-    if (activePack === id) {
-      applyPack('light')
-      // Persist the fallback, or other devices keep pointing at a dead pack.
-      if (user) api.saveSettings({ activePack: 'light' }).catch(() => {})
+    if (mapPreferences.provider === 'custom' && mapPreferences.customPackId === id) {
+      setMapProvider('apple')
     }
-  }, [activePack, applyPack, user])
+  }, [mapPreferences, setMapProvider])
 
   const allPacks = useMemo(() => [...packs, ...customPacks], [packs, customPacks])
+  const activePack = mapPreferences.provider === 'apple' ? 'light' : mapPreferences.customPackId
 
   const activeStyleUrl = useMemo(() => {
-    const p = allPacks.find((x) => x.id === activePack)
-      ?? allPacks.find((x) => x.id === 'light')
+    const p = allPacks.find((x) => x.id === mapPreferences.customPackId)
+      ?? allPacks.find((x) => x.id !== 'light')
       ?? allPacks[0]
       ?? null
     return p ? styleUrlFor(p) : null
-  }, [allPacks, activePack])
+  }, [allPacks, mapPreferences.customPackId])
 
   const value: AppState = {
     user, bookmarks, bookmarksStatus, pendingDeletes, packs: allPacks, packsError,
+    mapPreferences, mapProvider: mapPreferences.provider,
     activePack, activeStyleUrl, selected, authOpen, route, pickingStart, pois, activeCategory,
     lang, setLang,
     is3D, toggle3D: () => setIs3D((v) => !v),
@@ -443,7 +496,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     startNavigation: () => setNavigating(true),
     stopNavigation: () => setNavigating(false),
     setAuthOpen, login, register, logout, select, selectResult,
-    setActivePack, loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
+    setMapProvider, setAppleAppearance, setCustomPack, setActivePack,
+    loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
     showCategory, clearPois, installPack, removePack,
   }

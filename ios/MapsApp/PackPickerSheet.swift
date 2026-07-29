@@ -10,10 +10,45 @@ struct PackPickerSheet: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(model.allPacks) { pack in
+                    Picker("Kartenanbieter", selection: Binding(
+                        get: { model.activePackId == "light" ? "apple" : "custom" },
+                        set: { provider in
+                            if provider == "apple" {
+                                model.setAppleProvider()
+                            } else {
+                                let fallback = model.allPacks.first(where: { $0.id != "light" })?.id ?? "dark"
+                                model.setPack(fallback)
+                            }
+                        }
+                    )) {
+                        Text("Apple Maps").tag("apple")
+                        Text("Eigene Stile").tag("custom")
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                if model.activePackId == "light" {
+                    Section {
+                        Picker("Kartentyp", selection: $model.appleMapType) {
+                            Text("Standard").tag("standard")
+                            Text("Satellit").tag("satellite")
+                            Text("Hybrid").tag("hybrid")
+                        }
+                        Picker("Darstellung", selection: $model.appleColorScheme) {
+                            Text("Automatisch").tag("adaptive")
+                            Text("Hell").tag("light")
+                            Text("Dunkel").tag("dark")
+                        }
+                    } header: {
+                        Text("Apple Maps")
+                    } footer: {
+                        Text("Apple-Kartendaten bleiben vollständig interaktiv. Eigene Stile verwenden den separaten Kartenmodus.")
+                    }
+                } else {
+                    Section {
+                    ForEach(model.allPacks.filter { $0.id != "light" }) { pack in
                         Button {
                             model.setPack(pack.id)
-                            dismiss()
                         } label: {
                             HStack(spacing: 12) {
                                 if let colors = pack.preview?.colors, !colors.isEmpty {
@@ -44,7 +79,9 @@ struct PackPickerSheet: View {
                             }
                         }
                     }
-                }
+                    } header: {
+                        Text("Eigene Stile")
+                    }
                 Section {
                     Button {
                         showInstall = true
@@ -52,10 +89,13 @@ struct PackPickerSheet: View {
                         Label(L.t("pack-install-title"), systemImage: "plus")
                     }
                     .disabled(model.user == nil)
+                } header: {
+                    Text("Stile verwalten")
                 } footer: {
                     if model.user == nil {
                         Text(L.t("packs-signin-hint"))
                     }
+                }
                 }
             }
             .navigationTitle(L.t("map-style"))

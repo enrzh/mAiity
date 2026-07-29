@@ -6,10 +6,13 @@ import { api } from '../lib/api'
 import { makeT } from '../lib/i18n'
 import {
   locateActiveMap,
-  registerMapController,
+  registerMapRenderer,
   setActiveMap3D,
   zoomActiveMap,
-} from '../lib/mapController'
+} from '../maps/rendererController'
+import {
+  type MapViewport,
+} from '../maps/types'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { useApp } from '../state'
 import { AppleMapView } from './AppleMapView'
@@ -296,10 +299,40 @@ function MapLibreMapView() {
 
     setMap(m)
     liveMap.current = m
-    const unregisterController = registerMapController({
+    const viewport = (): MapViewport => {
+      const center = m.getCenter()
+      const bounds = m.getBounds()
+      return {
+        center: { lat: center.lat, lon: center.lng },
+        latitudeDelta: Math.abs(bounds.getNorth() - bounds.getSouth()),
+        longitudeDelta: Math.abs(bounds.getEast() - bounds.getWest()),
+      }
+    }
+    const unregisterController = registerMapRenderer({
+      provider: 'custom',
+      capabilities: {
+        threeD: true,
+        mapClick: true,
+        routes: true,
+        bookmarks: true,
+        nativeControls: false,
+      },
       locate: () => locateMapLibre(m),
       set3D: (on) => setMapLibre3D(m, on),
       zoomBy: (delta) => m.easeTo({ zoom: m.getZoom() + delta, duration: 220 }),
+      focusPlace: (place) => m.flyTo({
+        center: [place.lon, place.lat],
+        zoom: Math.max(m.getZoom(), 14),
+        duration: flyDuration(m, 14),
+        padding: framePad(0),
+      }),
+      showPlaces: (places) => {
+        if (!places.length) return
+        const bounds = new maplibregl.LngLatBounds()
+        for (const place of places) bounds.extend([place.lon, place.lat])
+        m.fitBounds(bounds, { padding: framePad(80), duration: 700, maxZoom: 15 })
+      },
+      getViewport: viewport,
     })
     // Debug handle (harmless, and invaluable for diagnosing render issues).
     ;(window as unknown as { __map?: MLMap }).__map = m
@@ -481,7 +514,7 @@ export function MapView() {
   const app = useApp()
   const [appleFailed, setAppleFailed] = useState(false)
   const handleAppleFailure = useCallback(() => setAppleFailed(true), [])
-  if (app.activePack === 'light' && !appleFailed) {
+  if (app.mapProvider === 'apple' && !appleFailed) {
     return <AppleMapView onFailure={handleAppleFailure} />
   }
   return <MapLibreMapView />

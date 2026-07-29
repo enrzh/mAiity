@@ -11,8 +11,9 @@ import { cn } from '@/lib/utils'
 import { useT } from '@/lib/useT'
 import { readSidebarCollapsed, writeSidebarCollapsed } from '@/lib/sidebarState'
 import { AppProvider, useApp } from './state'
-import { MapView, liveMap, locateUser, railInset, set3D, zoomBy } from './components/MapView'
-import { CategoryChips, centerOf } from './components/CategoryChips'
+import { MapView, locateUser, railInset, set3D, zoomBy } from './components/MapView'
+import { CategoryChips } from './components/CategoryChips'
+import { activeMapViewport } from './maps/rendererController'
 import { SearchBar } from './components/SearchBar'
 import { PlaceCard } from './components/PlaceCard'
 import { PoiResults } from './components/PoiResults'
@@ -48,30 +49,20 @@ function MapControls() {
   const t = useT()
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
-  if (app.activePack === 'light') {
-    return (
-      <div className="absolute bottom-[calc(var(--sheet-h,0px)+5.5rem)] right-4 z-20 md:bottom-20">
-        <Button variant="ghost" className={btn} onClick={locateUser}
-          aria-label={t('my-location')} title={t('my-location')}>
-          <Crosshair className="size-5" />
-        </Button>
-      </div>
-    )
-  }
   return (
     // On mobile the rail is a bottom sheet that would cover this stack — the
     // zoom buttons sat BEHIND it. Ride above it using the measured sheet
     // height (it changes with content), same as the iOS build. On desktop the
     // rail is a left panel, so md: puts the stack back on the bottom edge.
     <div className="absolute bottom-[calc(var(--sheet-h,0px)+1.5rem)] right-4 z-20 flex flex-col items-end gap-2.5 transition-[bottom] duration-200 md:bottom-6">
-      <Button
+      {app.mapProvider === 'custom' && <Button
         variant={app.is3D ? 'default' : 'ghost'}
         className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
         onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
         aria-label={t('view-3d')} aria-pressed={app.is3D} title={t('view-3d')}
       >
         <Box className="size-5" />
-      </Button>
+      </Button>}
       <Button variant="ghost" className={btn} onClick={locateUser}
         aria-label={t('my-location')} title={t('my-location')}>
         <Crosshair className="size-5" />
@@ -313,7 +304,7 @@ function Shell() {
           <RailControls panel={panel} toggle={toggle} />
         </div>
 
-        <CategoryChips getCenter={() => centerOf(liveMap.current)} />
+        <CategoryChips getCenter={() => activeMapViewport()?.center ?? null} />
 
         {/* Contextual content — one thing at a time, like Maps. At peek the
             sheet is search+chips only, so its clipped remainder must not
@@ -352,7 +343,7 @@ function Shell() {
               <RailControls panel={panel} toggle={toggle} compact />
             </div>
             <div className="pointer-events-auto relative z-10 w-fit max-w-full">
-              <CategoryChips getCenter={() => centerOf(liveMap.current)} />
+              <CategoryChips getCenter={() => activeMapViewport()?.center ?? null} />
             </div>
           </div>
         )}

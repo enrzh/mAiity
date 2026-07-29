@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { api, type GeoResult } from '../lib/api'
+import { activeMapViewport } from '../maps/rendererController'
 import { useT } from '../lib/useT'
-import { liveMap } from './MapView'
 import { useApp } from '../state'
 
 /// Result-type glyph — a quick visual scent of WHAT each hit is before
@@ -73,8 +73,8 @@ export function SearchBar() {
         // ranked by global importance — a park 400km away could outrank the
         // one on screen. (City/country queries are protected from over-biasing
         // server-side by the place-boost re-rank.)
-        const c = liveMap.current?.getCenter()
-        const res = await api.geocode(query, c ? { lat: c.lat, lon: c.lng } : undefined, ctrl.signal)
+        const c = activeMapViewport()?.center
+        const res = await api.geocode(query, c ?? undefined, ctrl.signal)
         if (seq.current !== mySeq) return // stale — a newer query is running
         setResults(res)
         setActiveIndex(0) // fresh list — cursor back to the top hit

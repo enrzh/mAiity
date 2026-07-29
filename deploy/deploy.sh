@@ -20,7 +20,18 @@ if [[ "$WANT" == *web* ]]; then
   # Preserve EVERY tile archive (they are 7-128 GB and versioned, e.g.
   # region-z14.pmtiles) — a bare `! -name region.pmtiles` silently deletes
   # the versioned ones and the map 404s.
-  $SSH "$NAS" 'cd /volume1/docker/maps && find dist -mindepth 1 -maxdepth 1 ! -name "*.pmtiles" -exec rm -rf {} + && tar xzf /tmp/maps-dist.tgz -C dist 2>/dev/null; ls dist | head'
+  $SSH "$NAS" 'set -e
+    cd /volume1/docker/maps
+    # Recover the stable archive before replacing web assets. Deploying UI
+    # must never silently disable every custom map style.
+    if ! find dist -maxdepth 1 -name "*.pmtiles" -print -quit | grep -q .; then
+      archive="$(find dist.old . -maxdepth 2 -name "region.pmtiles" -print -quit 2>/dev/null || true)"
+      if [ -n "$archive" ]; then ln "$archive" dist/region.pmtiles 2>/dev/null || cp --reflink=auto "$archive" dist/region.pmtiles; fi
+    fi
+    find dist -mindepth 1 -maxdepth 1 ! -name "*.pmtiles" -exec rm -rf {} +
+    tar xzf /tmp/maps-dist.tgz -C dist 2>/dev/null
+    test -s dist/region.pmtiles
+    ls dist | head'
 fi
 
 if [[ "$WANT" == *packs* ]]; then
@@ -43,6 +54,6 @@ fi
 
 echo "── verify"
 curl -s https://maps.aiity.de/maps/api/healthz && echo
-curl -s -o /dev/null -w "web: %{http_code}\n" https://maps.aiity.de/
+curl -s -o /dev/null -w "web: %{http_code}\n" https://maps.aiity.de/maps/
 curl -s -o /dev/null -w "tiles range: %{http_code}\n" -H 'Range: bytes=0-0' https://maps.aiity.de/maps/region-z15.pmtiles
 echo "done."

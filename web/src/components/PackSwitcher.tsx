@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, Palette, Plus, Trash2, X } from 'lucide-react'
+import { Check, Layers3, Map, Palette, Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,15 +34,70 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
             <X className="size-4" />
           </Button>
         </CardHeader>
-        <CardContent className="px-3">
-          {app.packs.length === 0 ? (
+        <CardContent className="space-y-4 px-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={app.mapProvider === 'apple' ? 'default' : 'outline'}
+              onClick={() => app.setMapProvider('apple')}
+            >
+              <Map className="size-4" /> Apple Maps
+            </Button>
+            <Button
+              variant={app.mapProvider === 'custom' ? 'default' : 'outline'}
+              onClick={() => app.setMapProvider('custom')}
+            >
+              <Layers3 className="size-4" /> {app.lang === 'de' ? 'Eigene Stile' : 'Custom styles'}
+            </Button>
+          </div>
+
+          {app.mapProvider === 'apple' ? (
+            <div className="space-y-4">
+              <OptionGroup
+                label={app.lang === 'de' ? 'Kartentyp' : 'Map type'}
+                value={app.mapPreferences.appleMapType}
+                options={[
+                  ['standard', app.lang === 'de' ? 'Standard' : 'Standard'],
+                  ['muted', app.lang === 'de' ? 'Dezent' : 'Muted'],
+                  ['satellite', app.lang === 'de' ? 'Satellit' : 'Satellite'],
+                  ['hybrid', 'Hybrid'],
+                ]}
+                onChange={(appleMapType) => app.setAppleAppearance({ appleMapType: appleMapType as typeof app.mapPreferences.appleMapType })}
+              />
+              <OptionGroup
+                label={app.lang === 'de' ? 'Darstellung' : 'Appearance'}
+                value={app.mapPreferences.appleColorScheme}
+                options={[
+                  ['adaptive', app.lang === 'de' ? 'Automatisch' : 'Automatic'],
+                  ['light', app.lang === 'de' ? 'Hell' : 'Light'],
+                  ['dark', app.lang === 'de' ? 'Dunkel' : 'Dark'],
+                ]}
+                onChange={(appleColorScheme) => app.setAppleAppearance({ appleColorScheme: appleColorScheme as typeof app.mapPreferences.appleColorScheme })}
+              />
+              <OptionGroup
+                label={app.lang === 'de' ? 'Farbton' : 'Tone'}
+                value={app.mapPreferences.appleOverlayTone}
+                options={[
+                  ['none', app.lang === 'de' ? 'Original' : 'Original'],
+                  ['cool', app.lang === 'de' ? 'Kühl' : 'Cool'],
+                  ['warm', app.lang === 'de' ? 'Warm' : 'Warm'],
+                  ['reduced-color', app.lang === 'de' ? 'Reduziert' : 'Reduced'],
+                ]}
+                onChange={(appleOverlayTone) => app.setAppleAppearance({ appleOverlayTone: appleOverlayTone as typeof app.mapPreferences.appleOverlayTone })}
+              />
+              <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+                {app.lang === 'de'
+                  ? 'Apple-Kartendaten bleiben interaktiv. Eigene Vollstile sind technisch nur im eigenen Kartenmodus möglich.'
+                  : 'Apple map data stays interactive. Full custom styling is available only with the custom renderer.'}
+              </p>
+            </div>
+          ) : app.packs.filter((pack) => pack.id !== 'light').length === 0 ? (
             <div className="space-y-3 p-2 text-center text-sm text-muted-foreground">
               <p>{app.packsError ? t('styles-load-failed') : t('styles-loading')}</p>
               {app.packsError && <Button onClick={() => app.loadPacks()}>{t('retry')}</Button>}
             </div>
           ) : (
             <ul className="space-y-2">
-              {app.packs.map((p) => (
+              {app.packs.filter((pack) => pack.id !== 'light').map((p) => (
                 <li key={p.id} className="flex items-center gap-1">
                   <button
                     className={cn(
@@ -81,7 +136,7 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
               ))}
             </ul>
           )}
-          <div className="mt-3 flex gap-2">
+          {app.mapProvider === 'custom' && <div className="flex gap-2">
             <Button
               variant="outline" className="flex-1"
               onClick={() => {
@@ -100,12 +155,43 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
             >
               <Plus className="size-4" /> {t('install')}
             </Button>
-          </div>
+          </div>}
         </CardContent>
       </Card>
       <InstallDialog open={installOpen} onOpenChange={setInstallOpen} />
       <PackEditor open={editorOpen} onOpenChange={setEditorOpen} />
     </>
+  )
+}
+
+function OptionGroup({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: string
+  options: [string, string][]
+  onChange: (value: string) => void
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="px-1 text-xs font-semibold text-muted-foreground">{label}</legend>
+      <div className="grid grid-cols-2 gap-2">
+        {options.map(([id, text]) => (
+          <Button
+            key={id}
+            type="button"
+            variant={value === id ? 'default' : 'outline'}
+            className="min-w-0 justify-center"
+            onClick={() => onChange(id)}
+          >
+            <span className="truncate">{text}</span>
+          </Button>
+        ))}
+      </div>
+    </fieldset>
   )
 }
 

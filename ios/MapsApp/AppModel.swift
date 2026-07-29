@@ -68,6 +68,12 @@ final class AppModel: ObservableObject {
     @Published var activePackId: String {
         didSet { UserDefaults.standard.set(activePackId, forKey: "maps.activePack") }
     }
+    @Published var appleMapType: String {
+        didSet { UserDefaults.standard.set(appleMapType, forKey: "maps.appleMapType") }
+    }
+    @Published var appleColorScheme: String {
+        didSet { UserDefaults.standard.set(appleColorScheme, forKey: "maps.appleColorScheme") }
+    }
     @Published var bookmarks: [Bookmark] = []
     @Published var selected: Place? {
         didSet { if selected != nil { panel = .none } }
@@ -103,6 +109,8 @@ final class AppModel: ObservableObject {
 
     init() {
         activePackId = UserDefaults.standard.string(forKey: "maps.activePack") ?? "light"
+        appleMapType = UserDefaults.standard.string(forKey: "maps.appleMapType") ?? "standard"
+        appleColorScheme = UserDefaults.standard.string(forKey: "maps.appleColorScheme") ?? "adaptive"
         if let data = UserDefaults.standard.data(forKey: "maps.recents"),
            let stored = try? JSONDecoder().decode([GeoResult].self, from: data) {
             recents = stored
@@ -321,6 +329,10 @@ final class AppModel: ObservableObject {
         if user != nil {
             Task { await APIClient.shared.saveSettings(activePack: id) }
         }
+    }
+
+    func setAppleProvider() {
+        setPack("light")
     }
 
     func installPack(name: String, styleUrl: String?, styleJson: String?) async throws {
