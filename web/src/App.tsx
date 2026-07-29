@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import { useT } from '@/lib/useT'
+import { readSidebarCollapsed, writeSidebarCollapsed } from '@/lib/sidebarState'
 import { AppProvider, useApp } from './state'
 import { MapView, liveMap, locateUser, railInset, set3D, zoomBy } from './components/MapView'
 import { CategoryChips, centerOf } from './components/CategoryChips'
@@ -167,13 +168,14 @@ function Shell() {
   const app = useApp()
   const t = useT()
   const [panel, setPanel] = useState<Panel>('none')
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => readSidebarCollapsed())
   const railRef = useRef<HTMLElement>(null)
   const [sheetH, setSheetH] = useState(0)
   // Mobile sheet detent + live height while the grabber is being dragged.
   const [detent, setDetent] = useState<Detent>('peek')
   const [dragH, setDragH] = useState<number | null>(null)
   const dragFrom = useRef<{ y: number; h: number } | null>(null)
+  useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.
     if (collapsed) setCollapsed(false)
@@ -329,17 +331,17 @@ function Shell() {
         {/* Collapsing hides the rail, never its functions: search, chips and
             the rail controls float over the map instead. */}
         {collapsed && (
-          <div className="pointer-events-none absolute left-8 top-4 z-20 hidden w-[380px] max-w-[calc(100%-6rem)] flex-col gap-2 md:flex">
+          <div className="pointer-events-none absolute left-8 right-8 top-4 z-20 hidden flex-col gap-2 md:flex">
             {/* relative z-20 is load-bearing: backdrop-blur creates a STACKING
                 CONTEXT, so the search dropdown's own z-30 is trapped inside
                 this row and cannot paint over the chips below — the chips are
                 a later sibling and would cover the results. Raising the row
                 itself (not the dropdown) is the only thing that works. */}
-            <div className="pointer-events-auto relative z-20 flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background/85 p-1.5 shadow-lg backdrop-blur-xl">
+            <div className="pointer-events-auto relative z-20 flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background p-1.5 shadow-lg">
               <div className="min-w-0 flex-1"><SearchBar /></div>
               <RailControls panel={panel} toggle={toggle} compact />
             </div>
-            <div className="pointer-events-auto relative z-10">
+            <div className="pointer-events-auto relative z-10 w-fit max-w-full">
               <CategoryChips getCenter={() => centerOf(liveMap.current)} />
             </div>
           </div>

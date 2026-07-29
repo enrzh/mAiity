@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
+import { registerMapController } from '../lib/mapController'
 import { useApp } from '../state'
 
 // MapKit JS is intentionally loaded at runtime; Apple owns the renderer and
@@ -14,6 +15,8 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   useEffect(() => {
     let cancelled = false
     let map: any
+    let unregisterController = () => {}
+    let userAnnotation: any
     const load = async () => {
       if (!el.current) return
       if (!(window as any).mapkit) {
@@ -50,6 +53,43 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       map.showsCompass = true
       map.showsScale = true
       map.showsMapTypeControl = true
+      unregisterController = registerMapController({
+        zoomBy: (delta) => {
+          const region = map.region
+          if (!region) return
+          const factor = delta > 0 ? 0.55 : 1.8
+          map.setRegionAnimated(new mk.CoordinateRegion(
+            region.center,
+            new mk.CoordinateSpan(
+              Math.max(0.0008, Math.min(160, region.span.latitudeDelta * factor)),
+              Math.max(0.0008, Math.min(320, region.span.longitudeDelta * factor)),
+            ),
+          ), true)
+        },
+        set3D: (on) => {
+          map.cameraPitch = on ? 55 : 0
+          if (on) map.cameraHeading = -18
+        },
+        locate: () => {
+          if (!navigator.geolocation) return
+          navigator.geolocation.getCurrentPosition((position) => {
+            const coordinate = new mk.Coordinate(
+              position.coords.latitude,
+              position.coords.longitude,
+            )
+            if (userAnnotation) map.removeAnnotation(userAnnotation)
+            userAnnotation = new mk.MarkerAnnotation(coordinate, {
+              title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
+              color: '#1677ff',
+            })
+            map.addAnnotation(userAnnotation)
+            map.setRegionAnimated(new mk.CoordinateRegion(
+              coordinate,
+              new mk.CoordinateSpan(0.025, 0.025),
+            ), true)
+          }, () => {}, { enableHighAccuracy: true, timeout: 8000 })
+        },
+      })
       map.addEventListener('region-change-end', () => {
         const c = map.center
         // MapKit owns the camera; searches continue to use the selected place
@@ -62,7 +102,12 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       }, 5000)
     }
     load().catch((error) => { console.error('[mapkit]', error); onFailure?.() })
-    return () => { cancelled = true; map?.destroy(); setMap(null) }
+    return () => {
+      cancelled = true
+      unregisterController()
+      map?.destroy()
+      setMap(null)
+    }
   }, [onFailure])
 
   useEffect(() => {

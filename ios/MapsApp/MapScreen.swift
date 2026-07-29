@@ -16,6 +16,10 @@ struct MapScreen: View {
             span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
         )
     )
+    @State private var visibleRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
+        span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
+    )
 
     var body: some View {
         if model.activePackId == "light" {
@@ -63,6 +67,7 @@ struct MapScreen: View {
         .ignoresSafeArea()
         .onMapCameraChange(frequency: .onEnd) { context in
             // Keep route/category searches anchored to the actual Apple map.
+            visibleRegion = context.region
             model.mapCenter = context.region.center
         }
         .onChange(of: model.selected) { _, place in
@@ -105,6 +110,17 @@ struct MapScreen: View {
                 MapUserLocationButton(scope: mapScope)
                     .frame(width: 44, height: 44)
                     .background(.regularMaterial, in: Circle())
+
+                VStack(spacing: 0) {
+                    Button { zoom(by: 0.55) } label: {
+                        Image(systemName: "plus").frame(width: 44, height: 44)
+                    }
+                    Divider().padding(.horizontal, 8)
+                    Button { zoom(by: 1.8) } label: {
+                        Image(systemName: "minus").frame(width: 44, height: 44)
+                    }
+                }
+                .background(.regularMaterial, in: Capsule())
             }
             .padding(.trailing, 14)
             .padding(.bottom, sheetHeight + 16)
@@ -122,5 +138,17 @@ struct MapScreen: View {
             center: coordinate(lat, lon),
             span: MKCoordinateSpan(latitudeDelta: span, longitudeDelta: span)
         )
+    }
+
+    private func zoom(by factor: Double) {
+        let region = MKCoordinateRegion(
+            center: visibleRegion.center,
+            span: MKCoordinateSpan(
+                latitudeDelta: max(0.0008, min(160, visibleRegion.span.latitudeDelta * factor)),
+                longitudeDelta: max(0.0008, min(320, visibleRegion.span.longitudeDelta * factor))
+            )
+        )
+        visibleRegion = region
+        position = .region(region)
     }
 }

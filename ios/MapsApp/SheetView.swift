@@ -15,6 +15,9 @@ struct SheetView: View {
     var body: some View {
         NavigationStack {
             List {
+                if !model.searchResults.isEmpty {
+                    resultsSection
+                }
                 searchSection
                 contextualBody
             }
@@ -43,8 +46,6 @@ struct SheetView: View {
             savedSection
         } else if model.panel == .packs {
             packsSection
-        } else if !model.searchResults.isEmpty {
-            resultsSection
         } else if !model.pois.isEmpty {
             poiSection
         } else {

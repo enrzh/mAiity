@@ -121,6 +121,7 @@ describe("auth", () => {
     expect(state).toBeTruthy();
     const stateCookie = start.cookies.find((cookie) => cookie.name === "maps_apple_state");
     expect(stateCookie?.httpOnly).toBe(true);
+    expect(stateCookie?.sameSite).toBe("None");
 
     const callback = await app.inject({
       method: "POST",

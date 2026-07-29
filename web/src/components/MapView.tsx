@@ -4,6 +4,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol } from 'pmtiles'
 import { api } from '../lib/api'
 import { makeT } from '../lib/i18n'
+import {
+  locateActiveMap,
+  registerMapController,
+  setActiveMap3D,
+  zoomActiveMap,
+} from '../lib/mapController'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { useApp } from '../state'
 import { AppleMapView } from './AppleMapView'
@@ -66,8 +72,10 @@ export function ensure3DScenery(m: MLMap) {
 
 /** Tilt into 3D with real terrain relief (or back to flat). */
 export function set3D(on: boolean) {
-  const m = liveMap.current
-  if (!m) return
+  setActiveMap3D(on)
+}
+
+function setMapLibre3D(m: MLMap, on: boolean) {
   try {
     ensure3DScenery(m)
     if (TERRAIN_ENABLED) {
@@ -146,8 +154,11 @@ function flyDuration(m: MLMap, toZoom: number, base = 700): number {
 
 /** Centre on the user, showing the dot. */
 export function locateUser() {
-  const m = liveMap.current
-  if (!m || !navigator.geolocation) return
+  locateActiveMap()
+}
+
+function locateMapLibre(m: MLMap) {
+  if (!navigator.geolocation) return
   navigator.geolocation.getCurrentPosition(
     (p) => {
       const here: [number, number] = [p.coords.longitude, p.coords.latitude]
@@ -160,9 +171,7 @@ export function locateUser() {
 }
 
 export function zoomBy(delta: number) {
-  const m = liveMap.current
-  if (!m) return
-  m.easeTo({ zoom: m.getZoom() + delta, duration: 220 })
+  zoomActiveMap(delta)
 }
 
 /// The one imperative component: owns the MapLibre map, keeps it in sync with
@@ -287,6 +296,11 @@ function MapLibreMapView() {
 
     setMap(m)
     liveMap.current = m
+    const unregisterController = registerMapController({
+      locate: () => locateMapLibre(m),
+      set3D: (on) => setMapLibre3D(m, on),
+      zoomBy: (delta) => m.easeTo({ zoom: m.getZoom() + delta, duration: 220 }),
+    })
     // Debug handle (harmless, and invaluable for diagnosing render issues).
     ;(window as unknown as { __map?: MLMap }).__map = m
     return () => {
@@ -297,6 +311,7 @@ function MapLibreMapView() {
       bmMarkers.current.clear()
       m.remove()
       liveMap.current = null
+      unregisterController()
       setMap(null)
     }
   }, [ready])

@@ -164,7 +164,9 @@ export function registerSocialRoutes(
   const stateCookie = {
     path: "/maps/api/auth/apple",
     httpOnly: true,
-    sameSite: "lax" as const,
+    // Apple returns response_mode=form_post from a different site. Lax
+    // cookies are omitted on that POST, invalidating otherwise valid state.
+    sameSite: "none" as const,
     secure: secureCookies,
     maxAge: 10 * 60,
   };
