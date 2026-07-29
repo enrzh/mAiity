@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785356921.4297152,
-    "ast_hash": "0e3123bbf7405b5535edde165e6fce9a",
+    "mtime": 1785357183.52648,
+    "ast_hash": "a8b5451f2cd70f5bfed3ef23e64611ce",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "web/src/components/PlaceCard.tsx": {
-    "mtime": 1785356397.656253,
-    "ast_hash": "ced7a6eeacd76066ba6236e1e3b68b45",
+    "mtime": 1785357210.952534,
+    "ast_hash": "f4d67882c762c41f5dd4dd8949d0b269",
     "semantic_hash": ""
   },
   "web/src/components/PoiResults.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "web/src/components/RoutePanel.tsx": {
-    "mtime": 1785356921.4295094,
-    "ast_hash": "6dad376d79adedba1a41edae3af1f180",
+    "mtime": 1785357193.1154244,
+    "ast_hash": "829e27f5cc3c722301ce66dec67799db",
     "semantic_hash": ""
   },
   "web/src/components/SavedPanel.tsx": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785356769.2969882,
-    "ast_hash": "48a9b01d7710337a58ebc4624fff6949",
+    "mtime": 1785357183.52645,
+    "ast_hash": "0384db0875a62cf650559153f1149010",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
-    "mtime": 1785355375.6695516,
-    "ast_hash": "df0012a0befeaf3abb585ae01687a8b0",
+    "mtime": 1785357200.6386676,
+    "ast_hash": "164c4d480be2f9718f84b6740169cccc",
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "web/src/components/MapLibreMapView.tsx": {
-    "mtime": 1785356324.4515915,
-    "ast_hash": "c2ded69da86aa98cae750392a82396ca",
+    "mtime": 1785357200.6385121,
+    "ast_hash": "c83da762e430c96f15a798228830b01d",
     "semantic_hash": ""
   },
   "web/src/components/MapStatus.tsx": {
