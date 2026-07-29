@@ -22,6 +22,16 @@ export function DrivingModePanel() {
   const keys = useRef({ throttle: false, brake: false, steer: 0 })
   const frame = useRef<number | null>(null)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [hitFlash, setHitFlash] = useState(false)
+
+  // Brief collision flash for free-drive wall hits.
+  useEffect(() => {
+    if (session.lastHitAt == null) return
+    setHitFlash(true)
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const id = window.setTimeout(() => setHitFlash(false), reduced ? 0 : 180)
+    return () => window.clearTimeout(id)
+  }, [session.lastHitAt])
 
   // 3-2-1 before the race actually starts.
   useEffect(() => {
@@ -136,7 +146,7 @@ export function DrivingModePanel() {
   // Compact while driving: map stays the hero; history/minimap only at rest.
   return (
     <section
-      className={`maps-race-hud${active || countingDown ? ' maps-race-hud--compact' : ''}`}
+      className={`maps-race-hud${active || countingDown ? ' maps-race-hud--compact' : ''}${hitFlash ? ' maps-race-hud--hit' : ''}`}
       aria-label={modeLabel}
     >
       <div className="maps-race-hud__top">

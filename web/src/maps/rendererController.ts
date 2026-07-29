@@ -30,3 +30,7 @@ export const subscribeActiveMapMoveEnd = (listener: () => void): (() => void) =>
 export const queryActiveMapBuildingsNear = (lon: number, lat: number, radiusM = 48) =>
   active?.queryBuildingsNear?.(lon, lat, radiusM) ?? []
 
+/** Soft free-drive road bias segments (empty on Apple / no tiles). */
+export const queryActiveMapRoadsNear = (lon: number, lat: number, radiusM = 55) =>
+  active?.queryRoadsNear?.(lon, lat, radiusM) ?? []
+

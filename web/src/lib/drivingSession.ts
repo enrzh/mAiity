@@ -20,6 +20,8 @@ export interface DrivingSession {
   lon: number
   lat: number
   heading: number
+  /** Last building collision time (ms epoch); HUD flash while fresh. */
+  lastHitAt?: number | null
 }
 
 export interface DrivingRun {
@@ -49,6 +51,7 @@ export const idleSession = (): DrivingSession => ({
   lon: 0,
   lat: 0,
   heading: 0,
+  lastHitAt: null,
 })
 
 export function createDrivingSession(
@@ -75,6 +78,7 @@ export function createDrivingSession(
     lon: pose?.lon ?? 0,
     lat: pose?.lat ?? 0,
     heading: pose?.heading ?? 0,
+    lastHitAt: null,
   }
 }
 
@@ -100,6 +104,7 @@ export function createFreeDrivingSession(
     lon: pose.lon,
     lat: pose.lat,
     heading: pose.heading ?? 0,
+    lastHitAt: null,
   }
 }
 

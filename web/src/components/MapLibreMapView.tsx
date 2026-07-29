@@ -533,6 +533,43 @@ export function MapLibreMapView() {
           return []
         }
       },
+      queryRoadsNear: (lon, lat, radiusM = 55) => {
+        try {
+          if (!m.getSource('protomaps')) return []
+          const raw = m.querySourceFeatures('protomaps', { sourceLayer: 'roads' }) as Array<{
+            geometry?: { type?: string; coordinates?: unknown }
+          }>
+          if (!raw.length) return []
+          const cosLat = Math.max(0.2, Math.cos((lat * Math.PI) / 180))
+          const r2 = radiusM * radiusM
+          const segs: Array<{ a: [number, number]; b: [number, number] }> = []
+          const pushLine = (coords: number[][]) => {
+            for (let i = 1; i < coords.length && segs.length < 80; i++) {
+              const a = coords[i - 1]
+              const b = coords[i]
+              if (!a || !b) continue
+              const mx = (a[0] + b[0]) / 2
+              const my = (a[1] + b[1]) / 2
+              const dx = (mx - lon) * 111_320 * cosLat
+              const dy = (my - lat) * 111_320
+              if (dx * dx + dy * dy > r2) continue
+              segs.push({ a: [a[0], a[1]], b: [b[0], b[1]] })
+            }
+          }
+          for (const f of raw) {
+            if (segs.length >= 80) break
+            const g = f.geometry
+            if (!g?.coordinates) continue
+            if (g.type === 'LineString') pushLine(g.coordinates as number[][])
+            else if (g.type === 'MultiLineString') {
+              for (const line of g.coordinates as number[][][]) pushLine(line)
+            }
+          }
+          return segs
+        } catch {
+          return []
+        }
+      },
       followNavigation: ({ lat, lon, heading }) => {
         showUserDot(m, [lon, lat])
         m.easeTo({ center: [lon, lat], zoom: 17, pitch: 60, bearing: heading, duration: 900 })

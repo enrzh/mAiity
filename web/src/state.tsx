@@ -17,10 +17,14 @@ import {
   toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
 import { stepDrivingGame, stepFreeDrive, type DrivingInput } from './lib/drivingGame'
-import { activeMapViewport, queryActiveMapBuildingsNear } from './maps/rendererController'
+import {
+  activeMapViewport,
+  queryActiveMapBuildingsNear,
+  queryActiveMapRoadsNear,
+} from './maps/rendererController'
 import { pointAtProgress, bearingAtProgress } from './lib/driving'
 import { carPositionAt, RACE_CAR_RADIUS_M } from './lib/drivingCamera'
-import { resolveBuildingCollision } from './lib/drivingCollision'
+import { resolveBuildingCollision, softRoadBias } from './lib/drivingCollision'
 
 /** Throttled building footprint cache for free-drive collision. */
 let buildingCache: { lon: number; lat: number; at: number; fps: { ring: [number, number][] }[] } | null = null
@@ -37,6 +41,26 @@ function nearbyBuildings(lon: number, lat: number) {
   const fps = queryActiveMapBuildingsNear(lon, lat, 50)
   buildingCache = { lon, lat, at: now, fps }
   return fps
+}
+
+/** Throttled road segments for soft free-drive road bias. */
+let roadCache: {
+  lon: number; lat: number; at: number
+  segs: Array<{ a: [number, number]; b: [number, number] }>
+} | null = null
+function nearbyRoads(lon: number, lat: number) {
+  const now = Date.now()
+  if (
+    roadCache
+    && now - roadCache.at < 220
+    && Math.abs(roadCache.lon - lon) < 0.00025
+    && Math.abs(roadCache.lat - lat) < 0.00025
+  ) {
+    return roadCache.segs
+  }
+  const segs = queryActiveMapRoadsNear(lon, lat, 55)
+  roadCache = { lon, lat, at: now, segs }
+  return segs
 }
 
 export interface Place {
@@ -569,8 +593,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           input,
           dt,
         )
-        // Soft building walls (MapLibre Protomaps); no-op on Apple / empty tiles.
+        let lastHitAt = s.lastHitAt ?? null
+        // Soft road bias + building walls (MapLibre Protomaps); no-op on Apple.
         try {
+          const roads = nearbyRoads(free.lon, free.lat)
+          if (roads.length > 0) {
+            const biased = softRoadBias(
+              {
+                lon: free.lon,
+                lat: free.lat,
+                heading: free.heading,
+                speedMps: free.speedMps,
+              },
+              roads,
+              { pullM: 0.28, headingBlend: 0.07, maxDistM: 26 },
+            )
+            free = {
+              ...free,
+              lon: biased.lon,
+              lat: biased.lat,
+              heading: biased.heading,
+            }
+          }
           const fps = nearbyBuildings(free.lon, free.lat)
           if (fps.length > 0) {
             const resolved = resolveBuildingCollision(
@@ -587,13 +631,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ...free,
               lon: resolved.lon,
               lat: resolved.lat,
+              heading: resolved.heading,
               speedMps: resolved.speedMps,
             }
+            if (resolved.hit) {
+              lastHitAt = now
+              try {
+                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(18)
+              } catch { /* ignore */ }
+            }
           }
-        } catch { /* collision optional */ }
+        } catch { /* collision / road bias optional */ }
         return {
           ...s,
           ...free,
+          lastHitAt,
           progress: 0,
           elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
           lastInputAt: now,

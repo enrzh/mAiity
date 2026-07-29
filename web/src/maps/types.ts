@@ -62,5 +62,10 @@ export interface MapRendererController {
    * Apple / missing tiles → empty array.
    */
   queryBuildingsNear?(lon: number, lat: number, radiusM?: number): BuildingFootprintQuery[]
+  /**
+   * Nearby road centerline segments for soft free-drive road bias.
+   * Apple / missing tiles → empty array.
+   */
+  queryRoadsNear?(lon: number, lat: number, radiusM?: number): Array<{ a: [number, number]; b: [number, number] }>
 }
 

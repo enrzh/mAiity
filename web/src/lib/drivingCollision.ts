@@ -1,6 +1,6 @@
 /**
- * Soft 2D building collisions for free-drive (MapLibre Protomaps footprints).
- * Push car out of polygons and kill speed — no rigid-body solver.
+ * Soft 2D building collisions + road bias for free-drive.
+ * MapLibre Protomaps footprints / road centerlines — no rigid-body solver.
  */
 
 import { RACE_CAR_RADIUS_M } from './drivingCamera'
@@ -12,6 +12,12 @@ export interface BuildingFootprint {
   ring: LngLatTuple[]
 }
 
+/** Road centerline segment in lon/lat. */
+export interface RoadSegment {
+  a: LngLatTuple
+  b: LngLatTuple
+}
+
 export interface CollisionPose {
   lon: number
   lat: number
@@ -21,6 +27,9 @@ export interface CollisionPose {
 
 export interface CollisionResult extends CollisionPose {
   hit: boolean
+  /** Wall normal in local metres (for slide); unit length when hit. */
+  wallNx?: number
+  wallNy?: number
 }
 
 const DEG2RAD = Math.PI / 180
@@ -55,7 +64,7 @@ function closestOnSeg(
   px: number, py: number,
   ax: number, ay: number,
   bx: number, by: number,
-): { x: number; y: number; dist: number } {
+): { x: number; y: number; dist: number; tx: number; ty: number } {
   const abx = bx - ax, aby = by - ay
   const len2 = abx * abx + aby * aby
   let t = len2 < 1e-12 ? 0 : ((px - ax) * abx + (py - ay) * aby) / len2
@@ -63,11 +72,13 @@ function closestOnSeg(
   const x = ax + abx * t
   const y = ay + aby * t
   const dx = px - x, dy = py - y
-  return { x, y, dist: Math.hypot(dx, dy) }
+  const len = Math.sqrt(len2) || 1
+  return { x, y, dist: Math.hypot(dx, dy), tx: abx / len, ty: aby / len }
 }
 
 /**
- * Resolve car against building footprints. Returns adjusted pose; `hit` if any wall touched.
+ * Resolve car against building footprints.
+ * Push-out + wall-slide: keep velocity component along the wall, kill into-wall speed.
  */
 export function resolveBuildingCollision(
   pose: CollisionPose,
@@ -82,10 +93,16 @@ export function resolveBuildingCollision(
   let y = 0
   let speed = pose.speedMps
   let hit = false
+  let wallNx = 0
+  let wallNy = 0
   const originLon = pose.lon
   const originLat = pose.lat
 
-  // Local coords of car start at origin; we push (x,y) then convert back.
+  // Velocity in local metres (heading 0 = north = +y)
+  const hrad = (pose.heading * Math.PI) / 180
+  let vx = Math.sin(hrad) * speed
+  let vy = Math.cos(hrad) * speed
+
   for (let pass = 0; pass < 3; pass++) {
     let moved = false
     for (const fp of footprints) {
@@ -93,7 +110,6 @@ export function resolveBuildingCollision(
       const local: [number, number][] = fp.ring.map(([lon, lat]) =>
         toLocalM(lon, lat, originLon, originLat),
       )
-      // Drop duplicate closing vertex if present
       if (local.length > 1) {
         const a = local[0], b = local[local.length - 1]
         if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 1e-3) local.pop()
@@ -101,7 +117,7 @@ export function resolveBuildingCollision(
       if (local.length < 3) continue
 
       const inside = pointInRing(x, y, local)
-      let best = { x, y, dist: Infinity }
+      let best = { x, y, dist: Infinity, tx: 1, ty: 0 }
       for (let i = 0; i < local.length; i++) {
         const j = (i + 1) % local.length
         const c = closestOnSeg(x, y, local[i][0], local[i][1], local[j][0], local[j][1])
@@ -111,39 +127,62 @@ export function resolveBuildingCollision(
       if (inside || best.dist < carRadiusM) {
         hit = true
         moved = true
-        // Outward normal from edge toward exterior: from closest to car if outside,
-        // opposite if inside.
         let nx = x - best.x
         let ny = y - best.y
         let nlen = Math.hypot(nx, ny)
         if (nlen < 1e-6) {
-          // Degenerate: push east
           nx = 1; ny = 0; nlen = 1
         }
         nx /= nlen
         ny /= nlen
         if (inside) {
-          // Closest edge is on the boundary; car is inside so push along -normal
-          // from car toward exterior = away from polygon centroid roughly:
-          // reverse so we go outside.
           nx = -nx
           ny = -ny
         }
-        const push = inside ? carRadiusM + 0.35 : (carRadiusM - best.dist + 0.15)
+        wallNx = nx
+        wallNy = ny
+
+        const push = inside ? carRadiusM + 0.4 : (carRadiusM - best.dist + 0.2)
         x = best.x + nx * Math.max(push, carRadiusM)
         y = best.y + ny * Math.max(push, carRadiusM)
-        // If still "inside" due to concave shapes, nudge further
         if (pointInRing(x, y, local)) {
           x += nx * 1.2
           y += ny * 1.2
         }
+
+        // Slide: remove into-wall velocity, keep tangent with friction.
+        const into = vx * nx + vy * ny
+        if (into < 0) {
+          vx -= into * nx
+          vy -= into * ny
+        }
+        // Wall friction — bleed slide speed
+        vx *= 0.72
+        vy *= 0.72
       }
     }
     if (!moved) break
   }
 
   if (hit) {
-    speed = Math.min(speed, Math.max(0, speed * 0.32))
+    speed = Math.hypot(vx, vy)
+    // Cap residual after impact
+    speed = Math.min(speed, Math.max(0, pose.speedMps * 0.45))
+    // Align heading with remaining velocity when sliding
+    if (speed > 0.8) {
+      const slideH = ((Math.atan2(vx, vy) * 180) / Math.PI + 360) % 360
+      // Blend heading toward slide so wall-ride feels natural
+      const dh = ((slideH - pose.heading + 540) % 360) - 180
+      return {
+        lon: fromLocalM(x, y, originLon, originLat)[0],
+        lat: fromLocalM(x, y, originLon, originLat)[1],
+        heading: ((pose.heading + dh * 0.35) % 360 + 360) % 360,
+        speedMps: speed,
+        hit: true,
+        wallNx,
+        wallNy,
+      }
+    }
   }
 
   const [lon, lat] = fromLocalM(x, y, originLon, originLat)
@@ -151,9 +190,69 @@ export function resolveBuildingCollision(
     lon,
     lat,
     heading: pose.heading,
-    speedMps: speed,
+    speedMps: hit ? Math.min(speed, pose.speedMps * 0.4) : pose.speedMps,
     hit,
+    wallNx: hit ? wallNx : undefined,
+    wallNy: hit ? wallNy : undefined,
   }
+}
+
+/**
+ * Weak attraction toward the nearest road centerline (free-drive “stay on pavement” feel).
+ * Does not hard-snap — gently pulls position and soft-aligns heading.
+ */
+export function softRoadBias(
+  pose: CollisionPose,
+  segments: RoadSegment[],
+  opts?: { pullM?: number; headingBlend?: number; maxDistM?: number },
+): CollisionPose {
+  if (!segments.length) return pose
+  const pullM = opts?.pullM ?? 0.35
+  const headingBlend = opts?.headingBlend ?? 0.08
+  const maxDistM = opts?.maxDistM ?? 28
+
+  const originLon = pose.lon
+  const originLat = pose.lat
+  let bestDist = Infinity
+  let bestX = 0
+  let bestY = 0
+  let bestTx = 0
+  let bestTy = 1
+
+  for (const seg of segments) {
+    const [ax, ay] = toLocalM(seg.a[0], seg.a[1], originLon, originLat)
+    const [bx, by] = toLocalM(seg.b[0], seg.b[1], originLon, originLat)
+    const c = closestOnSeg(0, 0, ax, ay, bx, by)
+    if (c.dist < bestDist) {
+      bestDist = c.dist
+      bestX = c.x
+      bestY = c.y
+      bestTx = c.tx
+      bestTy = c.ty
+    }
+  }
+
+  if (!Number.isFinite(bestDist) || bestDist > maxDistM || bestDist < 0.4) {
+    return pose
+  }
+
+  // Pull strength falls off with distance
+  const t = Math.min(1, pullM / Math.max(bestDist, 0.5))
+  const nx = bestX * t
+  const ny = bestY * t
+  const [lon, lat] = fromLocalM(nx, ny, originLon, originLat)
+
+  // Road heading (tangent); pick direction closer to current heading
+  let roadH = ((Math.atan2(bestTx, bestTy) * 180) / Math.PI + 360) % 360
+  const alt = (roadH + 180) % 360
+  const d1 = Math.abs(((roadH - pose.heading + 540) % 360) - 180)
+  const d2 = Math.abs(((alt - pose.heading + 540) % 360) - 180)
+  if (d2 < d1) roadH = alt
+
+  const dh = ((roadH - pose.heading + 540) % 360) - 180
+  const heading = ((pose.heading + dh * headingBlend) % 360 + 360) % 360
+
+  return { lon, lat, heading, speedMps: pose.speedMps }
 }
 
 /**
@@ -183,6 +282,32 @@ export function footprintsFromFeatures(
           out.push({ ring: ring.map((c) => [c[0], c[1]] as LngLatTuple) })
         }
       }
+    }
+  }
+  return out
+}
+
+/** Flatten LineString / MultiLineString features into short segments. */
+export function roadSegmentsFromFeatures(
+  features: Array<{ geometry?: { type?: string; coordinates?: unknown } | null }>,
+  maxSegs = 80,
+): RoadSegment[] {
+  const out: RoadSegment[] = []
+  const pushLine = (coords: number[][]) => {
+    for (let i = 1; i < coords.length && out.length < maxSegs; i++) {
+      const a = coords[i - 1]
+      const b = coords[i]
+      if (!a || !b) continue
+      out.push({ a: [a[0], a[1]], b: [b[0], b[1]] })
+    }
+  }
+  for (const f of features) {
+    if (out.length >= maxSegs) break
+    const g = f.geometry
+    if (!g?.coordinates) continue
+    if (g.type === 'LineString') pushLine(g.coordinates as number[][])
+    else if (g.type === 'MultiLineString') {
+      for (const line of g.coordinates as number[][][]) pushLine(line)
     }
   }
   return out

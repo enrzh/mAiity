@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import {
   footprintsFromFeatures,
   resolveBuildingCollision,
+  roadSegmentsFromFeatures,
+  softRoadBias,
 } from './drivingCollision'
 
 describe('drivingCollision', () => {
@@ -27,9 +29,16 @@ describe('drivingCollision', () => {
     const next = resolveBuildingCollision(pose, [{ ring: square }], 1.5)
     expect(next.hit).toBe(true)
     expect(next.speedMps).toBeLessThan(30)
-    // Should not remain at the centre
     const moved = Math.hypot(next.lon - pose.lon, next.lat - pose.lat)
     expect(moved).toBeGreaterThan(1e-6)
+  })
+
+  test('wall hit reduces into-wall speed more than slide', () => {
+    // Just inside west edge, heading east — must collide and slow
+    const pose = { lon: 6.79985, lat: 51.2, heading: 90, speedMps: 25 }
+    const next = resolveBuildingCollision(pose, [{ ring: square }], 1.5)
+    expect(next.hit).toBe(true)
+    expect(next.speedMps).toBeLessThan(25)
   })
 
   test('footprintsFromFeatures reads polygons', () => {
@@ -43,5 +52,28 @@ describe('drivingCollision', () => {
     ])
     expect(fps).toHaveLength(1)
     expect(fps[0].ring.length).toBeGreaterThanOrEqual(4)
+  })
+
+  test('softRoadBias pulls toward centerline', () => {
+    // Road along lat 51.2, car slightly north
+    const segs = [{
+      a: [6.79, 51.2] as [number, number],
+      b: [6.81, 51.2] as [number, number],
+    }]
+    const pose = { lon: 6.8, lat: 51.20015, heading: 90, speedMps: 15 }
+    const next = softRoadBias(pose, segs, { pullM: 2, headingBlend: 0.2, maxDistM: 40 })
+    expect(next.lat).toBeLessThan(pose.lat)
+  })
+
+  test('roadSegmentsFromFeatures flattens lines', () => {
+    const segs = roadSegmentsFromFeatures([
+      {
+        geometry: {
+          type: 'LineString',
+          coordinates: [[6.8, 51.2], [6.81, 51.2], [6.82, 51.21]],
+        },
+      },
+    ])
+    expect(segs.length).toBe(2)
   })
 })
