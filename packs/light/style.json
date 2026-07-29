@@ -1,8 +1,8 @@
 {
   "version": 8,
-  "name": "Phase 0 — Light (Protomaps v4)",
+  "name": "Apple-inspired Light",
   "metadata": {
-    "maps:pack": "phase0-light",
+    "maps:pack": "apple-inspired-light",
     "maps:schema": "protomaps-basemap-v4"
   },
   "glyphs": "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
@@ -29,7 +29,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#eae7df"
+        "background-color": "#f5f5f2"
       }
     },
     {
@@ -38,7 +38,7 @@
       "source": "protomaps",
       "source-layer": "earth",
       "paint": {
-        "fill-color": "#eae7df"
+        "fill-color": "#f5f5f2"
       }
     },
     {
@@ -60,11 +60,11 @@
             "grassland",
             "grass"
           ],
-          "#d6e6c3",
+          "#dcebd4",
           [
             "farmland"
           ],
-          "#e9e6cf",
+          "#eeeeda",
           [
             "glacier",
             "snow"
@@ -95,72 +95,72 @@
             "playground",
             "pitch"
           ],
-          "#d5e6c0",
+          "#d9ecd2",
           [
             "grass",
             "meadow",
             "grassland"
           ],
-          "#dcead0",
+          "#e2f0dc",
           [
             "forest",
             "wood",
             "scrub",
             "nature_reserve"
           ],
-          "#c8ddb2",
+          "#c9e3c2",
           [
             "farmland",
             "allotments"
           ],
-          "#ece9d4",
+          "#f0efd9",
           [
             "cemetery"
           ],
-          "#ccdabf",
+          "#d7e5cf",
           [
             "wetland"
           ],
-          "#d4e2da",
+          "#d6e8df",
           [
             "residential"
           ],
-          "#e6e2d8",
+          "#e8e8e3",
           [
             "commercial"
           ],
-          "#e9e0d8",
+          "#ece9e2",
           [
             "industrial",
             "railway",
             "brownfield",
             "quarry"
           ],
-          "#e1dee4",
+          "#e5e5e8",
           [
             "school",
             "university",
             "college"
           ],
-          "#efeade",
+          "#f0f0e9",
           [
             "hospital"
           ],
-          "#f2e6e4",
+          "#f3e7e5",
           [
             "aerodrome"
           ],
-          "#e5e2e9",
+          "#e7e8ed",
           [
             "beach",
             "sand"
           ],
-          "#f2ecd2",
+          "#f3efd8",
           [
             "pedestrian",
             "platform"
           ],
-          "#e3ded2",
+          "#e9e9e4",
           "rgba(0,0,0,0)"
         ]
       }
@@ -171,7 +171,7 @@
       "source": "protomaps",
       "source-layer": "water",
       "paint": {
-        "fill-color": "#a5cae8"
+        "fill-color": "#b7d9ee"
       },
       "filter": [
         "==",
@@ -205,7 +205,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#e0d9ca",
+        "line-color": "#d8d8d5",
         "line-width": [
           "interpolate",
           [
@@ -260,7 +260,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#d8d0c0",
+        "line-color": "#c9c9c6",
         "line-width": [
           "interpolate",
           [
@@ -317,7 +317,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#cfc7b6",
+        "line-color": "#b7b7b3",
         "line-width": [
           "interpolate",
           [
@@ -356,7 +356,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#d8ad64",
+        "line-color": "#e7b75f",
         "line-width": [
           "interpolate",
           [
@@ -398,7 +398,7 @@
         "line-join": "miter"
       },
       "paint": {
-        "line-color": "#dcd7ce",
+        "line-color": "#d4d4d1",
         "line-width": [
           "interpolate",
           [
@@ -463,7 +463,7 @@
         "line-join": "miter"
       },
       "paint": {
-        "line-color": "#b3a88f",
+        "line-color": "#a7b29f",
         "line-width": [
           "interpolate",
           [
@@ -663,7 +663,7 @@
         "line-join": "round"
       },
       "paint": {
-        "line-color": "#fbd48b",
+        "line-color": "#f7d47c",
         "line-width": [
           "interpolate",
           [
@@ -705,7 +705,7 @@
         "line-join": "miter"
       },
       "paint": {
-        "line-color": "#c2bbac",
+        "line-color": "#b8b8b5",
         "line-width": [
           "interpolate",
           [
@@ -737,8 +737,8 @@
       "minzoom": 13,
       "maxzoom": 14,
       "paint": {
-        "fill-color": "#e4dfd4",
-        "fill-outline-color": "#d3cdbf",
+        "fill-color": "#e1e1df",
+        "fill-outline-color": "#c9c9c7",
         "fill-opacity": [
           "interpolate",
           [
@@ -779,9 +779,9 @@
             8
           ],
           0,
-          "#ddd8cc",
+          "#d7d7d5",
           60,
-          "#efeae0"
+          "#eeeeeb"
         ],
         "fill-extrusion-height": [
           "case",
@@ -1029,7 +1029,7 @@
         ]
       ],
       "paint": {
-        "line-color": "#c6bfae",
+        "line-color": "#c1c1be",
         "line-width": [
           "interpolate",
           [
@@ -1054,7 +1054,7 @@
       "source": "protomaps",
       "source-layer": "boundaries",
       "paint": {
-        "line-color": "#9f95b5",
+        "line-color": "#a9a9b5",
         "line-dasharray": [
           3,
           2
@@ -1126,7 +1126,7 @@
         "text-padding": 4
       },
       "paint": {
-        "text-color": "#55534b",
+        "text-color": "#4c4c4a",
         "text-halo-color": "#ffffff",
         "text-halo-width": 1.2
       }
@@ -1198,7 +1198,7 @@
         ]
       },
       "paint": {
-        "text-color": "#a06a00",
+        "text-color": "#8b6b2e",
         "text-halo-color": "#ffffff",
         "text-halo-width": 1.4
       }
@@ -1241,7 +1241,7 @@
         "text-max-width": 7
       },
       "paint": {
-        "text-color": "#3d3d3d",
+        "text-color": "#343434",
         "text-halo-color": "#ffffff",
         "text-halo-width": 1.4
       }
