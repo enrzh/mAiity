@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "web/src/components/CategoryChips.tsx": {
-    "mtime": 1785356769.2806544,
-    "ast_hash": "362416f51010a4e58c98b0cb1d60c9e0",
+    "mtime": 1785357039.248574,
+    "ast_hash": "39ff139cc3a22db66bc5ad7ebcfea21d",
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "web/src/components/SearchBar.tsx": {
-    "mtime": 1785356769.2932801,
-    "ast_hash": "320d37acf0425d6d4b7719a847ac589d",
+    "mtime": 1785357051.7310743,
+    "ast_hash": "b1f1ee659f44ceef4c2e7da54e0f0ca7",
     "semantic_hash": ""
   },
   "web/src/components/ui/badge.tsx": {

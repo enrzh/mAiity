@@ -6631,8 +6631,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_package_dependencies_lucide_react",
-      "community": 21,
-      "community_name": "AuthSheet",
+      "community": 16,
+      "community_name": "dependencies",
       "norm_label": "lucide-react"
     },
     {
@@ -6642,8 +6642,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "lucide_react",
-      "community": 21,
-      "community_name": "AuthSheet",
+      "community": 16,
+      "community_name": "dependencies",
       "norm_label": "lucide-react"
     },
     {
@@ -6653,8 +6653,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_package_dependencies_maplibre_gl",
-      "community": 16,
-      "community_name": "dependencies",
+      "community": 21,
+      "community_name": "AuthSheet",
       "norm_label": "maplibre-gl"
     },
     {
@@ -6664,8 +6664,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "maplibre_gl",
-      "community": 16,
-      "community_name": "dependencies",
+      "community": 21,
+      "community_name": "AuthSheet",
       "norm_label": "maplibre-gl"
     },
     {
@@ -28434,7 +28434,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/CategoryChips.tsx",
-      "source_location": "L52",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_categorychips_categorychips",
@@ -32162,7 +32162,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/SearchBar.tsx",
-      "source_location": "L236",
+      "source_location": "L243",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_searchbar_searchbar",
@@ -32174,7 +32174,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/SearchBar.tsx",
-      "source_location": "L76",
+      "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_searchbar_searchbar",
@@ -38851,5 +38851,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "0101986bca3a8249cb87d1c4157c5a0e20f9eb97"
+  "built_at_commit": "ffb09a08f73f4113c900d53cf7083488be88730b"
 }

@@ -1,7 +1,7 @@
 # Graph Report - maps  (2026-07-29)
 
 ## Corpus Check
-- 147 files · ~109,545 words
+- 147 files · ~109,616 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0101986b`
+- Built from commit: `ffb09a08`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -183,7 +183,7 @@ Nodes (11): Element, DrivingPhysics, DrivingPhysicsState, Double, TimeInterval, 
 
 ### Community 16 - "dependencies"
 Cohesion: 0.15
-Nodes (13): class-variance-authority, maplibre-gl, radix-ui, react-dom, shadcn, tailwind-merge, dependencies, class-variance-authority (+5 more)
+Nodes (13): class-variance-authority, lucide-react, radix-ui, react-dom, shadcn, tailwind-merge, dependencies, class-variance-authority (+5 more)
 
 ### Community 17 - "compilerOptions"
 Cohesion: 0.17
