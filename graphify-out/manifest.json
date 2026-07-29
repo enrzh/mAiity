@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785356605.9164388,
-    "ast_hash": "0bebc1b8c5d66fbbedabda5bdb4d2941",
+    "mtime": 1785356786.618157,
+    "ast_hash": "3664fdbd8847e545da31a8327ef685bf",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "web/src/components/CategoryChips.tsx": {
-    "mtime": 1785078223.289771,
-    "ast_hash": "ea43e55f45c2422794d2caa30dad02fa",
+    "mtime": 1785356769.2806544,
+    "ast_hash": "362416f51010a4e58c98b0cb1d60c9e0",
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "web/src/components/RoutePanel.tsx": {
-    "mtime": 1785356411.4361749,
-    "ast_hash": "78cfaf0edd12e6a7c762210befe451b7",
+    "mtime": 1785356769.278381,
+    "ast_hash": "09d804278d589b7bab79704d4bd9a86a",
     "semantic_hash": ""
   },
   "web/src/components/SavedPanel.tsx": {
@@ -360,8 +360,8 @@
     "semantic_hash": ""
   },
   "web/src/components/SearchBar.tsx": {
-    "mtime": 1785355449.5865433,
-    "ast_hash": "dfeb3bb003036b88fc79970420b02d5b",
+    "mtime": 1785356769.2932801,
+    "ast_hash": "320d37acf0425d6d4b7719a847ac589d",
     "semantic_hash": ""
   },
   "web/src/components/ui/badge.tsx": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785354632.5746577,
-    "ast_hash": "24be437eb81c790f65eced758261e5db",
+    "mtime": 1785356769.2969882,
+    "ast_hash": "48a9b01d7710337a58ebc4624fff6949",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "web/src/components/DrivingModePanel.tsx": {
-    "mtime": 1785356341.805978,
-    "ast_hash": "64f4b940d37105c3e1f0045e1522783c",
+    "mtime": 1785356769.2934015,
+    "ast_hash": "6548799cb1b0622d12ab21a1ca02a63c",
     "semantic_hash": ""
   },
   "web/src/lib/driving.test.ts": {
