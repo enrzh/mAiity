@@ -1432,8 +1432,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "caseiterable",
-      "community": 18,
-      "community_name": "SheetView",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "caseiterable"
     },
     {
@@ -2238,7 +2238,7 @@
       "label": ".coordinate()",
       "file_type": "code",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L132",
+      "source_location": "L127",
       "_origin": "ast",
       "id": "ios_mapsapp_mapscreen_mapscreen_coordinate",
       "community": 50,
@@ -2271,7 +2271,7 @@
       "label": ".regionAround()",
       "file_type": "code",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L136",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "ios_mapsapp_mapscreen_mapscreen_regionaround",
       "community": 50,
@@ -2293,12 +2293,67 @@
       "label": ".zoom()",
       "file_type": "code",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L143",
+      "source_location": "L138",
       "_origin": "ast",
       "id": "ios_mapsapp_mapscreen_mapscreen_zoom",
       "community": 50,
       "community_name": "MapScreen",
       "norm_label": ".zoom()"
+    },
+    {
+      "label": ".toggle3D()",
+      "file_type": "code",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L150",
+      "_origin": "ast",
+      "id": "ios_mapsapp_mapscreen_mapscreen_toggle3d",
+      "community": 50,
+      "community_name": "MapScreen",
+      "norm_label": ".toggle3d()"
+    },
+    {
+      "label": ".locate()",
+      "file_type": "code",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "ios_mapsapp_mapscreen_mapscreen_locate",
+      "community": 1,
+      "community_name": "AppModel",
+      "norm_label": ".locate()"
+    },
+    {
+      "label": ".mapButton()",
+      "file_type": "code",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L176",
+      "_origin": "ast",
+      "id": "ios_mapsapp_mapscreen_mapscreen_mapbutton",
+      "community": 50,
+      "community_name": "MapScreen",
+      "norm_label": ".mapbutton()"
+    },
+    {
+      "label": "String",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "ios_mapsapp_mapscreen_swift_string",
+      "community": 50,
+      "community_name": "MapScreen",
+      "norm_label": "string"
+    },
+    {
+      "label": "Void",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast",
+      "id": "ios_mapsapp_mapscreen_swift_void",
+      "community": 50,
+      "community_name": "MapScreen",
+      "norm_label": "void"
     },
     {
       "label": "MapTokens.swift",
@@ -2384,8 +2439,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ios_mapsapp_mapsapp",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "mapsapp.swift"
     },
     {
@@ -2395,8 +2450,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "ios_mapsapp_mapsapp_mapsapp",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "mapsapp"
     },
     {
@@ -2406,8 +2461,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "app",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "app"
     },
     {
@@ -2417,8 +2472,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "scene",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "scene"
     },
     {
@@ -2428,8 +2483,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "ios_mapsapp_mapsapp_rootview",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 22,
+      "community_name": "View",
       "norm_label": "rootview"
     },
     {
@@ -2439,8 +2494,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_mapsapp_swift_presentationdetent",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 22,
+      "community_name": "View",
       "norm_label": "presentationdetent"
     },
     {
@@ -2450,8 +2505,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_mapsapp_swift_cgfloat",
-      "community": 52,
-      "community_name": "RootView",
+      "community": 22,
+      "community_name": "View",
       "norm_label": "cgfloat"
     },
     {
@@ -6367,8 +6422,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_components_mapview_livemap",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "livemap"
     },
     {
@@ -6389,8 +6444,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "web_src_components_mapview_set3d",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "set3d()"
     },
     {
@@ -6499,8 +6554,8 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "web_src_components_mapview_zoomby",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "zoomby()"
     },
     {
@@ -6554,8 +6609,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "navigationpanel.tsx"
     },
     {
@@ -6565,8 +6620,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_fmtdist",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "fmtdist()"
     },
     {
@@ -6576,8 +6631,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_fmteta",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "fmteta()"
     },
     {
@@ -6587,8 +6642,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_navigationpanel",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "navigationpanel()"
     },
     {
@@ -6719,8 +6774,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_placecard",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "placecard.tsx"
     },
     {
@@ -6741,8 +6796,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_components_placecard_row",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "row()"
     },
     {
@@ -6873,8 +6928,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_searchbar",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "searchbar.tsx"
     },
     {
@@ -6884,8 +6939,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_searchbar_resulticon",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "resulticon()"
     },
     {
@@ -6906,8 +6961,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_badge",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "badge.tsx"
     },
     {
@@ -6917,8 +6972,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_ui_badge_badgevariants",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "badgevariants"
     },
     {
@@ -6928,8 +6983,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_components_ui_badge_badge",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "badge()"
     },
     {
@@ -6939,7 +6994,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_button",
-      "community": 20,
+      "community": 6,
       "community_name": "PackSwitcher.tsx",
       "norm_label": "button.tsx"
     },
@@ -6950,7 +7005,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_ui_button_buttonvariants",
-      "community": 20,
+      "community": 6,
       "community_name": "PackSwitcher.tsx",
       "norm_label": "buttonvariants"
     },
@@ -6961,7 +7016,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "web_src_components_ui_button_button",
-      "community": 20,
+      "community": 6,
       "community_name": "PackSwitcher.tsx",
       "norm_label": "button()"
     },
@@ -7434,8 +7489,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_separator",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "separator.tsx"
     },
     {
@@ -7445,8 +7500,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_components_ui_separator_separator",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "separator()"
     },
     {
@@ -7577,8 +7632,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_skeleton",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "skeleton.tsx"
     },
     {
@@ -7588,8 +7643,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_components_ui_skeleton_skeleton",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "skeleton()"
     },
     {
@@ -7621,8 +7676,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabs.tsx"
     },
     {
@@ -7632,8 +7687,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabs",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabs()"
     },
     {
@@ -7643,8 +7698,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabslistvariants",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabslistvariants"
     },
     {
@@ -7654,8 +7709,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabslist",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabslist()"
     },
     {
@@ -7665,8 +7720,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabstrigger",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabstrigger()"
     },
     {
@@ -7676,8 +7731,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabscontent",
-      "community": 11,
-      "community_name": "cn",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "tabscontent()"
     },
     {
@@ -7687,8 +7742,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_api",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "api.ts"
     },
     {
@@ -7698,8 +7753,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_lib_api_user",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "user"
     },
     {
@@ -7709,8 +7764,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_api_bookmark",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "bookmark"
     },
     {
@@ -7720,8 +7775,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_api_pack",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "pack"
     },
     {
@@ -7731,8 +7786,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_lib_api_georesult",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "georesult"
     },
     {
@@ -7742,8 +7797,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_lib_api_placedetails",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "placedetails"
     },
     {
@@ -7753,8 +7808,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_lib_api_routestep",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "routestep"
     },
     {
@@ -7764,8 +7819,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "web_src_lib_api_routeresult",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "routeresult"
     },
     {
@@ -7775,8 +7830,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "web_src_lib_api_routemode",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "routemode"
     },
     {
@@ -7786,8 +7841,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "web_src_lib_api_nearby_categories",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "nearby_categories"
     },
     {
@@ -7797,8 +7852,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "web_src_lib_api_nearbycategory",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "nearbycategory"
     },
     {
@@ -7830,8 +7885,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "web_src_lib_api_parseerror",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "parseerror()"
     },
     {
@@ -7841,8 +7896,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "web_src_lib_api_sessionresponse",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "sessionresponse"
     },
     {
@@ -7852,8 +7907,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "web_src_lib_api_sessioncall",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "sessioncall()"
     },
     {
@@ -7863,8 +7918,8 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "web_src_lib_api_refreshsession",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "refreshsession()"
     },
     {
@@ -7874,8 +7929,8 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_lib_api_session",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "session"
     },
     {
@@ -7885,8 +7940,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "web_src_lib_api_authed",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "authed()"
     },
     {
@@ -7896,8 +7951,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_lib_api_api",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "api"
     },
     {
@@ -7907,8 +7962,8 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "web_src_lib_api_styleurlfor",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "styleurlfor()"
     },
     {
@@ -7918,8 +7973,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_i18n",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "i18n.ts"
     },
     {
@@ -7929,8 +7984,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_i18n_de",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "de"
     },
     {
@@ -7940,8 +7995,8 @@
       "source_location": "L162",
       "_origin": "ast",
       "id": "web_src_lib_i18n_tkey",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 20,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "tkey"
     },
     {
@@ -7951,8 +8006,8 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "web_src_lib_i18n_en",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "en"
     },
     {
@@ -7962,8 +8017,8 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "web_src_lib_i18n_fr",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "fr"
     },
     {
@@ -7973,8 +8028,8 @@
       "source_location": "L454",
       "_origin": "ast",
       "id": "web_src_lib_i18n_es",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "es"
     },
     {
@@ -7984,8 +8039,8 @@
       "source_location": "L599",
       "_origin": "ast",
       "id": "web_src_lib_i18n_it",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "it"
     },
     {
@@ -7995,8 +8050,8 @@
       "source_location": "L744",
       "_origin": "ast",
       "id": "web_src_lib_i18n_nl",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "nl"
     },
     {
@@ -8006,8 +8061,8 @@
       "source_location": "L889",
       "_origin": "ast",
       "id": "web_src_lib_i18n_pl",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "pl"
     },
     {
@@ -8017,8 +8072,8 @@
       "source_location": "L1034",
       "_origin": "ast",
       "id": "web_src_lib_i18n_tr",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "tr"
     },
     {
@@ -8028,8 +8083,8 @@
       "source_location": "L1179",
       "_origin": "ast",
       "id": "web_src_lib_i18n_dicts",
-      "community": 48,
-      "community_name": "i18n.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "dicts"
     },
     {
@@ -8039,8 +8094,8 @@
       "source_location": "L1182",
       "_origin": "ast",
       "id": "web_src_lib_i18n_maket",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "maket()"
     },
     {
@@ -8215,8 +8270,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_navigation",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "navigation.ts"
     },
     {
@@ -8226,8 +8281,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_navigation_lnglat",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "lnglat"
     },
     {
@@ -8237,8 +8292,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_lib_navigation_distancem",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "distancem()"
     },
     {
@@ -8248,8 +8303,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_lib_navigation_bearing",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "bearing()"
     },
     {
@@ -8259,8 +8314,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_lib_navigation_pointtosegment",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "pointtosegment()"
     },
     {
@@ -8270,8 +8325,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_lib_navigation_snapped",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "snapped"
     },
     {
@@ -8281,8 +8336,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_lib_navigation_snaptoroute",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "snaptoroute()"
     },
     {
@@ -8292,8 +8347,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "web_src_lib_navigation_currentstep",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "currentstep()"
     },
     {
@@ -8303,8 +8358,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "web_src_lib_navigation_metrestonextmaneuver",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "metrestonextmaneuver()"
     },
     {
@@ -8391,8 +8446,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_utils",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 48,
+      "community_name": "i18n.ts",
       "norm_label": "utils.ts"
     },
     {
@@ -8424,8 +8479,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "state.tsx"
     },
     {
@@ -8435,8 +8490,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_state_place",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "place"
     },
     {
@@ -8446,8 +8501,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_state_loadstatus",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "loadstatus"
     },
     {
@@ -8457,8 +8512,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_state_routestate",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "routestate"
     },
     {
@@ -8468,8 +8523,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_state_appstate",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "appstate"
     },
     {
@@ -8479,8 +8534,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "web_src_state_ctx",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "ctx"
     },
     {
@@ -8501,8 +8556,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "web_src_state_appprovider",
-      "community": 2,
-      "community_name": "state.tsx",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "appprovider()"
     },
     {
@@ -13529,11 +13584,23 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L32",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
       "context": "field",
       "source": "ios_mapsapp_mapscreen_mapscreen",
+      "target": "view",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "context": "return_type",
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen_mapbutton",
       "target": "view",
       "confidence_score": 1.0
     },
@@ -14632,6 +14699,18 @@
     {
       "relation": "calls",
       "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L166",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen_locate",
+      "target": "ios_mapsapp_locationservice_locationservice_currentlocation"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/LocationService.swift",
       "source_location": "L98",
@@ -14728,7 +14807,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L132",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen",
@@ -14739,7 +14818,29 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L136",
+      "source_location": "L164",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen",
+      "target": "ios_mapsapp_mapscreen_mapscreen_locate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen",
+      "target": "ios_mapsapp_mapscreen_mapscreen_mapbutton",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen",
@@ -14750,7 +14851,18 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L143",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen",
+      "target": "ios_mapsapp_mapscreen_mapscreen_toggle3d",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen",
@@ -14797,7 +14909,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L130",
+      "source_location": "L125",
       "weight": 1.0,
       "context": "field",
       "_origin": "ast",
@@ -14822,7 +14934,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L132",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen_coordinate",
@@ -14833,7 +14945,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L132",
+      "source_location": "L127",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -14846,7 +14958,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L138",
+      "source_location": "L133",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen_regionaround",
@@ -14857,7 +14969,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L136",
+      "source_location": "L131",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -14869,7 +14981,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L143",
+      "source_location": "L138",
       "weight": 1.0,
       "context": "parameter_type",
       "_origin": "ast",
@@ -14882,7 +14994,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L136",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen_regionaround",
@@ -14894,11 +15006,47 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "ios/MapsApp/MapScreen.swift",
-      "source_location": "L144",
+      "source_location": "L167",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen_locate",
+      "target": "mkcoordinateregion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast",
       "source": "ios_mapsapp_mapscreen_mapscreen_zoom",
       "target": "mkcoordinateregion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen_mapbutton",
+      "target": "ios_mapsapp_mapscreen_swift_string",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "ios/MapsApp/MapScreen.swift",
+      "source_location": "L176",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "_origin": "ast",
+      "source": "ios_mapsapp_mapscreen_mapscreen_mapbutton",
+      "target": "ios_mapsapp_mapscreen_swift_void",
       "confidence_score": 1.0
     },
     {
@@ -29182,5 +29330,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3d28124322552fca9a19f43117382e94d6045031"
+  "built_at_commit": "ec8ff578e5626bc6147bbbf8f551a096c0ad4419"
 }
