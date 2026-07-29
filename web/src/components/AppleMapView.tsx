@@ -4,7 +4,7 @@ import { useApp } from '../state'
 
 // MapKit JS is intentionally loaded at runtime; Apple owns the renderer and
 // keeps its map data out of our bundle.
-export function AppleMapView() {
+export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   const el = useRef<HTMLDivElement>(null)
   const app = useApp()
   const appRef = useRef(app)
@@ -27,14 +27,11 @@ export function AppleMapView() {
       }
       if (cancelled) return
       const mk = (window as any).mapkit
-      await new Promise<void>((resolve, reject) => {
-        mk.init({
-          language: appRef.current.lang,
-          authorizationCallback: async (done: (token: string) => void) => {
-            try { done((await api.mapkitToken()).token) } catch { reject(new Error('MapKit authorization failed')) }
-          },
-          callback: resolve,
-        })
+      mk.init({
+        language: appRef.current.lang,
+        authorizationCallback: async (done: (token: string) => void) => {
+          try { done((await api.mapkitToken()).token) } catch { onFailure?.() }
+        },
       })
       if (cancelled || !el.current) return
       map = new mk.Map(el.current)
@@ -51,10 +48,15 @@ export function AppleMapView() {
         // MapKit owns the camera; searches continue to use the selected place
         // or the browser's location bias from the existing app state.
       })
+      // MapKit JS reports invalid authorization asynchronously and otherwise
+      // leaves an empty map element. Do not strand users on a white canvas.
+      window.setTimeout(() => {
+        if (!cancelled && el.current && !el.current.querySelector('canvas, iframe, img')) onFailure?.()
+      }, 5000)
     }
-    load().catch((error) => console.error('[mapkit]', error))
+    load().catch((error) => { console.error('[mapkit]', error); onFailure?.() })
     return () => { cancelled = true; map?.destroy(); setMap(null) }
-  }, [])
+  }, [onFailure])
 
   useEffect(() => {
     if (!map) return

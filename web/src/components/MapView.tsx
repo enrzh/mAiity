@@ -460,5 +460,9 @@ function MapLibreMapView() {
 /** Apple Maps is the default renderer; custom packs continue to use MapLibre. */
 export function MapView() {
   const app = useApp()
-  return app.activePack === 'light' ? <AppleMapView /> : <MapLibreMapView />
+  const [appleFailed, setAppleFailed] = useState(false)
+  if (app.activePack === 'light' && !appleFailed) {
+    return <AppleMapView onFailure={() => setAppleFailed(true)} />
+  }
+  return <MapLibreMapView />
 }
