@@ -208,204 +208,22 @@ body { overscroll-behavior: none; }
   box-shadow: 0 0 0 1px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.35);
 }
 
-/* ---- First-person 3D race car (viewport-fixed, not a map pin) ---- */
+/* ---- First-person Three.js race car (WebGL canvas overlay) ---- */
 .maps-fp-car {
   pointer-events: none;
   position: absolute;
   left: 50%;
-  bottom: max(5.5rem, calc(var(--race-hud-h, 120px) + 0.25rem));
+  bottom: max(4.5rem, calc(var(--race-hud-h, 120px) - 0.5rem));
   z-index: 35;
-  width: min(280px, 72vw);
-  height: 150px;
-  margin-left: -min(140px, 36vw);
-  transform-style: preserve-3d;
-  transition: transform 80ms linear;
+  width: min(420px, 92vw);
+  height: min(260px, 38vh);
+  margin-left: -min(210px, 46vw);
 }
-.maps-fp-car__scene {
-  width: 100%;
-  height: 100%;
-  perspective: 520px;
-  perspective-origin: 50% 30%;
-}
-.maps-fp-car__shadow {
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  bottom: 8px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgb(0 0 0 / 45%), transparent 70%);
-  filter: blur(2px);
-}
-.maps-fp-car__body {
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  width: 120px;
-  height: 100px;
-  margin-left: -60px;
-  transform-style: preserve-3d;
-  transform:
-    rotateX(62deg)
-    rotateZ(var(--fp-bank, 0deg))
-    translateY(var(--fp-bounce, 0px));
-  transition: transform 70ms linear;
-}
-.maps-fp-car--active .maps-fp-car__body {
-  animation: maps-fp-rumble 0.12s linear infinite;
-}
-@keyframes maps-fp-rumble {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 1px; }
-}
-.maps-fp-car__hull {
-  position: absolute;
-  inset: 18px 8px 22px;
-  transform-style: preserve-3d;
-}
-.maps-fp-car__deck {
-  position: absolute;
-  inset: 0;
-  border-radius: 14px 14px 10px 10px;
-  background:
-    linear-gradient(180deg, #5eb0ff 0%, #1677ff 40%, #0b4fd0 78%, #083a9a 100%);
-  border: 2px solid rgb(255 255 255 / 55%);
-  box-shadow:
-    inset 0 10px 16px rgb(255 255 255 / 22%),
-    inset 0 -14px 18px rgb(0 0 0 / 28%),
-    0 10px 18px rgb(0 0 0 / 35%);
-}
-.maps-fp-car__side {
-  position: absolute;
-  top: 10px;
-  bottom: 8px;
-  width: 16px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #2f8fff, #0a4fc4);
-  transform-origin: center center;
-}
-.maps-fp-car__side--left {
-  left: -10px;
-  transform: rotateY(70deg) translateZ(2px);
-  box-shadow: inset 4px 0 8px rgb(0 0 0 / 25%);
-}
-.maps-fp-car__side--right {
-  right: -10px;
-  transform: rotateY(-70deg) translateZ(2px);
-  box-shadow: inset -4px 0 8px rgb(0 0 0 / 25%);
-}
-.maps-fp-car__tail {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: -6px;
-  height: 18px;
-  border-radius: 0 0 10px 10px;
-  background: linear-gradient(180deg, #0b5fff, #062e7a);
-  transform: rotateX(-55deg);
-  transform-origin: top center;
-  box-shadow: 0 6px 10px rgb(0 0 0 / 30%);
-}
-.maps-fp-car__cabin {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  top: 4px;
-  height: 36px;
-  transform-style: preserve-3d;
-  z-index: 2;
-}
-.maps-fp-car__glass {
-  position: absolute;
-  border-radius: 6px;
-  background: linear-gradient(160deg, rgb(210 235 255 / 85%), rgb(40 90 160 / 55%));
-  border: 1px solid rgb(255 255 255 / 45%);
-  box-shadow: inset 0 2px 6px rgb(255 255 255 / 35%);
-}
-.maps-fp-car__glass--rear {
-  left: 8px;
-  right: 8px;
-  top: 0;
-  height: 22px;
-  transform: rotateX(18deg);
-}
-.maps-fp-car__glass--side {
-  top: 8px;
-  width: 14px;
-  height: 24px;
-}
-.maps-fp-car__glass--left {
-  left: -2px;
-  transform: rotateY(55deg);
-}
-.maps-fp-car__glass--right {
-  right: -2px;
-  transform: rotateY(-55deg);
-}
-.maps-fp-car__wing {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: -2px;
-  height: 8px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #0a3d9c, #111 40%, #111 60%, #0a3d9c);
-  box-shadow: 0 2px 0 #fff;
-  z-index: 3;
-  transform: translateZ(8px);
-}
-.maps-fp-car__wheel {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 40% 35%, #666 0 18%, #1a1a1a 19% 55%, #0a0a0a 56%);
-  border: 2px solid #eee;
-  box-shadow: 0 3px 4px rgb(0 0 0 / 40%);
-  z-index: 1;
-}
-.maps-fp-car__wheel--rl { left: 2px; bottom: 10px; }
-.maps-fp-car__wheel--rr { right: 2px; bottom: 10px; }
-.maps-fp-car__wheel--fl { left: 6px; top: 28px; width: 18px; height: 18px; opacity: 0.85; }
-.maps-fp-car__wheel--fr { right: 6px; top: 28px; width: 18px; height: 18px; opacity: 0.85; }
-.maps-fp-car__wheel--spin {
-  animation: maps-fp-spin 0.35s linear infinite;
-}
-@keyframes maps-fp-spin {
-  to { transform: rotate(360deg); }
-}
-.maps-fp-car__light {
-  position: absolute;
-  bottom: 20px;
-  width: 14px;
-  height: 6px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #ff4d4f, #ff7875);
-  box-shadow: 0 0 10px #ff4d4f;
-  z-index: 4;
-}
-.maps-fp-car__light--l { left: 22px; }
-.maps-fp-car__light--r { right: 22px; }
-.maps-fp-car__exhaust {
-  position: absolute;
-  left: 50%;
-  bottom: 6px;
-  width: 28px;
-  height: 10px;
-  margin-left: -14px;
-  border-radius: 50%;
+.maps-fp-car--three canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
   background: transparent;
-  z-index: 0;
-  transition: background 120ms ease, box-shadow 120ms ease;
-}
-.maps-fp-car__exhaust--on {
-  background: radial-gradient(ellipse at center, rgb(120 200 255 / 55%), transparent 70%);
-  box-shadow: 0 0 16px rgb(80 180 255 / 45%);
-}
-@media (prefers-reduced-motion: reduce) {
-  .maps-fp-car--active .maps-fp-car__body,
-  .maps-fp-car__wheel--spin { animation: none; }
 }
 
 /* Live race HUD over the real map (not a fake full-screen road) */

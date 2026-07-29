@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Box, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +23,9 @@ import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
 import { DrivingModePanel } from './components/DrivingModePanel'
-import { RaceCar3D } from './components/RaceCar3D'
+const RaceCar3D = lazy(() =>
+  import('./components/RaceCar3D').then((m) => ({ default: m.RaceCar3D })),
+)
 import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
 
@@ -461,13 +463,15 @@ function Shell() {
           }}
         />
 
-        {/* First-person 3D car — sits in the lower frame while racing. */}
+        {/* First-person Three.js car — WebGL mesh in the lower frame. */}
         {app.driving.status !== 'idle' && app.driving.status !== 'finished' && (
-          <RaceCar3D
-            lateral={app.driving.lateral ?? 0}
-            speedMps={app.driving.speedMps ?? 0}
-            active={app.driving.status === 'running'}
-          />
+          <Suspense fallback={null}>
+            <RaceCar3D
+              lateral={app.driving.lateral ?? 0}
+              speedMps={app.driving.speedMps ?? 0}
+              active={app.driving.status === 'running'}
+            />
+          </Suspense>
         )}
 
         {/* Race HUD — exclusive bottom strip; map controls clear it via --race-hud-h. */}
