@@ -26,6 +26,9 @@ struct RaceHUDView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
+                if minimapPath != nil {
+                    minimapView
+                }
                 actionsRow
                 if case .running = state {
                     touchPads
@@ -193,6 +196,65 @@ struct RaceHUDView: View {
                 .font(.subheadline.bold())
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Simple route outline + car dot (parity with web race minimap).
+    private var minimapPath: (path: Path, car: CGPoint)? {
+        guard let geometry = model.route?.result?.geometry, geometry.count > 1 else { return nil }
+        var minX = Double.infinity, minY = Double.infinity
+        var maxX = -Double.infinity, maxY = -Double.infinity
+        for p in geometry {
+            minX = min(minX, p[0]); maxX = max(maxX, p[0])
+            minY = min(minY, p[1]); maxY = max(maxY, p[1])
+        }
+        let w = max(1e-6, maxX - minX)
+        let h = max(1e-6, maxY - minY)
+        let pad: CGFloat = 0.08
+        func to(_ lon: Double, _ lat: Double) -> CGPoint {
+            let x = CGFloat((lon - minX) / w) * (1 - 2 * pad) + pad
+            let y = 1 - (CGFloat((lat - minY) / h) * (1 - 2 * pad) + pad)
+            return CGPoint(x: x, y: y)
+        }
+        var path = Path()
+        for (i, p) in geometry.enumerated() {
+            let pt = to(p[0], p[1])
+            // Path is in unit space; scale in GeometryReader.
+            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
+        }
+        let car = DrivingPhysics.carPosition(
+            progress: state.progress,
+            lateral: model.raceLateral,
+            geometry: geometry
+        )
+        return (path, to(car.lon, car.lat))
+    }
+
+    private var minimapView: some View {
+        GeometryReader { geo in
+            let size = geo.size
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.black.opacity(0.28))
+                if let mini = minimapPath {
+                    mini.path
+                        .applying(CGAffineTransform(scaleX: size.width, y: size.height))
+                        .stroke(Color.cyan.opacity(0.9), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                    Circle()
+                        .fill(Color.mint)
+                        .frame(width: 8, height: 8)
+                        .position(
+                            x: mini.car.x * size.width,
+                            y: mini.car.y * size.height
+                        )
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1)
+                            .frame(width: 8, height: 8)
+                            .position(x: mini.car.x * size.width, y: mini.car.y * size.height))
+                }
+            }
+        }
+        .frame(height: 56)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .accessibilityHidden(true)
     }
 
     private var history: some View {

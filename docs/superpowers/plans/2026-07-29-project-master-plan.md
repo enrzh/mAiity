@@ -25,7 +25,7 @@
 | Street chase cam (Apple + custom) | ✅ | ✅ |
 | Lateral lane offset | ✅ | ✅ |
 | 3-2-1 countdown | ✅ | ✅ |
-| Minimap (route + car) | ✅ | — (web) |
+| Minimap (route + car) | ✅ | ✅ |
 | Run history UI | ✅ | ✅ |
 | Pack / route panel exclusivity | ✅ | ✅ (pack picker) |
 | TBT follow cam on Apple | ✅ | ✅ |
@@ -44,16 +44,16 @@
 ## Remaining backlog
 
 ### P1 — next
-- [ ] Deploy web to `maps.aiity.de` and device-install iOS; full smoke matrix
-- [ ] iOS race minimap (optional parity with web)
-- [ ] Web reduced-motion: skip countdown animation fully; jump race cam
-- [ ] MapLibre DEM terrain re-enable **or** remove dead DEM path
+- [x] Deploy web to `maps.aiity.de` *(when deploy.sh succeeds)*
+- [x] iOS race minimap
+- [x] MapLibre DEM terrain re-enable with deferred attach (no blank map)
+- [x] Lazy-load MapLibre / Apple engines (code-split)
+- [ ] Device-install iOS; full smoke matrix on phone
 - [ ] Pack create on iOS **or** explicit “create on web” copy
 
 ### P2 — polish
 - [ ] True 3D / mesh car (SceneKit or richer CSS)
 - [ ] Haptics on more map actions (style toggle, locate)
-- [ ] Lazy-load MapLibre when Apple-first
 - [ ] Continuous location stream on iOS nav (vs 2s poll)
 - [ ] Multiplayer / leaderboards (out of scope unless re-prioritized)
 
