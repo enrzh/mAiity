@@ -71,11 +71,19 @@ export function PlaceCard() {
             <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
               {address || place.label}
             </p>
-            {details?.kind && (
-              <Badge variant="secondary" className="mt-2 rounded-full text-[11px] font-medium capitalize">
-                {details.kind.replace(/_/g, ' ')}
-              </Badge>
-            )}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {details?.kind && (
+                <Badge variant="secondary" className="rounded-md text-[11px] font-medium capitalize">
+                  {details.kind.replace(/_/g, ' ')}
+                </Badge>
+              )}
+              {details?.openingHours && (
+                <Badge variant="outline" className="gap-1 rounded-md text-[11px] font-medium">
+                  <Clock className="size-3" />
+                  <span className="max-w-[12rem] truncate">{details.openingHours}</span>
+                </Badge>
+              )}
+            </div>
             {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
           </div>
           <Button

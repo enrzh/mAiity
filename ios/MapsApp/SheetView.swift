@@ -80,31 +80,45 @@ struct SheetView: View {
         }
     }
 
-    // MARK: Chrome — [Saved] [Me] ····· [Search]
+    // MARK: Chrome — search first (Apple Maps style)
 
     private var chromeSection: some View {
         Section {
-            HStack(spacing: 4) {
+            HStack(spacing: 8) {
+                Button {
+                    searchExpanded = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        Text(L.t("search-placeholder"))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer(minLength: 0)
+                    }
+                    .font(.body)
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, minHeight: 40, alignment: .leading)
+                    .background(Color(.tertiarySystemFill), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.t("search"))
+
                 Button {
                     model.panel = model.panel == .saved ? .none : .saved
-                    if detent == .height(96) { detent = .medium }
+                    if detent == .height(96) { detent = .height(220) }
                 } label: {
-                    Label(L.t("chrome-saved"), systemImage: "star.fill")
-                        .font(.subheadline.weight(.medium))
-                        .labelStyle(.titleAndIcon)
-                        .padding(.horizontal, 12)
-                        .frame(minHeight: MapTokens.controlHeight)
-                        .foregroundStyle(model.panel == .saved ? Color.white : Color.primary)
-                        .background(
-                            Capsule().fill(model.panel == .saved
-                                ? Color.accentColor
-                                : Color.clear)
-                        )
+                    Image(systemName: model.panel == .saved ? "star.fill" : "star")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(model.panel == .saved ? Color.accentColor : Color.primary)
+                        .frame(width: 40, height: 40)
+                        .background(Color(.tertiarySystemFill), in: Circle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.t("saved-places"))
 
                 Menu {
+
                     if let user = model.user {
                         Section(user.displayName ?? user.email ?? L.t("account")) {
                             Button {
@@ -138,30 +152,15 @@ struct SheetView: View {
                         Label(L.t("language"), systemImage: "globe")
                     }
                 } label: {
-                    Label(L.t("chrome-me"), systemImage: "person.crop.circle")
-                        .font(.subheadline.weight(.medium))
-                        .labelStyle(.titleAndIcon)
-                        .padding(.horizontal, 12)
-                        .frame(minHeight: MapTokens.controlHeight)
+                    Image(systemName: "person.crop.circle")
+                        .font(.body.weight(.medium))
+                        .frame(width: 40, height: 40)
+                        .background(Color(.tertiarySystemFill), in: Circle())
                 }
                 .accessibilityLabel(L.t("chrome-me"))
 
-                Spacer(minLength: 2)
-
-                Button {
-                    searchExpanded = true
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16, weight: .medium))
-                        .frame(width: MapTokens.controlHeight, height: MapTokens.controlHeight)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.t("search"))
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 3)
-            .mapsChrome(pill: true)
-            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+            .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
             .listRowBackground(Color.clear)
         }
     }

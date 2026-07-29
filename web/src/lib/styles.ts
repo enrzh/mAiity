@@ -19,24 +19,18 @@ export const radius = {
 } as const
 
 /**
- * Surface recipes — frosted glass, soft fill, or solid card.
- * All use semantic tokens only (no raw hex in components).
+ * Surface recipes — solid cards by default; light blur only on map chrome.
  */
 export const surface = {
   glass: cn(
-    'border border-border/40 bg-background/70 shadow-sm',
-    'backdrop-blur-2xl backdrop-saturate-150',
-    'supports-backdrop-filter:bg-background/55',
+    'border border-border bg-background/95 shadow-sm',
+    'backdrop-blur-md supports-backdrop-filter:bg-background/90',
   ),
-  soft: cn(
-    'border border-border/30 bg-muted/50',
-    'supports-backdrop-filter:bg-muted/40 supports-backdrop-filter:backdrop-blur-md',
-  ),
-  solid: 'border border-border/50 bg-card text-card-foreground shadow-sm',
+  soft: 'border border-border/80 bg-muted/60',
+  solid: 'border border-border bg-card text-card-foreground shadow-sm',
   float: cn(
-    'border border-border/40 bg-background/75 shadow-md',
-    'backdrop-blur-2xl backdrop-saturate-150',
-    'supports-backdrop-filter:bg-background/60',
+    'border border-border bg-background/95 shadow-md',
+    'backdrop-blur-md supports-backdrop-filter:bg-background/92',
   ),
 } as const
 

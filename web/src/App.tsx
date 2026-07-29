@@ -53,7 +53,7 @@ function TopBar({
     <header
       className="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
     >
-      <div className="pointer-events-auto flex w-full max-w-xl items-center gap-1.5 rounded-2xl border border-border/60 bg-background/95 p-1.5 shadow-md backdrop-blur-md">
+      <div className="pointer-events-auto flex w-full max-w-xl items-center gap-1.5 rounded-2xl border border-border bg-background p-1.5 shadow-sm">
         <Button
           type="button"
           variant="ghost"
@@ -146,7 +146,7 @@ function MapFabs() {
   const app = useApp()
   const t = useT()
   const fab =
-    'size-10 rounded-full border border-border/60 bg-background/95 shadow-md backdrop-blur-md hover:bg-background'
+    'size-10 rounded-full border border-border bg-background shadow-sm hover:bg-muted'
 
   return (
     <div className="absolute bottom-[calc(var(--detail-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
@@ -313,7 +313,7 @@ function Shell() {
       {hasDetail && body && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div
-            className="pointer-events-auto flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/95 shadow-lg backdrop-blur-md transition-[height] duration-200 ease-out"
+            className="pointer-events-auto flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-lg transition-[height] duration-200 ease-out"
             style={{ height: detailH }}
           >
             <button
