@@ -31,13 +31,10 @@ targets:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
         NSLocationWhenInUseUsageDescription: Zeigt deine Position auf der Karte. Standort wird nur lokal verwendet.
-    # NOTE: Sign in with Apple entitlement removed — personal team "Emoji PvP"
-    # (H8FW6W6K2D) doesn't support the capability. Re-add when on the paid
-    # Apple Developer Program (and flip AppConfig.signInWithAppleEnabled):
-    #   entitlements:
-    #     path: MapsApp/MapsApp.entitlements
-    #     properties:
-    #       com.apple.developer.applesignin: [Default]
+    entitlements:
+      path: MapsApp/MapsApp.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: de.aiity.maps

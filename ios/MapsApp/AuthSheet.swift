@@ -2,10 +2,10 @@ import SwiftUI
 import AuthenticationServices
 
 enum AppConfig {
-    /// Sign in with Apple needs the paid Apple Developer Program — personal
-    /// teams can't sign the entitlement. Flip this (and re-add the
-    /// entitlement in project.yml) once a paid membership is active.
-    static let signInWithAppleEnabled = false
+    /// The paid Apple Developer Program entitlement is enabled in project.yml.
+    /// Keep this flag centralized so the UI cannot surface an auth path the
+    /// signed app is not entitled to use.
+    static let signInWithAppleEnabled = true
 }
 
 /// Login/registration: Sign in with Apple (native) + email/password.
