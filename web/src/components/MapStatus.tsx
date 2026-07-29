@@ -18,22 +18,22 @@ export function MapStatus({
   if (appleFailed && app.mapProvider === 'apple') {
     return (
       <div
-        className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-3"
+        className="pointer-events-none absolute inset-x-0 top-3 z-[35] flex justify-center px-3 md:top-4"
         style={{ paddingLeft: 'var(--left-chrome, 0px)' }}
         role="alert"
       >
-        <div className="pointer-events-auto flex max-w-md flex-col gap-2 rounded-2xl border border-border/60 bg-background/95 p-3 shadow-xl backdrop-blur sm:flex-row sm:items-center">
-          <div className="flex min-w-0 flex-1 items-start gap-2 text-sm">
+        <div className="pointer-events-auto flex max-w-md flex-col gap-2 rounded-2xl border border-border/50 bg-background/95 p-2.5 shadow-lg backdrop-blur-md sm:flex-row sm:items-center sm:gap-3 sm:p-3">
+          <div className="flex min-w-0 flex-1 items-start gap-2 text-[13px] leading-snug">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden />
             <span>{t('map-apple-failed')}</span>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={onRetryApple}>
+            <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={onRetryApple}>
               <RefreshCw className="size-3.5" /> {t('retry')}
             </Button>
             <Button
               size="sm"
-              className="gap-1.5"
+              className="h-8 gap-1.5"
               onClick={() => app.setMapProvider('custom')}
             >
               <MapIcon className="size-3.5" /> {t('map-switch-custom')}
@@ -47,22 +47,22 @@ export function MapStatus({
   if (app.packsError && app.mapProvider === 'custom' && app.packs.length === 0) {
     return (
       <div
-        className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-3"
+        className="pointer-events-none absolute inset-x-0 top-3 z-[35] flex justify-center px-3 md:top-4"
         style={{ paddingLeft: 'var(--left-chrome, 0px)' }}
         role="alert"
       >
-        <div className="pointer-events-auto flex max-w-md flex-col gap-2 rounded-2xl border border-border/60 bg-background/95 p-3 shadow-xl backdrop-blur sm:flex-row sm:items-center">
-          <div className="flex min-w-0 flex-1 items-start gap-2 text-sm">
+        <div className="pointer-events-auto flex max-w-md flex-col gap-2 rounded-2xl border border-border/50 bg-background/95 p-2.5 shadow-lg backdrop-blur-md sm:flex-row sm:items-center sm:gap-3 sm:p-3">
+          <div className="flex min-w-0 flex-1 items-start gap-2 text-[13px] leading-snug">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden />
             <span>{t('map-load-failed')}</span>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => void app.loadPacks()}>
+            <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={() => void app.loadPacks()}>
               <RefreshCw className="size-3.5" /> {t('retry')}
             </Button>
             <Button
               size="sm"
-              className="gap-1.5"
+              className="h-8 gap-1.5"
               onClick={() => app.setMapProvider('apple')}
             >
               <MapIcon className="size-3.5" /> {t('map-switch-apple')}

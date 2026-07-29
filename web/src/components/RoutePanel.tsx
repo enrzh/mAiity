@@ -1,6 +1,5 @@
 import { ArrowUpDown, Bike, Car, Footprints, Loader2, LocateFixed, MapPin, Navigation2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import type { RouteMode } from '../lib/api'
@@ -21,8 +20,7 @@ export function RoutePanel() {
   if (!route) return null
 
   return (
-    <Card className="gap-0 border-border/60 py-0 shadow-none">
-      <CardContent className="space-y-3 p-4">
+    <div className="space-y-3">
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1 space-y-1.5">
             {/* Start row — editable */}
@@ -113,7 +111,6 @@ export function RoutePanel() {
             </ol>
           </>
         ) : null}
-      </CardContent>
-    </Card>
+    </div>
   )
 }

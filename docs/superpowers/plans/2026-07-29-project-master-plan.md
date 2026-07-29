@@ -1,8 +1,17 @@
 # mAiity — Project Master Plan (web + native)
 
-**Updated:** 2026-07-29  
+**Updated:** 2026-07-29 (UI zones + rail flatten + deploy)  
 **Repo:** `enrzh/mAiity` · product on `maps.aiity.de`  
 **Goal:** One map-first product across web and iOS — discover, route, navigate, race — with Apple Maps and custom packs as equal providers.
+
+## Layout contract (do not violate)
+
+| Zone | Owner | Must not share with |
+|------|--------|---------------------|
+| Top centre | Status / search-this-area | Race HUD, sheet |
+| Bottom | Race HUD **or** mobile sheet | Both at once |
+| Bottom-right | Map zoom/locate | Race touch pads (phone) |
+| Left (desktop) | Rail 360px | Floating race chrome on left edge |
 
 ---
 

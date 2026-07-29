@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/AppModel.swift": {
-    "mtime": 1785341055.0916834,
-    "ast_hash": "68140675c20fffe96772d12f0be6e5c4",
+    "mtime": 1785355942.4858167,
+    "ast_hash": "c8db8c884a34c40b992322ec453fa3a7",
     "semantic_hash": ""
   },
   "ios/MapsApp/Assets.xcassets/AppIcon.appiconset/Contents.json": {
@@ -65,13 +65,13 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/MapScreen.swift": {
-    "mtime": 1785340965.1816645,
-    "ast_hash": "6a370c84300aa48bf48a3657ca57b766",
+    "mtime": 1785356313.3477516,
+    "ast_hash": "4a44c5823ff7fddf0691b46d5ef6e5ae",
     "semantic_hash": ""
   },
   "ios/MapsApp/MapsApp.swift": {
-    "mtime": 1784974971.96693,
-    "ast_hash": "a41a9c9f4ad688f677911c6271f5ec80",
+    "mtime": 1785356324.4515672,
+    "ast_hash": "76390cf52adb8e92ddbd67a7f62b1039",
     "semantic_hash": ""
   },
   "ios/MapsApp/Models.swift": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/SheetView.swift": {
-    "mtime": 1785340942.5475113,
-    "ast_hash": "2eebc0d21d537259d9fb603c2769d846",
+    "mtime": 1785355942.4774895,
+    "ast_hash": "130f57a8a02d293ce5c540b0d86e6109",
     "semantic_hash": ""
   },
   "packs/dark/pack.json": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785338878.6144884,
-    "ast_hash": "82f44789099bae44d0f31e5b033b158f",
+    "mtime": 1785356440.0687728,
+    "ast_hash": "244c884aa9726c5e6a4166dccb596955",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -315,13 +315,13 @@
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
-    "mtime": 1785340686.6935356,
-    "ast_hash": "a1af544e86a53a58dffcb7f19ca46433",
+    "mtime": 1785356097.9180145,
+    "ast_hash": "026d44f55db6658e9b68c3c928686c51",
     "semantic_hash": ""
   },
   "web/src/components/NavigationPanel.tsx": {
-    "mtime": 1785068541.6008801,
-    "ast_hash": "8c5c81e6414bdf38e095dadbf9c55edc",
+    "mtime": 1785356411.446962,
+    "ast_hash": "28c0857516d2906fd4d32558a08b7fd8",
     "semantic_hash": ""
   },
   "web/src/components/PackEditor.tsx": {
@@ -330,23 +330,23 @@
     "semantic_hash": ""
   },
   "web/src/components/PackSwitcher.tsx": {
-    "mtime": 1785338831.5715246,
-    "ast_hash": "6c89197ca13ccf2240f1db810894a2d6",
+    "mtime": 1785353940.4333644,
+    "ast_hash": "c999f02d45512e00d9245b75e1f6c274",
     "semantic_hash": ""
   },
   "web/src/components/PlaceCard.tsx": {
-    "mtime": 1785068633.8571389,
-    "ast_hash": "484104f26fcdcc0faf398756685616eb",
+    "mtime": 1785356397.656253,
+    "ast_hash": "ced7a6eeacd76066ba6236e1e3b68b45",
     "semantic_hash": ""
   },
   "web/src/components/PoiResults.tsx": {
-    "mtime": 1785069332.716586,
-    "ast_hash": "cb248c4baa19ace0fca950b3abdeb378",
+    "mtime": 1785356440.0686045,
+    "ast_hash": "8a538a82195f084347631917a9ed355f",
     "semantic_hash": ""
   },
   "web/src/components/RoutePanel.tsx": {
-    "mtime": 1785341359.5792358,
-    "ast_hash": "d2bcd87d3cec4e3258c0f6427941f765",
+    "mtime": 1785356411.4361749,
+    "ast_hash": "78cfaf0edd12e6a7c762210befe451b7",
     "semantic_hash": ""
   },
   "web/src/components/SavedPanel.tsx": {
@@ -355,13 +355,13 @@
     "semantic_hash": ""
   },
   "web/src/components/SearchAreaButton.tsx": {
-    "mtime": 1785338907.9619944,
-    "ast_hash": "901ec99eef5593a69bea103c7113dacc",
+    "mtime": 1785356294.7150002,
+    "ast_hash": "e7b754150b28e1483d4bd271918be05a",
     "semantic_hash": ""
   },
   "web/src/components/SearchBar.tsx": {
-    "mtime": 1785338891.6507435,
-    "ast_hash": "e19c8fbe8afd9390faa98dd3e0ab4ac3",
+    "mtime": 1785355449.5865433,
+    "ast_hash": "dfeb3bb003036b88fc79970420b02d5b",
     "semantic_hash": ""
   },
   "web/src/components/ui/badge.tsx": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785352102.5257757,
-    "ast_hash": "7c483fcb9e837a86f51d022b5a4b9240",
+    "mtime": 1785354632.5746577,
+    "ast_hash": "24be437eb81c790f65eced758261e5db",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -555,13 +555,13 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/CustomMapScreen.swift": {
-    "mtime": 1785341124.2096994,
-    "ast_hash": "4a75ed6461c1383a219b505269cb7d0b",
+    "mtime": 1785356313.347918,
+    "ast_hash": "353a885d48e49c2bda821c211bbb75dd",
     "semantic_hash": ""
   },
   "ios/MapsApp/Localization.swift": {
-    "mtime": 1785078285.9914646,
-    "ast_hash": "dd2bcb82fa57be8b86ca208324bd8b61",
+    "mtime": 1785355901.3532202,
+    "ast_hash": "e7f1dfd17d19b88e83acb4bb87b104c3",
     "semantic_hash": ""
   },
   "ios/MapsApp/MapTokens.swift": {
@@ -575,13 +575,13 @@
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
-    "mtime": 1785340734.9811172,
-    "ast_hash": "87ebc566f85546d36c193c462ab7e83b",
+    "mtime": 1785355375.6695516,
+    "ast_hash": "df0012a0befeaf3abb585ae01687a8b0",
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
-    "mtime": 1785333230.013704,
-    "ast_hash": "a0533c78cb6bb060ceac87eb4f4afc3f",
+    "mtime": 1785355794.8773165,
+    "ast_hash": "3ca6fa24708665a8822abd3ec681ab5c",
     "semantic_hash": ""
   },
   "web/src/lib/markerTokens.ts": {
@@ -630,8 +630,8 @@
     "semantic_hash": ""
   },
   "PRODUCT.md": {
-    "mtime": 1785334946.7942107,
-    "ast_hash": "4a5d8525271a6734bb29243b1a079f89",
+    "mtime": 1785355942.477614,
+    "ast_hash": "bc507a9460158791724f6971027b0639",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-29-map-controls-and-layout-plan.md": {
@@ -665,18 +665,18 @@
     "semantic_hash": ""
   },
   "web/src/maps/rendererController.test.ts": {
-    "mtime": 1785338318.2093194,
-    "ast_hash": "a2f6ecc324116da4bec1a09424a9907b",
+    "mtime": 1785355342.0864382,
+    "ast_hash": "8b8c82ee1056280ff113f720575d3059",
     "semantic_hash": ""
   },
   "web/src/maps/rendererController.ts": {
-    "mtime": 1785338318.2090337,
-    "ast_hash": "b1b61f5263f37a21f561b0c352caf9e6",
+    "mtime": 1785355342.086436,
+    "ast_hash": "746e531cf460db51830a82ddcff605d6",
     "semantic_hash": ""
   },
   "web/src/maps/types.ts": {
-    "mtime": 1785338318.2077572,
-    "ast_hash": "42ede9026594e448643c5fe9a6b552e3",
+    "mtime": 1785355342.086469,
+    "ast_hash": "daf898910a60c4ecba33b26557be73ef",
     "semantic_hash": ""
   },
   "web/src/maps/viewportStorage.test.ts": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "web/src/components/DrivingModePanel.tsx": {
-    "mtime": 1785352173.0713747,
-    "ast_hash": "88ed905ccf1ab958977d9e9432a54dc9",
+    "mtime": 1785356341.805978,
+    "ast_hash": "64f4b940d37105c3e1f0045e1522783c",
     "semantic_hash": ""
   },
   "web/src/lib/driving.test.ts": {
@@ -710,13 +710,13 @@
     "semantic_hash": ""
   },
   "web/src/lib/drivingSession.test.ts": {
-    "mtime": 1785340474.736547,
-    "ast_hash": "f402072b6eb327b99cebe94a6f207c2e",
+    "mtime": 1785354598.275957,
+    "ast_hash": "65e2151df11a1dfe49275781e8957665",
     "semantic_hash": ""
   },
   "web/src/lib/drivingSession.ts": {
-    "mtime": 1785352231.778995,
-    "ast_hash": "2d4bb7c7819fbb672cac4258f3c1e4b2",
+    "mtime": 1785354598.275951,
+    "ast_hash": "0ad3878d415db377efbac7a25dda1c77",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-29-driving-game-mode.md": {
@@ -732,6 +732,61 @@
   "web/src/lib/drivingGame.ts": {
     "mtime": 1785352069.9951553,
     "ast_hash": "1a01812f4393cd7e1139054b6b93401d",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/DrivingPhysics.swift": {
+    "mtime": 1785355466.109461,
+    "ast_hash": "21e3e4e587bae59ca4bf7413b410ae49",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/MapPersistence.swift": {
+    "mtime": 1785355834.6919882,
+    "ast_hash": "0023ab22e98255e05386314166430a3d",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/RaceHUDView.swift": {
+    "mtime": 1785356313.3604555,
+    "ast_hash": "e91503d03d26396d5b79814f99a9cd38",
+    "semantic_hash": ""
+  },
+  "web/src/components/MapLibreMapView.tsx": {
+    "mtime": 1785356324.4515915,
+    "ast_hash": "c2ded69da86aa98cae750392a82396ca",
+    "semantic_hash": ""
+  },
+  "web/src/components/MapStatus.tsx": {
+    "mtime": 1785356440.068723,
+    "ast_hash": "e804d13928bc68d45d2699d0881f1e3f",
+    "semantic_hash": ""
+  },
+  "web/src/lib/drivingCamera.test.ts": {
+    "mtime": 1785354598.2757459,
+    "ast_hash": "46e616e5ffb9370183ba654081935076",
+    "semantic_hash": ""
+  },
+  "web/src/lib/drivingCamera.ts": {
+    "mtime": 1785354598.2756784,
+    "ast_hash": "6454c9cdac54d2c517a627fb13d1f5cd",
+    "semantic_hash": ""
+  },
+  "web/src/maps/railInset.ts": {
+    "mtime": 1785356097.912985,
+    "ast_hash": "525b9a26a83056e918ae76212dde1b94",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-29-project-master-plan.md": {
+    "mtime": 1785356440.0687523,
+    "ast_hash": "597a22b57df9000286fc0ec2145d015f",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-29-racing-mode-vision.md": {
+    "mtime": 1785355661.5364554,
+    "ast_hash": "70399306c9052e1fbbeb7bcee1c146c9",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-29-web-ios-improvement-plan.md": {
+    "mtime": 1785355597.1862953,
+    "ast_hash": "54189e0a016549b79bdba4c4678e8e73",
     "semantic_hash": ""
   }
 }

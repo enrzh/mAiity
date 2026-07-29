@@ -4,7 +4,6 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -60,12 +59,12 @@ export function PlaceCard() {
   }
 
   return (
-    <Card className="gap-0 border-border/60 py-0 shadow-none">
-      <CardContent className="space-y-3 p-3.5">
+    // Flat surface — no nested card chrome inside the rail.
+    <div className="space-y-3">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[17px] font-semibold leading-tight">{place.name}</h2>
-            <p className="mt-0.5 line-clamp-2 text-[13px] text-muted-foreground">
+            <h2 className="truncate text-[17px] font-semibold leading-tight tracking-tight">{place.name}</h2>
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
               {address || place.label}
             </p>
             {details?.kind && (
@@ -147,8 +146,7 @@ export function PlaceCard() {
           <MapPin className="size-3" />
           {place.lat.toFixed(5)}, {place.lon.toFixed(5)}
         </p>
-      </CardContent>
-    </Card>
+    </div>
   )
 }
 

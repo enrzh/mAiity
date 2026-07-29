@@ -498,13 +498,15 @@ function EmptyRail() {
   const app = useApp()
   const t = useT()
   return (
-    <div className="hidden h-full flex-col justify-end gap-1 px-1 pb-1 md:flex">
-      <p className="text-sm font-medium text-foreground/80">
-        {app.user ? t('welcome-back') : t('explore-map')}
-      </p>
-      <p className="text-[13px] leading-relaxed text-muted-foreground">
-        {t('empty-hint')}
-      </p>
+    <div className="hidden h-full flex-col justify-end gap-2 px-1 pb-2 md:flex">
+      <div className="rounded-xl bg-muted/40 px-3 py-3">
+        <p className="text-sm font-medium tracking-tight text-foreground/90">
+          {app.user ? t('welcome-back') : t('explore-map')}
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+          {t('empty-hint')}
+        </p>
+      </div>
     </div>
   )
 }
