@@ -19,7 +19,6 @@ const appleMaps = applePrivateKey && process.env.APPLE_MAPS_KEY_ID
       keyId: process.env.APPLE_MAPS_KEY_ID,
       teamId: process.env.APPLE_MAPS_TEAM_ID,
       mapsId: process.env.APPLE_MAPS_ID,
-      mapKitJsToken: process.env.APPLE_MAPKIT_JS_TOKEN,
     })
   : undefined;
 

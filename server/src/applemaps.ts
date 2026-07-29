@@ -5,7 +5,6 @@ export interface AppleMapsConfig {
   keyId: string;
   mapsId: string;
   privateKey: string;
-  mapKitJsToken?: string;
 }
 
 export interface AppleSearchResult {
@@ -26,7 +25,6 @@ export class AppleMapsClient {
 
   private async developerToken(scope = "server_api", origin?: string): Promise<string> {
     const now = Math.floor(Date.now() / 1000);
-    if (this.token && this.token.expiresAt - 60 > now) return this.token.value;
     this.keyPromise ??= importPKCS8(this.config.privateKey, "ES256");
     const key = await this.keyPromise;
     const value = await new SignJWT({
@@ -44,18 +42,10 @@ export class AppleMapsClient {
 
   /** Short-lived browser token for MapKit JS. Never expose the signing key. */
   async mapKitToken(origin: string): Promise<{ token: string; expiresInSeconds: number }> {
-    if (this.config.mapKitJsToken) {
-      return { token: this.config.mapKitJsToken, expiresInSeconds: 86400 };
-    }
-    const developerToken = await this.developerToken("mapkit_js", origin);
-    const response = await fetch("https://maps-api.apple.com/v1/token", {
-      headers: { Authorization: `Bearer ${developerToken}` },
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!response.ok) throw new Error(`Apple Maps token request failed: ${response.status}`);
-    const body = (await response.json()) as { accessToken?: string; expiresInSeconds?: number };
-    if (!body.accessToken) throw new Error("Apple Maps token response was empty");
-    return { token: body.accessToken, expiresInSeconds: body.expiresInSeconds ?? 1800 };
+    return {
+      token: await this.developerToken("mapkit_js", origin),
+      expiresInSeconds: 15 * 60,
+    };
   }
 
   private async accessToken(): Promise<string> {

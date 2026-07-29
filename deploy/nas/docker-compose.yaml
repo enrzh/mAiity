@@ -86,7 +86,6 @@ services:
       APPLE_MAPS_TEAM_ID: ${APPLE_MAPS_TEAM_ID:-}
       APPLE_MAPS_KEY_ID: ${APPLE_MAPS_KEY_ID:-}
       APPLE_MAPS_ID: ${APPLE_MAPS_ID:-}
-      APPLE_MAPKIT_JS_TOKEN: ${APPLE_MAPKIT_JS_TOKEN:-}
       APPLE_MAPS_PRIVATE_KEY_FILE: /run/secrets/apple-maps.p8
       APPLE_AUDIENCES: "de.aiity.maps,de.aiity.maps.web"
       APPLE_LOGIN_TEAM_ID: "H8FW6W6K2D"
