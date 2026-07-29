@@ -25,20 +25,23 @@ import {
 import { pointAtProgress, bearingAtProgress } from './lib/driving'
 import { carPositionAt, RACE_CAR_RADIUS_M } from './lib/drivingCamera'
 import { resolveBuildingCollision, softRoadBias } from './lib/drivingCollision'
+import { resetDrivingLive, setDrivingLive } from './lib/drivingLive'
 
 /** Throttled building footprint cache for free-drive collision. */
 let buildingCache: { lon: number; lat: number; at: number; fps: { ring: [number, number][] }[] } | null = null
 function nearbyBuildings(lon: number, lat: number) {
   const now = Date.now()
+  // Never stick empty results — tiles often load mid-drive.
+  const ttl = buildingCache?.fps.length ? 120 : 40
   if (
     buildingCache
-    && now - buildingCache.at < 160
-    && Math.abs(buildingCache.lon - lon) < 0.0002
-    && Math.abs(buildingCache.lat - lat) < 0.0002
+    && now - buildingCache.at < ttl
+    && Math.abs(buildingCache.lon - lon) < 0.00015
+    && Math.abs(buildingCache.lat - lat) < 0.00015
   ) {
     return buildingCache.fps
   }
-  const fps = queryActiveMapBuildingsNear(lon, lat, 50)
+  const fps = queryActiveMapBuildingsNear(lon, lat, 65)
   buildingCache = { lon, lat, at: now, fps }
   return fps
 }
@@ -198,7 +201,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [is3D, setIs3D] = useState(false)
   const [navigating, setNavigating] = useState(false)
   const [driving, setDriving] = useState<DrivingSession>(() => idleSession())
+  const drivingRef = useRef<DrivingSession>(idleSession())
+  const drivePublishAt = useRef(0)
   const [drivingRuns, setDrivingRuns] = useState<DrivingRun[]>(() => loadDrivingRuns())
+
+  // Keep ref in sync when session status changes from non-physics paths.
+  useEffect(() => {
+    drivingRef.current = driving
+    if (driving.status === 'idle') resetDrivingLive()
+    else {
+      setDrivingLive({
+        status: driving.status,
+        kind: driving.kind,
+        lon: driving.lon,
+        lat: driving.lat,
+        heading: driving.heading,
+        speedMps: driving.speedMps,
+        lateral: driving.lateral,
+        progress: driving.progress,
+        distanceM: driving.distanceM,
+        elapsedMs: driving.elapsedMs,
+        lastHitAt: driving.lastHitAt ?? null,
+      })
+    }
+  }, [driving])
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
   // bookmark mutation counter — stale fetches must never clobber newer state.
@@ -578,24 +604,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [])
+  /**
+   * Physics step at display rate. Writes high-frequency pose to drivingLive
+   * (map + 3D car). React state is throttled (~18 Hz) so the tree does not
+   * re-render 60×/s (main cause of laggy drive).
+   */
   const driveDrivingMode = useCallback((input: DrivingInput, now = Date.now()) => {
-    setDriving((s) => {
-      if (s.status !== 'running') return s
-      const dt = Math.min(0.05, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000))
-      const frameMs = Math.min(50, Math.max(0, now - (s.lastInputAt ?? now)))
+    const s = drivingRef.current
+    if (s.status !== 'running') return
 
-      if (s.kind === 'free') {
-        let free = stepFreeDrive(
-          {
-            lon: s.lon, lat: s.lat, heading: s.heading,
-            speedMps: s.speedMps, lateral: s.lateral, distanceM: s.distanceM,
-          },
-          input,
-          dt,
-        )
-        let lastHitAt = s.lastHitAt ?? null
-        // Soft road bias + building walls (MapLibre Protomaps); no-op on Apple.
-        try {
+    const dt = Math.min(0.05, Math.max(0.001, (now - (s.lastInputAt ?? now)) / 1000))
+    const frameMs = Math.min(50, Math.max(0, now - (s.lastInputAt ?? now)))
+    let next: DrivingSession
+
+    if (s.kind === 'free') {
+      const prevLon = s.lon
+      const prevLat = s.lat
+      let free = stepFreeDrive(
+        {
+          lon: s.lon, lat: s.lat, heading: s.heading,
+          speedMps: s.speedMps, lateral: s.lateral, distanceM: s.distanceM,
+        },
+        input,
+        dt,
+      )
+      let lastHitAt = s.lastHitAt ?? null
+      try {
+        // Buildings first (hard walls), then light road bias only if not blocked.
+        const fps = nearbyBuildings(free.lon, free.lat)
+        if (fps.length > 0) {
+          const resolved = resolveBuildingCollision(
+            {
+              lon: free.lon,
+              lat: free.lat,
+              heading: free.heading,
+              speedMps: free.speedMps,
+            },
+            fps,
+            RACE_CAR_RADIUS_M,
+            { lon: prevLon, lat: prevLat },
+          )
+          free = {
+            ...free,
+            lon: resolved.lon,
+            lat: resolved.lat,
+            heading: resolved.heading,
+            speedMps: resolved.speedMps,
+          }
+          if (resolved.hit) {
+            lastHitAt = now
+            try {
+              if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(12)
+            } catch { /* ignore */ }
+          }
+        }
+        // Soft road pull only when not in a wall this frame
+        if (lastHitAt !== now) {
           const roads = nearbyRoads(free.lon, free.lat)
           if (roads.length > 0) {
             const biased = softRoadBias(
@@ -606,7 +670,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 speedMps: free.speedMps,
               },
               roads,
-              { pullM: 0.28, headingBlend: 0.07, maxDistM: 26 },
+              { pullM: 0.2, headingBlend: 0.05, maxDistM: 22 },
             )
             free = {
               ...free,
@@ -615,50 +679,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
               heading: biased.heading,
             }
           }
-          const fps = nearbyBuildings(free.lon, free.lat)
-          if (fps.length > 0) {
-            const resolved = resolveBuildingCollision(
-              {
-                lon: free.lon,
-                lat: free.lat,
-                heading: free.heading,
-                speedMps: free.speedMps,
-              },
-              fps,
-              RACE_CAR_RADIUS_M,
-            )
-            free = {
-              ...free,
-              lon: resolved.lon,
-              lat: resolved.lat,
-              heading: resolved.heading,
-              speedMps: resolved.speedMps,
-            }
-            if (resolved.hit) {
-              lastHitAt = now
-              try {
-                if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(18)
-              } catch { /* ignore */ }
-            }
-          }
-        } catch { /* collision / road bias optional */ }
-        return {
-          ...s,
-          ...free,
-          lastHitAt,
-          progress: 0,
-          elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
-          lastInputAt: now,
         }
-      }
+      } catch { /* collision optional */ }
 
+      next = {
+        ...s,
+        ...free,
+        lastHitAt,
+        progress: 0,
+        elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
+        lastInputAt: now,
+      }
+    } else {
       const nextPhysics = stepDrivingGame(
         { progress: s.progress, speedMps: s.speedMps, lateral: s.lateral },
         input,
         dt,
         s.distanceM,
       )
-      // Sync lon/lat/heading from route so the 3D car anchors to the road.
       let lon = s.lon, lat = s.lat, heading = s.heading
       const geo = routeRef.current?.result?.geometry as [number, number][] | undefined
       if (geo && geo.length >= 2) {
@@ -667,7 +705,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const car = carPositionAt(pt, brg, nextPhysics.lateral)
         lon = car[0]; lat = car[1]; heading = brg
       }
-      const next = {
+      next = {
         ...s,
         ...nextPhysics,
         lon, lat, heading,
@@ -677,13 +715,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (next.progress >= 1) {
         const finished = finishDriving(next, now)
         const run = toDrivingRun(finished, now)
+        drivingRef.current = finished
+        setDriving(finished)
+        setDrivingLive({
+          status: finished.status,
+          kind: finished.kind,
+          lon: finished.lon,
+          lat: finished.lat,
+          heading: finished.heading,
+          speedMps: 0,
+          lateral: 0,
+          progress: 1,
+          distanceM: finished.distanceM,
+          elapsedMs: finished.elapsedMs,
+          lastHitAt: null,
+        })
         setDrivingRuns(() => {
           try { return saveDrivingRun(run) } catch { return [run] }
         })
-        return finished
+        return
       }
-      return next
+    }
+
+    drivingRef.current = next
+    // Always publish live pose for map/car (no React).
+    setDrivingLive({
+      status: next.status,
+      kind: next.kind,
+      lon: next.lon,
+      lat: next.lat,
+      heading: next.heading,
+      speedMps: next.speedMps,
+      lateral: next.lateral,
+      progress: next.progress,
+      distanceM: next.distanceM,
+      elapsedMs: next.elapsedMs,
+      lastHitAt: next.lastHitAt ?? null,
     })
+    // Throttle React HUD updates (~18fps). Force on hit flash.
+    const force = next.lastHitAt != null && next.lastHitAt === now
+    if (force || now - drivePublishAt.current >= 55) {
+      drivePublishAt.current = now
+      setDriving(next)
+    }
   }, [])
   const finishDrivingMode = useCallback(() => {
     setDriving((s) => {

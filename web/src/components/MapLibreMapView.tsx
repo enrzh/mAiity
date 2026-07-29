@@ -16,11 +16,11 @@ import {
 import { readViewport, writeViewport } from '../maps/viewportStorage'
 import { railInset } from '../maps/railInset'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
-import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import {
-  raceCameraAt, vehiclePoseFromSession,
+  raceCameraAt,
   RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M,
 } from '../lib/drivingCamera'
+import { getDrivingLive, subscribeDrivingLive } from '../lib/drivingLive'
 import { useApp } from '../state'
 import { cn } from '../lib/utils'
 
@@ -485,48 +485,66 @@ export function MapLibreMapView() {
           return { x: p.x, y: p.y }
         } catch { return null }
       },
-      queryBuildingsNear: (lon, lat, radiusM = 48) => {
+      queryBuildingsNear: (lon, lat, radiusM = 60) => {
         try {
-          if (!m.getSource('protomaps')) return []
-          // Loaded vector tiles only (Protomaps buildings layer).
-          const raw = m.querySourceFeatures('protomaps', { sourceLayer: 'buildings' }) as Array<{
-            geometry?: { type?: string; coordinates?: unknown }
-          }>
+          // Prefer rendered building layers (style-visible), fall back to source tiles.
+          const style = m.getStyle()
+          const buildingLayerIds = (style?.layers ?? [])
+            .filter((l) => {
+              const srcLayer = (l as { 'source-layer'?: string })['source-layer']
+              const id = l.id ?? ''
+              return srcLayer === 'buildings' || /building/i.test(id)
+            })
+            .map((l) => l.id)
+
+          type Feat = { geometry?: { type?: string; coordinates?: unknown } }
+          let raw: Feat[] = []
+          if (buildingLayerIds.length) {
+            // Screen radius ≈ metres at this zoom (rough)
+            const p = m.project([lon, lat])
+            const pxR = Math.min(220, Math.max(48, radiusM * 2.2))
+            raw = m.queryRenderedFeatures(
+              [[p.x - pxR, p.y - pxR], [p.x + pxR, p.y + pxR]],
+              { layers: buildingLayerIds },
+            ) as Feat[]
+          }
+          if (!raw.length && m.getSource('protomaps')) {
+            raw = m.querySourceFeatures('protomaps', { sourceLayer: 'buildings' }) as Feat[]
+          }
           if (!raw.length) return []
+
           const cosLat = Math.max(0.2, Math.cos((lat * Math.PI) / 180))
           const r2 = radiusM * radiusM
-          const near: typeof raw = []
+          const out: { ring: [number, number][] }[] = []
+          const seen = new Set<string>()
+
+          const pushRing = (ring: number[][]) => {
+            if (!ring || ring.length < 3) return
+            // Centroid for distance cull
+            let sx = 0, sy = 0
+            for (const c of ring) { sx += c[0]; sy += c[1] }
+            const n = ring.length
+            const clat = sy / n, clon = sx / n
+            const dx = (clon - lon) * 111_320 * cosLat
+            const dy = (clat - lat) * 111_320
+            if (dx * dx + dy * dy > r2 * 2.5) return
+            const key = `${clon.toFixed(5)},${clat.toFixed(5)}`
+            if (seen.has(key)) return
+            seen.add(key)
+            out.push({ ring: ring.map((c) => [c[0], c[1]] as [number, number]) })
+          }
+
           for (const f of raw) {
+            if (out.length >= 64) break
             const g = f.geometry
             if (!g?.coordinates) continue
-            // Quick reject via first ring vertex
-            let ring: number[][] | null = null
-            if (g.type === 'Polygon') ring = (g.coordinates as number[][][])[0] ?? null
-            else if (g.type === 'MultiPolygon') ring = (g.coordinates as number[][][][])[0]?.[0] ?? null
-            if (!ring?.length) continue
-            const [flon, flat] = ring[0]
-            const dx = (flon - lon) * 111_320 * cosLat
-            const dy = (flat - lat) * 111_320
-            if (dx * dx + dy * dy > r2 * 4) continue // coarse
-            near.push(f)
-            if (near.length >= 64) break
-          }
-          // Lazy import-free: inline footprint extract for ring only
-          const out: { ring: [number, number][] }[] = []
-          for (const f of near) {
-            const g = f.geometry
-            if (!g) continue
-            if (g.type === 'Polygon') {
-              const r = (g.coordinates as number[][][])[0]
-              if (r?.length >= 3) out.push({ ring: r.map((c) => [c[0], c[1]] as [number, number]) })
-            } else if (g.type === 'MultiPolygon') {
+            if (g.type === 'Polygon') pushRing((g.coordinates as number[][][])[0])
+            else if (g.type === 'MultiPolygon') {
               for (const poly of g.coordinates as number[][][][]) {
-                const r = poly[0]
-                if (r?.length >= 3) out.push({ ring: r.map((c) => [c[0], c[1]] as [number, number]) })
-                if (out.length >= 48) break
+                pushRing(poly[0])
+                if (out.length >= 64) break
               }
             }
-            if (out.length >= 48) break
           }
           return out
         } catch {
@@ -535,11 +553,30 @@ export function MapLibreMapView() {
       },
       queryRoadsNear: (lon, lat, radiusM = 55) => {
         try {
-          if (!m.getSource('protomaps')) return []
-          const raw = m.querySourceFeatures('protomaps', { sourceLayer: 'roads' }) as Array<{
-            geometry?: { type?: string; coordinates?: unknown }
-          }>
-          if (!raw.length) return []
+          const style = m.getStyle()
+          const roadLayerIds = (style?.layers ?? [])
+            .filter((l) => {
+              const srcLayer = (l as { 'source-layer'?: string })['source-layer']
+              const id = l.id ?? ''
+              return srcLayer === 'roads' || /^roads?-/i.test(id)
+            })
+            .map((l) => l.id)
+            .slice(0, 12)
+
+          type Feat = { geometry?: { type?: string; coordinates?: unknown } }
+          let raw: Feat[] = []
+          if (roadLayerIds.length) {
+            const p = m.project([lon, lat])
+            const pxR = Math.min(200, Math.max(40, radiusM * 2))
+            raw = m.queryRenderedFeatures(
+              [[p.x - pxR, p.y - pxR], [p.x + pxR, p.y + pxR]],
+              { layers: roadLayerIds },
+            ) as Feat[]
+          }
+          if (!raw.length && m.getSource('protomaps')) {
+            raw = m.querySourceFeatures('protomaps', { sourceLayer: 'roads' }) as Feat[]
+          }
+
           const cosLat = Math.max(0.2, Math.cos((lat * Math.PI) / 180))
           const r2 = radiusM * radiusM
           const segs: Array<{ a: [number, number]; b: [number, number] }> = []
@@ -749,55 +786,83 @@ export function MapLibreMapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
 
-  // Race / free-drive camera — follows vehiclePose (route or free).
+  // Race / free-drive camera — reads high-frequency drivingLive (NOT React state).
+  // jumpTo every frame: easeTo stacking was the main lag source.
   const racePrevStatus = useRef(app.driving.status)
   useEffect(() => {
-    if (!map || app.driving.status === 'idle') {
-      drivingMarker.current?.remove(); drivingMarker.current = null
+    if (!map) return
+    drivingMarker.current?.remove(); drivingMarker.current = null
+
+    let raf = 0
+    let sceneryReady = false
+    const reduced = typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      const live = getDrivingLive()
+      if (live.status === 'idle') return
+      if (!(live.status === 'running' || live.status === 'paused' || live.status === 'ready')) return
+      if (!Number.isFinite(live.lon) || !Number.isFinite(live.lat)) return
+
+      if (!sceneryReady) {
+        sceneryReady = true
+        try { ensure3DScenery(map) } catch { /* optional */ }
+        try { attachTerrainWhenReady(map) } catch { /* optional */ }
+      }
+
+      try {
+        const ready = live.status === 'ready'
+        const cam = raceCameraAt([live.lon, live.lat], live.heading, {
+          lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
+        })
+        // Instant camera follow while running — no animation queue lag.
+        if (live.status === 'running' || reduced) {
+          map.jumpTo({
+            center: cam.center as [number, number],
+            bearing: cam.bearing,
+            pitch: cam.pitch,
+            zoom: cam.zoom,
+            padding: { top: 12, bottom: 140, left: 12, right: 56 },
+          })
+        } else {
+          map.easeTo({
+            center: cam.center as [number, number],
+            bearing: cam.bearing,
+            pitch: cam.pitch,
+            zoom: cam.zoom,
+            duration: ready ? 350 : 0,
+            essential: true,
+            padding: { top: 12, bottom: 140, left: 12, right: 56 },
+          })
+        }
+      } catch { /* map disposed mid-frame */ }
+    }
+
+    const unsub = subscribeDrivingLive(() => {
+      // Kick loop; continuous rAF keeps camera smooth while live updates.
+    })
+    raf = requestAnimationFrame(tick)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      unsub()
       if (
-        map
-        && (racePrevStatus.current === 'running' || racePrevStatus.current === 'paused' || racePrevStatus.current === 'finished')
+        racePrevStatus.current === 'running'
+        || racePrevStatus.current === 'paused'
+        || racePrevStatus.current === 'finished'
+        || racePrevStatus.current === 'ready'
       ) {
         try {
-          map.easeTo({ pitch: 0, bearing: 0, duration: 700, essential: true })
-        } catch { /* map disposed */ }
+          map.easeTo({ pitch: 0, bearing: 0, duration: reduced ? 0 : 500, essential: true })
+        } catch { /* ok */ }
       }
-      racePrevStatus.current = app.driving.status
-      return
     }
+  }, [map])
+
+  useEffect(() => {
     racePrevStatus.current = app.driving.status
-    const pose = vehiclePoseFromSession(
-      app.driving,
-      routeGeometry as [number, number][] | null,
-    )
-    if (!pose) return
-    const carLngLat: [number, number] = [pose.lon, pose.lat]
-    drivingMarker.current?.remove(); drivingMarker.current = null
-    if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
-    try {
-      try { ensure3DScenery(map) } catch { /* optional sky/terrain */ }
-      try { attachTerrainWhenReady(map) } catch { /* DEM optional */ }
-      const ready = app.driving.status === 'ready'
-      const cam = raceCameraAt(carLngLat, pose.heading, {
-        lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
-      })
-      const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const opts = {
-        center: cam.center as [number, number],
-        bearing: cam.bearing,
-        pitch: cam.pitch,
-        // Street-scale: force race zoom (not max with prior zoom — that kept roads small)
-        zoom: cam.zoom,
-        duration: app.driving.status === 'running' && !reduced ? 55 : (ready ? 400 : 0),
-        essential: true as const,
-        padding: { top: 12, bottom: 140, left: 12, right: 56 },
-      }
-      if (opts.duration > 0) map.easeTo(opts)
-      else map.jumpTo(opts)
-    } catch (e) {
-      console.error('[maplibre] race camera failed', e)
-    }
-  }, [map, routeGeometry, app.driving])
+  }, [app.driving.status])
 
   // POI category markers (teal), replaced wholesale per category.
   const poiMarkers = useRef<Marker[]>([])

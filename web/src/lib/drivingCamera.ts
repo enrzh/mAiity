@@ -17,8 +17,8 @@ export const RACE_LOOKAHEAD_M = 26
 export const RACE_LOOKAHEAD_READY_M = 16
 export const RACE_LOOKAHEAD = 0.012
 export const RACE_LANE_M = 3.2
-/** Half-width of car AABB for building collisions (metres). */
-export const RACE_CAR_RADIUS_M = 1.6
+/** Half-width of car for building collisions (metres) — generous so free-drive hits feel solid. */
+export const RACE_CAR_RADIUS_M = 2.4
 
 export interface RaceCamera {
   center: LngLat

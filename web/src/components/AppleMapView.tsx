@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import {
   raceCameraAt,
-  vehiclePoseFromSession,
   RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M, RACE_PITCH,
 } from '../lib/drivingCamera'
+import { getDrivingLive } from '../lib/drivingLive'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
@@ -531,21 +531,17 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     }
   }, [map, app.route])
 
-  // Chase camera for route race + free drive (vehicle pose, not route-only).
+  // Chase camera from high-frequency drivingLive — never animate while running.
   useEffect(() => {
     if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
-    try {
-      const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
-      const pts = (geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null) as
-        | [number, number][]
-        | null
-      const racing =
-        app.driving.status === 'running'
-        || app.driving.status === 'paused'
-        || app.driving.status === 'ready'
-        || app.driving.status === 'finished'
+    let raf = 0
+    let wasRacing = false
 
+    const apply = (animated: boolean) => {
+      if (!aliveRef.current || !mapIsLive(map, el.current)) return
+      const live = getDrivingLive()
+      const racing = live.status !== 'idle'
       try {
         if (typeof map.showsBuildings !== 'undefined') map.showsBuildings = racing
         if (typeof map.showsCompass !== 'undefined' && mk.FeatureVisibility) {
@@ -553,32 +549,31 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         }
       } catch { /* older MapKit */ }
 
-      if (app.driving.status === 'idle') {
-        try {
-          const center = map.center
-          if (mk.Camera && center) {
-            const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
-            if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
-            else if ('camera' in map) map.camera = cam
-          }
-        } catch { /* no Camera API */ }
+      if (!racing) {
+        if (wasRacing) {
+          try {
+            const center = map.center
+            if (mk.Camera && center) {
+              const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
+              if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
+              else if ('camera' in map) map.camera = cam
+            }
+          } catch { /* ok */ }
+        }
+        wasRacing = false
         return
       }
+      wasRacing = true
+      if (!(live.status === 'running' || live.status === 'paused' || live.status === 'ready')) return
+      if (!Number.isFinite(live.lon) || !Number.isFinite(live.lat)) return
 
-      const pose = vehiclePoseFromSession(app.driving, pts)
-      if (!pose || !Number.isFinite(pose.lon) || !Number.isFinite(pose.lat)) return
-      if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
-
-      const carPt: [number, number] = [pose.lon, pose.lat]
-      const bearing = pose.heading
-      const ready = app.driving.status === 'ready'
-      const cam = raceCameraAt(carPt, bearing, {
+      const ready = live.status === 'ready'
+      const cam = raceCameraAt([live.lon, live.lat], live.heading, {
         lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
         altitudeM: ready ? RACE_ALTITUDE_READY_M : RACE_ALTITUDE_M,
         pitch: Math.min(RACE_PITCH, 85),
       })
       const coord = new mk.Coordinate(cam.center[1], cam.center[0])
-      const animated = app.driving.status === 'running'
       try {
         if (mk.Camera) {
           const camera = new mk.Camera(coord, {
@@ -586,35 +581,23 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
             pitch: cam.pitch,
             altitude: cam.altitudeM,
           })
+          // Never animate while running — queued animations = lag.
           if (typeof map.setCameraAnimated === 'function') {
-            map.setCameraAnimated(camera, animated)
+            map.setCameraAnimated(camera, animated && ready)
           } else if ('camera' in map) {
             map.camera = camera
-          } else {
-            throw new Error('no camera setter')
           }
-        } else {
-          throw new Error('no Camera class')
         }
-      } catch {
-        try {
-          map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), animated)
-          if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
-          if (typeof map.setCameraDistanceAnimated === 'function') {
-            map.setCameraDistanceAnimated(cam.altitudeM, animated)
-          } else if (map.region) {
-            const span = 0.0012
-            map.setRegionAnimated(new mk.CoordinateRegion(
-              new mk.Coordinate(carPt[1], carPt[0]),
-              new mk.CoordinateSpan(span, span),
-            ), animated)
-          }
-        } catch { /* last resort already failed */ }
-      }
-    } catch (e) {
-      console.error('[mapkit] race camera failed', e)
+      } catch { /* camera API quirks */ }
     }
-  }, [map, app.route, app.driving])
+
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      apply(false)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [map])
 
   const tone = appleOverlayClass(app.mapPreferences.appleOverlayTone)
   return (

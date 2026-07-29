@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { cn } from '../lib/utils'
 import { projectActiveMapToScreen } from '../maps/rendererController'
+import { getDrivingLive, subscribeDrivingLive } from '../lib/drivingLive'
 
 type Props = {
   /** -1…1 lane offset → bank / slide */
@@ -207,26 +208,35 @@ export function RaceCar3D({
     }
   }, [])
 
-  // Push live inputs without remounting the scene
+  // Live pose from high-frequency store (smooth); props are mount fallbacks.
   useEffect(() => {
-    apiRef.current?.setInput(lateral, speedMps, active, heading)
-  }, [lateral, speedMps, active, heading])
-
-  // Anchor to map coordinates every animation frame while posed
-  useEffect(() => {
-    if (lon == null || lat == null || !Number.isFinite(lon) || !Number.isFinite(lat)) {
-      apiRef.current?.setScreen(null, null)
-      return
-    }
     let raf = 0
     const loop = () => {
-      const p = projectActiveMapToScreen(lon, lat)
-      apiRef.current?.setScreen(p?.x ?? null, p?.y ?? null)
       raf = requestAnimationFrame(loop)
+      const live = getDrivingLive()
+      const useLive = live.status === 'running' || live.status === 'paused' || live.status === 'ready'
+      const plat = useLive ? live.lat : lat
+      const plon = useLive ? live.lon : lon
+      const phead = useLive ? live.heading : heading
+      const pspeed = useLive ? live.speedMps : speedMps
+      const pactive = useLive ? live.status === 'running' : active
+      const plat2 = useLive ? live.lateral : lateral
+
+      apiRef.current?.setInput(plat2 ?? 0, pspeed ?? 0, pactive, phead ?? 0)
+      if (plon != null && plat != null && Number.isFinite(plon) && Number.isFinite(plat)) {
+        const p = projectActiveMapToScreen(plon, plat)
+        apiRef.current?.setScreen(p?.x ?? null, p?.y ?? null)
+      } else {
+        apiRef.current?.setScreen(null, null)
+      }
     }
     raf = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(raf)
-  }, [lon, lat])
+    const unsub = subscribeDrivingLive(() => { /* rAF already samples */ })
+    return () => {
+      cancelAnimationFrame(raf)
+      unsub()
+    }
+  }, [lon, lat, heading, speedMps, active, lateral])
 
   return (
     <div
