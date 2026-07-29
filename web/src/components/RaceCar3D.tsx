@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { cn } from '../lib/utils'
+import { projectActiveMapToScreen } from '../maps/rendererController'
 
 type Props = {
   /** -1…1 lane offset → bank / slide */
@@ -8,22 +9,30 @@ type Props = {
   speedMps?: number
   /** Running — wheels spin, engine shake */
   active?: boolean
+  /** Map position — car is anchored to this lon/lat on screen. */
+  lon?: number
+  lat?: number
+  heading?: number
   className?: string
 }
 
 /**
- * First-person race car rendered with Three.js (real WebGL mesh, not CSS).
- * Transparent canvas overlays the map; camera is a rear ¾ / cockpit angle.
+ * Three.js sports car overlaid on the map. Anchored to lon/lat via
+ * projectActiveMapToScreen so it sits on the road (not a fixed HUD corner).
  */
 export function RaceCar3D({
   lateral = 0,
   speedMps = 0,
   active = false,
+  lon,
+  lat,
+  heading = 0,
   className,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const apiRef = useRef<{
-    setInput: (lateral: number, speedMps: number, active: boolean) => void
+    setInput: (lateral: number, speedMps: number, active: boolean, heading: number) => void
+    setScreen: (x: number | null, y: number | null) => void
     dispose: () => void
   } | null>(null)
 
@@ -146,11 +155,36 @@ export function RaceCar3D({
     }
     raf = requestAnimationFrame(tick)
 
+    let screenX: number | null = null
+    let screenY: number | null = null
+
     apiRef.current = {
-      setInput: (lat, spd, act) => {
+      setInput: (lat, spd, act, head) => {
         lateralIn = lat
         speedIn = spd
         activeIn = act
+        // Subtle model yaw from map heading change is handled via bank/steer only
+        void head
+      },
+      setScreen: (x, y) => {
+        screenX = x
+        screenY = y
+        if (x != null && y != null && Number.isFinite(x) && Number.isFinite(y)) {
+          host.classList.add('maps-fp-car--anchored')
+          host.style.left = `${x}px`
+          host.style.top = `${y}px`
+          host.style.bottom = 'auto'
+          host.style.marginLeft = '0'
+          // Anchor near rear axle so chase-cam look-ahead keeps the car lower-center.
+          host.style.transform = 'translate(-50%, -42%)'
+        } else {
+          host.classList.remove('maps-fp-car--anchored')
+          host.style.left = '50%'
+          host.style.top = 'auto'
+          host.style.bottom = 'max(4.5rem, calc(var(--race-hud-h, 120px) - 0.5rem))'
+          host.style.marginLeft = '-min(210px, 46vw)'
+          host.style.transform = 'none'
+        }
       },
       dispose: () => {
         disposed = true
@@ -163,6 +197,8 @@ export function RaceCar3D({
         if (renderer.domElement.parentNode === host) host.removeChild(renderer.domElement)
       },
     }
+    void screenX
+    void screenY
 
     return () => {
       apiRef.current?.dispose()
@@ -172,8 +208,24 @@ export function RaceCar3D({
 
   // Push live inputs without remounting the scene
   useEffect(() => {
-    apiRef.current?.setInput(lateral, speedMps, active)
-  }, [lateral, speedMps, active])
+    apiRef.current?.setInput(lateral, speedMps, active, heading)
+  }, [lateral, speedMps, active, heading])
+
+  // Anchor to map coordinates every animation frame while posed
+  useEffect(() => {
+    if (lon == null || lat == null || !Number.isFinite(lon) || !Number.isFinite(lat)) {
+      apiRef.current?.setScreen(null, null)
+      return
+    }
+    let raf = 0
+    const loop = () => {
+      const p = projectActiveMapToScreen(lon, lat)
+      apiRef.current?.setScreen(p?.x ?? null, p?.y ?? null)
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [lon, lat])
 
   return (
     <div

@@ -36,7 +36,7 @@ struct RaceHUDView: View {
                     finishedRow
                 }
                 if case .ready = state, countdown == nil {
-                    Text(L.t("race-hint"))
+                    Text(L.t(model.driveKind == .free ? "free-drive-hint" : "race-hint"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -75,21 +75,30 @@ struct RaceHUDView: View {
     }
 
     private var statsRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        let free = model.driveKind == .free
+        return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 12) {
-                Label(L.t("race-mode"), systemImage: "car.fill")
+                Label(L.t(free ? "free-drive" : "race-mode"), systemImage: "car.fill")
                     .font(.subheadline.bold())
                 Spacer(minLength: 0)
                 Text("\(Int(model.raceSpeedMps * 3.6)) km/h")
                     .font(.subheadline.monospacedDigit().bold())
                 Text(Self.fmtTime(state.elapsed))
                     .font(.subheadline.monospacedDigit().bold())
-                Text("\(Int(state.progress * 100))%")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                if free {
+                    Text(Self.fmtDist(state.distanceM))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("\(Int(state.progress * 100))%")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
-            ProgressView(value: state.progress)
-                .tint(.cyan)
+            if !free {
+                ProgressView(value: state.progress)
+                    .tint(.cyan)
+            }
         }
     }
 
@@ -111,8 +120,11 @@ struct RaceHUDView: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                         model.requestStartRace()
                     } label: {
-                        Label(L.t("race-start"), systemImage: "play.fill")
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                        Label(
+                            L.t(model.driveKind == .free ? "free-drive-start" : "race-start"),
+                            systemImage: "play.fill"
+                        )
+                        .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     .buttonStyle(.borderedProminent)
                 }

@@ -12,12 +12,13 @@ const fmtTime = (ms: number) => {
 
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`)
 
-/** Compact race HUD over the live map (not a full-screen fake road). */
+/** Compact race / free-drive HUD over the live map (not a full-screen fake road). */
 export function DrivingModePanel() {
   const app = useApp()
   const t = useT()
   const route = app.route?.result
   const session = app.driving
+  const isFree = session.kind === 'free'
   const keys = useRef({ throttle: false, brake: false, steer: 0 })
   const frame = useRef<number | null>(null)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -75,12 +76,15 @@ export function DrivingModePanel() {
   }, [app.driveDrivingMode, session.status])
 
   const geometry = route?.geometry
-  const currentPoint = useMemo(
-    () => (geometry && geometry.length > 0 ? pointAtProgress(geometry, session.progress) : null),
-    [geometry, session.progress],
-  )
+  const currentPoint = useMemo(() => {
+    if (isFree && Number.isFinite(session.lon) && Number.isFinite(session.lat)) {
+      return [session.lon, session.lat] as [number, number]
+    }
+    return geometry && geometry.length > 0 ? pointAtProgress(geometry, session.progress) : null
+  }, [geometry, session.progress, session.lon, session.lat, isFree])
+
   const minimap = useMemo(() => {
-    if (!geometry || geometry.length < 2) return null
+    if (isFree || !geometry || geometry.length < 2) return null
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
     for (const pt of geometry) {
       if (!pt || !Number.isFinite(pt[0]) || !Number.isFinite(pt[1])) continue
@@ -107,12 +111,19 @@ export function DrivingModePanel() {
       ? to(currentPoint[0], currentPoint[1])
       : null
     return { path, car }
-  }, [geometry, currentPoint])
+  }, [geometry, currentPoint, isFree])
 
-  if (!route || !geometry || geometry.length < 2 || session.status === 'idle') return null
+  // Free drive needs no route; route race needs geometry.
+  if (session.status === 'idle') return null
+  if (!isFree && (!route || !geometry || geometry.length < 2)) return null
+
   const speed = Math.round(session.speedMps * 3.6)
   const recent = app.drivingRuns.slice(0, 5)
   const countingDown = countdown != null
+  const modeLabel = isFree ? t('free-drive') : t('race-mode')
+  const startLabel = isFree ? t('free-drive-start') : t('race-start')
+  const hintLabel = isFree ? t('free-drive-hint') : t('race-hint')
+  const drivenM = isFree ? session.distanceM : session.distanceM * session.progress
 
   const hold = (type: 'throttle' | 'brake' | 'left' | 'right', value: boolean) => {
     if (type === 'throttle') keys.current.throttle = value
@@ -126,12 +137,12 @@ export function DrivingModePanel() {
   return (
     <section
       className={`maps-race-hud${active || countingDown ? ' maps-race-hud--compact' : ''}`}
-      aria-label={t('race-mode')}
+      aria-label={modeLabel}
     >
       <div className="maps-race-hud__top">
         <div className="maps-race-hud__stat">
           <Car className="size-3.5 shrink-0" aria-hidden />
-          <span>{t('race-mode')}</span>
+          <span>{modeLabel}</span>
         </div>
         <div className="maps-race-hud__stat">
           <Gauge className="size-3.5 shrink-0" aria-hidden />
@@ -139,7 +150,11 @@ export function DrivingModePanel() {
         </div>
         <div className="maps-race-hud__stat">
           <span>{fmtTime(session.elapsedMs)}</span>
-          <span className="opacity-70">{Math.round(session.progress * 100)}%</span>
+          {isFree ? (
+            <span className="opacity-70">{fmtDist(drivenM)}</span>
+          ) : (
+            <span className="opacity-70">{Math.round(session.progress * 100)}%</span>
+          )}
         </div>
         {(session.status === 'ready' || session.status === 'finished') && (
           <Button
@@ -153,9 +168,11 @@ export function DrivingModePanel() {
             <X className="size-3.5" />
           </Button>
         )}
-        <div className="maps-race-hud__progress" aria-hidden>
-          <span style={{ width: `${session.progress * 100}%` }} />
-        </div>
+        {!isFree && (
+          <div className="maps-race-hud__progress" aria-hidden>
+            <span style={{ width: `${session.progress * 100}%` }} />
+          </div>
+        )}
       </div>
 
       {countingDown && (
@@ -179,7 +196,7 @@ export function DrivingModePanel() {
         {session.status === 'ready' && !countingDown && (
           <Button size="sm" className="min-h-10 flex-1" onClick={() => setCountdown(3)}>
             <Play className="mr-1.5 size-4" />
-            {t('race-start')}
+            {startLabel}
           </Button>
         )}
         {session.status === 'ready' && countingDown && (
@@ -214,7 +231,7 @@ export function DrivingModePanel() {
       </div>
 
       {session.status === 'running' && (
-        <div className="maps-race-hud__touch" aria-label={t('race-mode')}>
+        <div className="maps-race-hud__touch" aria-label={modeLabel}>
           <Button
             size="sm"
             variant="secondary"
@@ -263,11 +280,12 @@ export function DrivingModePanel() {
         <div className="maps-race-hud__finished">
           <Flag className="size-3.5" />
           {t('race-complete')} · {fmtTime(session.elapsedMs)}
+          {isFree && drivenM > 0 ? ` · ${fmtDist(drivenM)}` : ''}
         </div>
       )}
 
       {session.status === 'ready' && !countingDown && (
-        <p className="maps-race-hud__hint">{t('race-hint')}</p>
+        <p className="maps-race-hud__hint">{hintLabel}</p>
       )}
 
       {/* History only at rest — never under the touch pads. */}

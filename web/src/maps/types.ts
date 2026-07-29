@@ -18,6 +18,8 @@ export interface MapViewport {
   center: { lat: number; lon: number }
   latitudeDelta: number
   longitudeDelta: number
+  /** Map rotation in degrees (0 = north). Used to arm free-drive heading. */
+  bearing?: number
 }
 
 export interface MapRendererCapabilities {
@@ -44,6 +46,8 @@ export interface MapRendererController {
   focusPlace(place: Place): void
   showPlaces(places: Place[]): void
   getViewport(): MapViewport | null
+  /** Project lon/lat into CSS pixels relative to the map container. */
+  projectToScreen?(lon: number, lat: number): { x: number; y: number } | null
   /** Optional: chase camera during turn-by-turn (Apple + custom). */
   followNavigation?(state: NavFollowState): void
   /** Optional: fire when the user pans/zooms the map (for “search this area”). */

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   createDrivingSession,
   createDrivingSessionForMode,
+  createFreeDrivingSession,
   finishDriving,
   pauseDriving,
   resetDriving,
@@ -13,8 +14,9 @@ describe('driving session state', () => {
   const route = { distanceM: 10_000, durationS: 600 }
 
   test('moves through ready, running, paused, and finished states', () => {
-    const ready = createDrivingSession(route, 100_000)
+    const ready = createDrivingSession(route, { lon: 6.8, lat: 51.2 })
     expect(ready.status).toBe('ready')
+    expect(ready.kind).toBe('route')
     expect(startDriving(ready, 1_000).status).toBe('running')
     const paused = pauseDriving({ ...ready, status: 'running', startedAt: 1_000, lastInputAt: 1_000, progress: 0.42, elapsedMs: 2_500 }, 4_000)
     expect(paused.status).toBe('paused')
@@ -24,7 +26,14 @@ describe('driving session state', () => {
   })
 
   test('does not start sessions without a usable route', () => {
-    expect(createDrivingSession({ distanceM: 0, durationS: 0 }, 100).status).toBe('idle')
+    expect(createDrivingSession({ distanceM: 0, durationS: 0 }).status).toBe('idle')
+  })
+
+  test('free drive arms without a route', () => {
+    const free = createFreeDrivingSession({ lon: 6.77, lat: 51.22, heading: 90 })
+    expect(free.status).toBe('ready')
+    expect(free.kind).toBe('free')
+    expect(startDriving(free, 1).status).toBe('running')
   })
 
   test('only car routes arm race mode', () => {
@@ -35,7 +44,7 @@ describe('driving session state', () => {
 
   test('pause preserves game physics progress (no teleport)', () => {
     const running = {
-      ...createDrivingSession(route, 0),
+      ...createDrivingSession(route),
       status: 'running' as const,
       startedAt: 1_000,
       lastInputAt: 3_000,
@@ -49,12 +58,12 @@ describe('driving session state', () => {
     expect(paused.progress).toBe(0.37)
     expect(paused.lateral).toBe(0.4)
     expect(paused.speedMps).toBe(18)
-    expect(paused.elapsedMs).toBe(2_500) // +500 from lastInputAt
+    expect(paused.elapsedMs).toBe(2_500)
   })
 
   test('finish keeps elapsed from game loop and sets progress to 1', () => {
     const running = {
-      ...createDrivingSession(route, 0),
+      ...createDrivingSession(route),
       status: 'running' as const,
       startedAt: 1_000,
       lastInputAt: 5_000,
@@ -71,7 +80,7 @@ describe('driving session state', () => {
 
   test('reset re-arms a finished session for another race', () => {
     const finished = {
-      ...createDrivingSession(route, 0),
+      ...createDrivingSession(route),
       status: 'finished' as const,
       elapsedMs: 40_000,
       progress: 1,

@@ -17,7 +17,10 @@ import { readViewport, writeViewport } from '../maps/viewportStorage'
 import { railInset } from '../maps/railInset'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
-import { carPositionAt, raceCameraAt } from '../lib/drivingCamera'
+import {
+  raceCameraAt, vehiclePoseFromSession,
+  RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M,
+} from '../lib/drivingCamera'
 import { useApp } from '../state'
 import { cn } from '../lib/utils'
 
@@ -68,14 +71,15 @@ export function ensure3DScenery(m: MLMap) {
   // NOTE: in MapLibre v5 `sky` is a ROOT style property (setSky), NOT a
   // layer type — addLayer({type:'sky'}) throws and aborts 3D setup.
   try {
+    // Soft atmosphere — high blend at low zoom washed the world into milk.
     m.setSky({
       'sky-color': '#8cb8e8',
-      'sky-horizon-blend': 0.5,
-      'horizon-color': '#f0e6d8',
-      'horizon-fog-blend': 0.6,
-      'fog-color': '#dfe7f0',
-      'fog-ground-blend': 0.1,
-      'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 0.8, 10, 0.6, 14, 0.2],
+      'sky-horizon-blend': 0.35,
+      'horizon-color': '#e8eef5',
+      'horizon-fog-blend': 0.25,
+      'fog-color': '#e8eef5',
+      'fog-ground-blend': 0.05,
+      'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 0.18, 4, 0.28, 8, 0.4, 14, 0.15],
     })
   } catch { /* older renderer without sky support */ }
 }
@@ -118,15 +122,26 @@ function setMapLibre3D(m: MLMap, on: boolean) {
   } catch (e) {
     console.error('[3d] scenery unavailable', e) // never block the tilt
   }
-  // Lift to z16 so extruded buildings (minzoom 14) are actually in view.
-  // Prefer reduced motion: snap without long ease.
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  // Don't force zoom-in on toggle — keep the user's scale (mobile felt "broken"
+  // when 3D yanked the camera to z16).
   m.easeTo({
-    pitch: on ? 62 : 0,
-    bearing: on ? -18 : 0,
-    zoom: on ? Math.max(m.getZoom(), 16) : m.getZoom(),
-    duration: reduced ? 0 : 1000,
+    pitch: on ? 58 : 0,
+    bearing: on ? m.getBearing() : 0,
+    duration: reduced ? 0 : 700,
   })
+}
+
+/** Globe at continental zoom; mercator for street/city. Softens flat-world fade. */
+function syncProjectionForZoom(m: MLMap) {
+  try {
+    const z = m.getZoom()
+    const wantGlobe = z < 5.5
+    const proj = m.getProjection?.() as { type?: string } | undefined
+    const cur = proj?.type ?? 'mercator'
+    if (wantGlobe && cur !== 'globe') m.setProjection({ type: 'globe' })
+    else if (!wantGlobe && cur === 'globe') m.setProjection({ type: 'mercator' })
+  } catch { /* projection API unavailable */ }
 }
 
 /** Padding for framing calls, keeping content clear of the rail. */
@@ -399,6 +414,7 @@ export function MapLibreMapView() {
         center: { lat: center.lat, lon: center.lng },
         latitudeDelta: Math.abs(bounds.getNorth() - bounds.getSouth()),
         longitudeDelta: Math.abs(bounds.getEast() - bounds.getWest()),
+        bearing: m.getBearing(),
       }
     }
     const moveListeners = new Set<() => void>()
@@ -407,6 +423,8 @@ export function MapLibreMapView() {
       for (const listener of moveListeners) listener()
     }
     m.on('moveend', onMoveEnd)
+    m.on('zoomend', () => { try { syncProjectionForZoom(m) } catch { /* ok */ } })
+    try { syncProjectionForZoom(m) } catch { /* ok */ }
     // Restore last custom viewport if we have one. Regional PMTiles look blank
     // at world-scale zooms, so clamp to a useful street/city range.
     const savedCustom = readViewport('custom')
@@ -460,6 +478,13 @@ export function MapLibreMapView() {
         m.fitBounds(bounds, { padding: framePad(80), duration: 700, maxZoom: 15 })
       },
       getViewport: viewport,
+      projectToScreen: (lon, lat) => {
+        try {
+          const p = m.project([lon, lat])
+          if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return null
+          return { x: p.x, y: p.y }
+        } catch { return null }
+      },
       followNavigation: ({ lat, lon, heading }) => {
         showUserDot(m, [lon, lat])
         m.easeTo({ center: [lon, lat], zoom: 17, pitch: 60, bearing: heading, duration: 900 })
@@ -639,12 +664,10 @@ export function MapLibreMapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
 
-  // First-person race camera (driver-eye). The 3D car is a viewport overlay
-  // (RaceCar3D) — no top-down map pin, which broke the FP illusion.
+  // Race / free-drive camera — follows vehiclePose (route or free).
   const racePrevStatus = useRef(app.driving.status)
   useEffect(() => {
-    if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle') {
-      // Drop any legacy pin if present.
+    if (!map || app.driving.status === 'idle') {
       drivingMarker.current?.remove(); drivingMarker.current = null
       if (
         map
@@ -658,20 +681,20 @@ export function MapLibreMapView() {
       return
     }
     racePrevStatus.current = app.driving.status
-    const progress = app.driving.progress
-    const point = pointAtProgress(routeGeometry, progress)
-    const bearing = bearingAtProgress(routeGeometry, progress)
-    const carLngLat = carPositionAt(point, bearing, app.driving.lateral ?? 0)
-    if (!Number.isFinite(carLngLat[0]) || !Number.isFinite(carLngLat[1])) return
-    // Never show a top-down marker in FP race.
+    const pose = vehiclePoseFromSession(
+      app.driving,
+      routeGeometry as [number, number][] | null,
+    )
+    if (!pose) return
+    const carLngLat: [number, number] = [pose.lon, pose.lat]
     drivingMarker.current?.remove(); drivingMarker.current = null
     if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
     try {
       try { ensure3DScenery(map) } catch { /* optional sky/terrain */ }
       try { attachTerrainWhenReady(map) } catch { /* DEM optional */ }
       const ready = app.driving.status === 'ready'
-      const cam = raceCameraAt(carLngLat, bearing, {
-        lookAheadM: ready ? 14 : 22,
+      const cam = raceCameraAt(carLngLat, pose.heading, {
+        lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
       })
       const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
       const opts = {
@@ -679,10 +702,9 @@ export function MapLibreMapView() {
         bearing: cam.bearing,
         pitch: cam.pitch,
         zoom: Math.max(map.getZoom(), cam.zoom),
-        duration: app.driving.status === 'running' && !reduced ? 70 : (ready ? 450 : 0),
+        duration: app.driving.status === 'running' && !reduced ? 55 : (ready ? 400 : 0),
         essential: true as const,
-        // Bottom padding leaves room for the 3D car + race HUD.
-        padding: { top: 12, bottom: 200, left: 12, right: 64 },
+        padding: { top: 16, bottom: 180, left: 16, right: 64 },
       }
       if (opts.duration > 0) map.easeTo(opts)
       else map.jumpTo(opts)

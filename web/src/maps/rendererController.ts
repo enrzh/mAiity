@@ -12,6 +12,11 @@ export function registerMapRenderer(controller: MapRendererController) {
 
 export const activeMapCapabilities = (): MapRendererCapabilities | null => active?.capabilities ?? null
 export const activeMapViewport = () => active?.getViewport() ?? null
+
+/** Project lon/lat to CSS pixel position in the map container (or null). */
+export function projectActiveMapToScreen(lon: number, lat: number): { x: number; y: number } | null {
+  return active?.projectToScreen?.(lon, lat) ?? null
+}
 export const zoomActiveMap = (delta: number) => active?.zoomBy(delta)
 export const locateActiveMap = () => active?.locate()
 export const setActiveMap3D = (on: boolean) => active?.set3D(on)

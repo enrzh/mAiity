@@ -218,6 +218,15 @@ body { overscroll-behavior: none; }
   width: min(420px, 92vw);
   height: min(260px, 38vh);
   margin-left: -min(210px, 46vw);
+  /* Map-anchored: shrink so the mesh reads as a car on the road */
+  will-change: left, top, transform;
+  transition: width 0.15s ease, height 0.15s ease;
+}
+.maps-fp-car--anchored {
+  width: min(280px, 55vw);
+  height: min(180px, 28vh);
+  margin-left: 0;
+  bottom: auto;
 }
 .maps-fp-car--three canvas {
   width: 100% !important;

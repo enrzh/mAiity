@@ -14,6 +14,16 @@ struct DrivingPhysicsState: Equatable {
     var lateral: Double
 }
 
+/// Open-world free drive pose (mirrors web `FreeDriveState`).
+struct FreeDriveState: Equatable {
+    var lon: Double
+    var lat: Double
+    var heading: Double
+    var speedMps: Double
+    var lateral: Double
+    var distanceM: Double
+}
+
 enum DrivingPhysics {
     /// Lane half-width scale for lateral ∈ [-1, 1] (metres).
     static let laneM = 3.2
@@ -30,6 +40,35 @@ enum DrivingPhysics {
         let lateral = max(-1, min(1, state.lateral + input.steer * safeDt * (0.8 + speedMps / 35)))
         let progress = min(1, state.progress + (speedMps * safeDt) / max(1, distanceM))
         return DrivingPhysicsState(progress: progress, speedMps: speedMps, lateral: lateral)
+    }
+
+    /// Free roam on the ground plane (no route polyline).
+    static func stepFree(
+        _ state: FreeDriveState,
+        input: DrivingInput,
+        dt: TimeInterval
+    ) -> FreeDriveState {
+        let safeDt = min(max(dt, 0), 0.1)
+        let acceleration: Double = input.brake ? -18 : (input.throttle ? 14 : -3)
+        let speedMps = max(0, min(62, state.speedMps + acceleration * safeDt))
+        let turnRate = (input.steer * (95 - min(70, speedMps * 1.1)))
+            * (speedMps > 0.4 || input.throttle ? 1 : 0.15)
+        var heading = (state.heading + turnRate * safeDt).truncatingRemainder(dividingBy: 360)
+        if heading < 0 { heading += 360 }
+        let lateral = max(-1, min(1, state.lateral * 0.88 + input.steer * 0.22))
+        let rad = heading * .pi / 180
+        let dist = speedMps * safeDt
+        let dLat = (dist / 111_320) * cos(rad)
+        let cosLat = max(0.2, cos(state.lat * .pi / 180))
+        let dLon = (dist / (111_320 * cosLat)) * sin(rad)
+        return FreeDriveState(
+            lon: state.lon + dLon,
+            lat: max(-85, min(85, state.lat + dLat)),
+            heading: heading,
+            speedMps: speedMps,
+            lateral: lateral,
+            distanceM: state.distanceM + dist
+        )
     }
 
     /// Distance-based point along geometry (progress 0…1).

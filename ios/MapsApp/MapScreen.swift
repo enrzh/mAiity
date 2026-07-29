@@ -163,6 +163,10 @@ struct MapScreen: View {
 
                     mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
                         .accessibilityLabel(L.t("view-3d"))
+
+                    // Free drive — no route required.
+                    mapButton("car.fill") { model.prepareFreeDriving() }
+                        .accessibilityLabel(L.t("free-drive"))
                 }
 
                 mapButton("location.fill") { locate() }
@@ -216,7 +220,13 @@ struct MapScreen: View {
         case .idle: return nil
         default: break
         }
-        guard let geometry = model.route?.result?.geometry, geometry.count > 1 else { return nil }
+        if model.driveKind == .free || model.route?.result?.geometry == nil {
+            guard model.carLat != 0 || model.carLon != 0 else { return nil }
+            return coordinate(model.carLat, model.carLon)
+        }
+        guard let geometry = model.route?.result?.geometry, geometry.count > 1 else {
+            return coordinate(model.carLat, model.carLon)
+        }
         let car = DrivingPhysics.carPosition(
             progress: model.driving.progress,
             lateral: model.raceLateral,

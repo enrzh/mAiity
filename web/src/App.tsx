@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Box, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User, MapPin, X } from 'lucide-react'
+import { Box, Car, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -82,16 +82,34 @@ function MapControls({ racing }: { racing: boolean }) {
     'size-11 rounded-2xl bg-background/90 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
     <div className="absolute bottom-[calc(var(--sheet-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
-      {app.mapProvider === 'custom' && (
+      {/* 3D tilt — custom MapLibre + Apple MapKit Camera pitch. */}
+      <Button
+        variant={app.is3D ? 'default' : 'ghost'}
+        className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
+        onClick={() => {
+          const next = !app.is3D
+          app.setIs3D(next)
+          set3D(next)
+        }}
+        aria-label={t('view-3d')}
+        aria-pressed={app.is3D}
+        title={t('view-3d')}
+      >
+        <Box className="size-5" />
+      </Button>
+      {/* Free drive — raise the world without a route. */}
+      {app.driving.status === 'idle' && (
         <Button
-          variant={app.is3D ? 'default' : 'ghost'}
-          className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
-          onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
-          aria-label={t('view-3d')}
-          aria-pressed={app.is3D}
-          title={t('view-3d')}
+          variant="ghost"
+          className={btn}
+          onClick={() => {
+            app.armFreeDrivingMode()
+            set3D(true)
+          }}
+          aria-label={t('free-drive')}
+          title={t('free-drive')}
         >
-          <Box className="size-5" />
+          <Car className="size-5" />
         </Button>
       )}
       <Button variant="ghost" className={btn} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
@@ -470,6 +488,9 @@ function Shell() {
               lateral={app.driving.lateral ?? 0}
               speedMps={app.driving.speedMps ?? 0}
               active={app.driving.status === 'running'}
+              lon={app.driving.lon}
+              lat={app.driving.lat}
+              heading={app.driving.heading}
             />
           </Suspense>
         )}

@@ -95,6 +95,13 @@ struct CustomMapScreen: View {
                 }
 
                 mapButton(
+                    symbol: "car.fill",
+                    label: L.t("free-drive")
+                ) {
+                    model.prepareFreeDriving()
+                }
+
+                mapButton(
                     symbol: location.isAuthorized ? "location.fill" : "location",
                     label: L.t("my-location")
                 ) {
@@ -218,13 +225,19 @@ struct CustomMapScreen: View {
                 default: return true
                 }
             }()
-            if active, let geometry = model.route?.result?.geometry, geometry.count > 1 {
-                let car = DrivingPhysics.carPosition(
-                    progress: model.driving.progress,
-                    lateral: model.raceLateral,
-                    geometry: geometry
-                )
-                MLNPointFeature(coordinate: coordinate(car.lat, car.lon))
+            if active {
+                if model.driveKind == .free {
+                    MLNPointFeature(coordinate: coordinate(model.carLat, model.carLon))
+                } else if let geometry = model.route?.result?.geometry, geometry.count > 1 {
+                    let car = DrivingPhysics.carPosition(
+                        progress: model.driving.progress,
+                        lateral: model.raceLateral,
+                        geometry: geometry
+                    )
+                    MLNPointFeature(coordinate: coordinate(car.lat, car.lon))
+                } else {
+                    MLNPointFeature(coordinate: coordinate(model.carLat, model.carLon))
+                }
             }
         }
     }

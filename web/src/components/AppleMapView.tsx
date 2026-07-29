@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
-import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import {
-  carPositionAt,
   raceCameraAt,
+  vehiclePoseFromSession,
   RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M, RACE_PITCH,
 } from '../lib/drivingCamera'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
@@ -322,7 +321,6 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           }
         },
         locate,
-        set3D: () => {},
         focusPlace: (place) => {
           if (!stillHere() || !mapIsLive(instance, el.current)) return
           try { instance.setRegionAnimated(regionForPlace(mk, place), true) }
@@ -338,13 +336,48 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
             if (!mapIsLive(instance, el.current)) return null
             const region = instance.region
             if (!region) return null
+            const heading =
+              typeof instance.camera?.heading === 'number'
+                ? instance.camera.heading
+                : (typeof instance.rotation === 'number' ? instance.rotation : 0)
             return {
               center: { lat: region.center.latitude, lon: region.center.longitude },
               latitudeDelta: region.span.latitudeDelta,
               longitudeDelta: region.span.longitudeDelta,
+              bearing: heading,
             }
           } catch {
             return null
+          }
+        },
+        projectToScreen: (lon, lat) => {
+          try {
+            if (!mapIsLive(instance, el.current) || !el.current) return null
+            const mk = (window as any).mapkit
+            const coord = new mk.Coordinate(lat, lon)
+            // MapKit JS: convertCoordinateToPointOnMapView if available
+            const pt = instance.convertCoordinateToPointOnMapView?.(coord)
+              ?? instance.convertCoordinateToPoint?.(coord)
+            if (!pt || !Number.isFinite(pt.x) || !Number.isFinite(pt.y)) return null
+            return { x: pt.x, y: pt.y }
+          } catch { return null }
+        },
+        set3D: (on: boolean) => {
+          if (!stillHere() || !mapIsLive(instance, el.current)) return
+          try {
+            const mk = (window as any).mapkit
+            const center = instance.center ?? instance.region?.center
+            if (!center || !mk.Camera) return
+            const cam = new mk.Camera(center, {
+              pitch: on ? 58 : 0,
+              altitude: on ? 650 : 2500,
+              heading: instance.camera?.heading ?? 0,
+            })
+            if (typeof instance.setCameraAnimated === 'function') instance.setCameraAnimated(cam, true)
+            else instance.camera = cam
+            if (typeof instance.showsBuildings !== 'undefined') instance.showsBuildings = on
+          } catch (e) {
+            console.error('[mapkit] set3D failed', e)
           }
         },
         followNavigation: ({ lat, lon, heading }) => {
@@ -498,13 +531,15 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     }
   }, [map, app.route])
 
-  // First-person race camera (driver-eye). 3D car is RaceCar3D overlay in App.
+  // Chase camera for route race + free drive (vehicle pose, not route-only).
   useEffect(() => {
     if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
     try {
       const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
-      const pts = geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null
+      const pts = (geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null) as
+        | [number, number][]
+        | null
       const racing =
         app.driving.status === 'running'
         || app.driving.status === 'paused'
@@ -518,26 +553,24 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         }
       } catch { /* older MapKit */ }
 
-      if (!pts || pts.length < 2 || app.driving.status === 'idle') {
-        if (app.driving.status === 'idle') {
-          try {
-            const center = map.center
-            if (mk.Camera && center) {
-              const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
-              if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
-              else if ('camera' in map) map.camera = cam
-            }
-          } catch { /* no Camera API */ }
-        }
+      if (app.driving.status === 'idle') {
+        try {
+          const center = map.center
+          if (mk.Camera && center) {
+            const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
+            if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
+            else if ('camera' in map) map.camera = cam
+          }
+        } catch { /* no Camera API */ }
         return
       }
 
-      const point = pointAtProgress(pts, app.driving.progress)
-      const bearing = bearingAtProgress(pts, app.driving.progress)
-      const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
-      if (!Number.isFinite(carPt[0]) || !Number.isFinite(carPt[1])) return
+      const pose = vehiclePoseFromSession(app.driving, pts)
+      if (!pose || !Number.isFinite(pose.lon) || !Number.isFinite(pose.lat)) return
       if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
 
+      const carPt: [number, number] = [pose.lon, pose.lat]
+      const bearing = pose.heading
       const ready = app.driving.status === 'ready'
       const cam = raceCameraAt(carPt, bearing, {
         lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,

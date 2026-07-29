@@ -11,12 +11,15 @@ import type {
   AppleColorScheme, AppleMapType, AppleOverlayTone, MapPreferences, MapProvider,
 } from './maps/types'
 import {
-  createDrivingSession, createDrivingSessionForMode, finishDriving, loadDrivingRuns,
+  createDrivingSession, createDrivingSessionForMode, createFreeDrivingSession, finishDriving,
+  idleSession, loadDrivingRuns,
   pauseDriving, resetDriving, resumeDriving, saveDrivingRun, startDriving, tickDriving,
   toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
-import { stepDrivingGame, type DrivingInput } from './lib/drivingGame'
+import { stepDrivingGame, stepFreeDrive, type DrivingInput } from './lib/drivingGame'
 import { activeMapViewport } from './maps/rendererController'
+import { pointAtProgress, bearingAtProgress } from './lib/driving'
+import { carPositionAt } from './lib/drivingCamera'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -59,6 +62,7 @@ interface AppState {
   setLang: (l: string) => void
   is3D: boolean
   toggle3D: () => void
+  setIs3D: (on: boolean) => void
   navigating: boolean
   startNavigation: () => void
   stopNavigation: () => void
@@ -97,6 +101,8 @@ interface AppState {
   resetDrivingMode: () => void
   /** Arm race HUD for the current car route (idle → ready). */
   armDrivingMode: () => void
+  /** Free roam: drive from map center / GPS without a route. */
+  armFreeDrivingMode: () => void
   /** Hide race HUD without clearing the route (any → idle). */
   exitDrivingMode: () => void
   tickDrivingMode: (now?: number) => void
@@ -149,8 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
   const [is3D, setIs3D] = useState(false)
   const [navigating, setNavigating] = useState(false)
-  const [driving, setDriving] = useState<DrivingSession>(() =>
-    route?.result ? createDrivingSession(route.result) : createDrivingSession({ distanceM: 0, durationS: 0 }))
+  const [driving, setDriving] = useState<DrivingSession>(() => idleSession())
   const [drivingRuns, setDrivingRuns] = useState<DrivingRun[]>(() => loadDrivingRuns())
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
@@ -406,7 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const requestRoute = useCallback(async (fromPlace: Place | null, to: Place, mode: RouteMode) => {
     const seq = ++routeSeq.current
     setRoute({ from: fromPlace, to, mode, status: 'loading' })
-    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
+    setDriving(idleSession())
     setSelected(null)
     setPickingStart(false)
     let from: { lat: number; lon: number }
@@ -445,7 +450,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (seq !== routeSeq.current) return
       setRoute({ from: fromLabel, to, mode, status: 'ready', result })
       // Race mode is car-only; bike/foot routes must not arm the race HUD.
-      setDriving(createDrivingSessionForMode(mode, result))
+      const geo = result.geometry
+      const startPose = geo?.[0]
+        ? { lon: geo[0][0], lat: geo[0][1], heading: bearingAtProgress(geo as [number, number][], 0) }
+        : { lon: from.lon, lat: from.lat, heading: 0 }
+      setDriving(createDrivingSessionForMode(mode, result, startPose))
     } catch (e) {
       if (seq !== routeSeq.current) return
       const code = (e as { code?: string })?.code
@@ -478,7 +487,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRoute(null)
     setPickingStart(false)
     setNavigating(false)
-    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
+    setDriving(idleSession())
   }, [])
 
   const startDrivingMode = useCallback(() => setDriving((s) => startDriving(s)), [])
@@ -488,16 +497,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const armDrivingMode = useCallback(() => {
     const r = routeRef.current
     if (r?.status === 'ready' && r.mode === 'car' && r.result) {
-      setDriving(createDrivingSessionForMode('car', r.result))
+      const geo = r.result.geometry as [number, number][] | undefined
+      const start = geo?.[0]
+      const pose = start
+        ? { lon: start[0], lat: start[1], heading: bearingAtProgress(geo!, 0) }
+        : undefined
+      setDriving(createDrivingSessionForMode('car', r.result, pose))
     }
   }, [])
+  const armFreeDrivingMode = useCallback(() => {
+    const vp = activeMapViewport()
+    const center = vp?.center
+    const heading = Number.isFinite(vp?.bearing) ? ((vp!.bearing! % 360) + 360) % 360 : 0
+    const pose = center && Number.isFinite(center.lat) && Number.isFinite(center.lon)
+      ? { lon: center.lon, lat: center.lat, heading }
+      : { lon: 6.7735, lat: 51.2277, heading: 0 } // Düsseldorf fallback
+    setNavigating(false)
+    setDriving(createFreeDrivingSession(pose))
+    setIs3D(true)
+  }, [])
   const exitDrivingMode = useCallback(() => {
-    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
+    setDriving(idleSession())
   }, [])
   const tickDrivingMode = useCallback((now = Date.now()) => {
     setDriving((s) => {
       const next = tickDriving(s, now)
-      if (next.status === 'running' && next.progress >= 1) {
+      if (next.kind === 'route' && next.status === 'running' && next.progress >= 1) {
         const finished = finishDriving(next, now)
         const run = toDrivingRun(finished, now)
         setDrivingRuns(() => {
@@ -511,17 +536,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const driveDrivingMode = useCallback((input: DrivingInput, now = Date.now()) => {
     setDriving((s) => {
       if (s.status !== 'running') return s
-      const dt = Math.min(0.1, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000))
+      const dt = Math.min(0.05, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000))
+      const frameMs = Math.min(50, Math.max(0, now - (s.lastInputAt ?? now)))
+
+      if (s.kind === 'free') {
+        const free = stepFreeDrive(
+          {
+            lon: s.lon, lat: s.lat, heading: s.heading,
+            speedMps: s.speedMps, lateral: s.lateral, distanceM: s.distanceM,
+          },
+          input,
+          dt,
+        )
+        return {
+          ...s,
+          ...free,
+          progress: 0,
+          elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
+          lastInputAt: now,
+        }
+      }
+
       const nextPhysics = stepDrivingGame(
         { progress: s.progress, speedMps: s.speedMps, lateral: s.lateral },
         input,
         dt,
         s.distanceM,
       )
-      const frameMs = Math.min(100, Math.max(0, now - (s.lastInputAt ?? now)))
+      // Sync lon/lat/heading from route so the 3D car anchors to the road.
+      let lon = s.lon, lat = s.lat, heading = s.heading
+      const geo = routeRef.current?.result?.geometry as [number, number][] | undefined
+      if (geo && geo.length >= 2) {
+        const pt = pointAtProgress(geo, nextPhysics.progress)
+        const brg = bearingAtProgress(geo, nextPhysics.progress)
+        const car = carPositionAt(pt, brg, nextPhysics.lateral)
+        lon = car[0]; lat = car[1]; heading = brg
+      }
       const next = {
         ...s,
         ...nextPhysics,
+        lon, lat, heading,
         elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
         lastInputAt: now,
       }
@@ -601,7 +655,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     mapPreferences, mapProvider: mapPreferences.provider,
     activePack, activeStyleUrl, selected, authOpen, route, pickingStart, pois, activeCategory,
     lang, setLang,
-    is3D, toggle3D: () => setIs3D((v) => !v),
+    is3D,
+    toggle3D: () => setIs3D((v) => !v),
+    setIs3D,
     navigating,
     startNavigation: () => setNavigating(true),
     stopNavigation: () => setNavigating(false),
@@ -610,7 +666,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, cancelPickStart, clearRoute,
     driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
-    resetDrivingMode, armDrivingMode, exitDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
+    resetDrivingMode, armDrivingMode, armFreeDrivingMode, exitDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

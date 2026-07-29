@@ -1,10 +1,13 @@
 import { progressForElapsed } from './driving'
 
 export type DrivingStatus = 'idle' | 'ready' | 'running' | 'paused' | 'finished'
+/** Route time-trial vs open-world free drive. */
+export type DriveKind = 'route' | 'free'
 
 export interface DrivingSession {
   status: DrivingStatus
   mode: 'game'
+  kind: DriveKind
   startedAt: number | null
   lastInputAt: number | null
   elapsedMs: number
@@ -13,6 +16,10 @@ export interface DrivingSession {
   distanceM: number
   speedMps: number
   lateral: number
+  /** World pose (always set while not idle). */
+  lon: number
+  lat: number
+  heading: number
 }
 
 export interface DrivingRun {
@@ -22,13 +29,15 @@ export interface DrivingRun {
   distanceM: number
   averageSpeedKmh: number
   mode: 'game'
+  kind?: DriveKind
 }
 
 export const DRIVING_RUNS_KEY = 'maps.driving-runs.v1'
 
-const idleSession = (): DrivingSession => ({
+export const idleSession = (): DrivingSession => ({
   status: 'idle',
   mode: 'game',
+  kind: 'route',
   startedAt: null,
   lastInputAt: null,
   elapsedMs: 0,
@@ -37,18 +46,24 @@ const idleSession = (): DrivingSession => ({
   distanceM: 0,
   speedMps: 0,
   lateral: 0,
+  lon: 0,
+  lat: 0,
+  heading: 0,
 })
 
-export function createDrivingSession(route: { distanceM: number; durationS: number }, now = Date.now()): DrivingSession {
+export function createDrivingSession(
+  route: { distanceM: number; durationS: number },
+  pose?: { lon: number; lat: number; heading?: number },
+  now = Date.now(),
+): DrivingSession {
   void now
   if (!Number.isFinite(route.distanceM) || route.distanceM <= 0) return idleSession()
   const routeDuration = Math.max(20_000, route.durationS * 1000)
-  // A time trial is deliberately faster than normal route ETA, but capped so
-  // short city routes remain playable instead of finishing instantly.
   const durationMs = Math.max(30_000, Math.round(routeDuration * 0.72))
   return {
     status: 'ready',
     mode: 'game',
+    kind: 'route',
     startedAt: null,
     lastInputAt: null,
     elapsedMs: 0,
@@ -57,28 +72,53 @@ export function createDrivingSession(route: { distanceM: number; durationS: numb
     distanceM: route.distanceM,
     speedMps: 0,
     lateral: 0,
+    lon: pose?.lon ?? 0,
+    lat: pose?.lat ?? 0,
+    heading: pose?.heading ?? 0,
   }
 }
 
-/** Only car routes enter race mode; bike/foot stay idle. */
+export function createFreeDrivingSession(
+  pose: { lon: number; lat: number; heading?: number },
+  now = Date.now(),
+): DrivingSession {
+  void now
+  if (!Number.isFinite(pose.lon) || !Number.isFinite(pose.lat)) return idleSession()
+  return {
+    status: 'ready',
+    mode: 'game',
+    kind: 'free',
+    startedAt: null,
+    lastInputAt: null,
+    elapsedMs: 0,
+    // Soft “session” timer for free roam (no finish line)
+    durationMs: 60 * 60 * 1000,
+    progress: 0,
+    distanceM: 0,
+    speedMps: 0,
+    lateral: 0,
+    lon: pose.lon,
+    lat: pose.lat,
+    heading: pose.heading ?? 0,
+  }
+}
+
 export function createDrivingSessionForMode(
   mode: string,
   route: { distanceM: number; durationS: number },
+  pose?: { lon: number; lat: number; heading?: number },
   now = Date.now(),
 ): DrivingSession {
   if (mode !== 'car') return idleSession()
-  return createDrivingSession(route, now)
+  return createDrivingSession(route, pose, now)
 }
 
 export function startDriving(session: DrivingSession, now = Date.now()): DrivingSession {
-  if (session.status !== 'ready' || session.distanceM <= 0) return session
+  if (session.status !== 'ready') return session
+  if (session.kind === 'route' && session.distanceM <= 0) return session
   return { ...session, status: 'running', startedAt: now, lastInputAt: now, speedMps: 0, lateral: 0 }
 }
 
-/**
- * Pause keeps physics progress. Game mode advances progress via throttle, not
- * wall-clock / duration — recomputing progress from elapsed would teleport the car.
- */
 export function pauseDriving(session: DrivingSession, now = Date.now()): DrivingSession {
   if (session.status !== 'running') return session
   let elapsedMs = session.elapsedMs
@@ -93,7 +133,6 @@ export function pauseDriving(session: DrivingSession, now = Date.now()): Driving
     startedAt: null,
     lastInputAt: null,
     elapsedMs,
-    // progress / lateral / speedMps preserved from game physics
   }
 }
 
@@ -102,18 +141,13 @@ export function resumeDriving(session: DrivingSession, now = Date.now()): Drivin
   return { ...session, status: 'running', startedAt: now - session.elapsedMs, lastInputAt: now }
 }
 
-/** Legacy automatic tick (time → progress). Game mode prefers stepDrivingGame. */
 export function tickDriving(session: DrivingSession, now = Date.now()): DrivingSession {
   if (session.status !== 'running' || session.startedAt == null) return session
   const elapsedMs = Math.max(0, now - session.startedAt)
-  const progress = progressForElapsed(elapsedMs, session.durationMs)
+  const progress = session.kind === 'free' ? 0 : progressForElapsed(elapsedMs, session.durationMs)
   return { ...session, elapsedMs, progress }
 }
 
-/**
- * Finish without rewriting game progress from the clock. Sets progress to 1
- * and freezes the timer at the last known elapsed.
- */
 export function finishDriving(session: DrivingSession, now = Date.now()): DrivingSession {
   if (!['running', 'paused'].includes(session.status)) return session
   let elapsedMs = session.elapsedMs
@@ -128,13 +162,25 @@ export function finishDriving(session: DrivingSession, now = Date.now()): Drivin
     startedAt: null,
     lastInputAt: null,
     elapsedMs,
-    progress: 1,
+    progress: session.kind === 'free' ? session.progress : 1,
     speedMps: 0,
   }
 }
 
-/** After a finished run, re-arm the same route for another race. */
 export function resetDriving(session: DrivingSession): DrivingSession {
+  if (session.kind === 'free') {
+    return {
+      ...session,
+      status: 'ready',
+      startedAt: null,
+      lastInputAt: null,
+      elapsedMs: 0,
+      progress: 0,
+      distanceM: 0,
+      speedMps: 0,
+      lateral: 0,
+    }
+  }
   if (session.distanceM <= 0) return idleSession()
   return {
     ...session,
@@ -150,13 +196,19 @@ export function resetDriving(session: DrivingSession): DrivingSession {
 
 export function toDrivingRun(session: DrivingSession, now = Date.now()): DrivingRun {
   const durationMs = Math.max(0, session.elapsedMs)
+  const distanceM = session.kind === 'free' ? session.distanceM : session.distanceM * (session.kind === 'route' ? Math.min(1, session.progress || 1) : 1)
+  // For route races use full route distance on finish; for free use driven metres
+  const dist = session.kind === 'free'
+    ? session.distanceM
+    : (session.progress >= 1 ? session.distanceM : session.distanceM * session.progress)
   return {
     id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: now,
     durationMs,
-    distanceM: session.distanceM,
-    averageSpeedKmh: durationMs > 0 ? (session.distanceM / 1000) / (durationMs / 3_600_000) : 0,
+    distanceM: dist,
+    averageSpeedKmh: durationMs > 0 ? (dist / 1000) / (durationMs / 3_600_000) : 0,
     mode: session.mode,
+    kind: session.kind,
   }
 }
 
