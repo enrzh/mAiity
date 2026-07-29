@@ -86,6 +86,7 @@ interface AppState {
   setRouteStart: (from: Place | null) => void
   swapRoute: () => void
   beginPickStart: () => void
+  cancelPickStart: () => void
   clearRoute: () => void
   driving: DrivingSession
   drivingRuns: DrivingRun[]
@@ -456,6 +457,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (r?.from) void requestRoute(r.to, r.from, r.mode)
   }, [requestRoute])
   const beginPickStart = useCallback(() => setPickingStart(true), [])
+  const cancelPickStart = useCallback(() => setPickingStart(false), [])
   const clearRoute = useCallback(() => {
     routeSeq.current++
     setRoute(null)
@@ -591,7 +593,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAuthOpen, login, register, logout, select, selectResult,
     setMapProvider, setAppleAppearance, setCustomPack, setActivePack,
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
-    startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
+    startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, cancelPickStart, clearRoute,
     driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
     resetDrivingMode, armDrivingMode, exitDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,

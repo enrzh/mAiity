@@ -42,8 +42,12 @@ export function PlaceCard() {
 
   const toggleSave = async () => {
     setSaving(true); setError(null)
-    try { await app.saveBookmark(place) }
-    catch { setError(t('save-failed')) }
+    try {
+      const wasSaved = !!app.bookmarkFor(place)
+      await app.saveBookmark(place)
+      // saveBookmark toggles: toast after successful mutation.
+      toast.success(wasSaved ? t('saved-remove') : t('save-place'))
+    } catch { setError(t('save-failed')) }
     finally { setSaving(false) }
   }
 

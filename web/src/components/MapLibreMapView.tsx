@@ -19,6 +19,7 @@ import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../li
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import { carPositionAt, offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
 import { useApp } from '../state'
+import { cn } from '../lib/utils'
 
 maplibregl.addProtocol('pmtiles', new Protocol().tile)
 
@@ -611,7 +612,13 @@ export function MapLibreMapView() {
     }
   }, [map, app.bookmarks])
 
-  return <div ref={el} className="map" />
+  return (
+    <div
+      ref={el}
+      className={cn('map', app.pickingStart && 'maps-pick-start')}
+      style={app.pickingStart ? { cursor: 'crosshair' } : undefined}
+    />
+  )
 }
 
 export default MapLibreMapView

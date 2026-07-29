@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User } from 'lucide-react'
+import { Box, Check, ChevronLeft, ChevronRight, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User, MapPin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -245,7 +245,11 @@ function Shell() {
       if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1); return }
       if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomBy(-1); return }
       if (e.key === 'Escape') {
-        // Close side panel first; if already clear, dismiss ready/finished race HUD.
+        // Priority: cancel pick-start → close side panel → dismiss race HUD.
+        if (app.pickingStart) {
+          app.cancelPickStart()
+          return
+        }
         if (panel !== 'none') {
           setPanel('none')
           return
@@ -257,7 +261,7 @@ function Shell() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [collapsed, panel, app.driving.status, app.exitDrivingMode])
+  }, [collapsed, panel, app.driving.status, app.exitDrivingMode, app.pickingStart, app.cancelPickStart])
 
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.
@@ -492,7 +496,30 @@ function Shell() {
           </button>
         )}
 
-        {!racing && <SearchAreaButton />}
+        {/* Pick-start mode: clear top banner so users know to search or tap. */}
+        {app.pickingStart && !racing && (
+          <div
+            className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-3 z-[36] flex -translate-x-1/2 px-3 md:top-4"
+            role="status"
+          >
+            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full border border-primary/30 bg-background/95 px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur-md">
+              <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
+              <span className="min-w-0">{t('route-pick-start')}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="size-7 shrink-0"
+                onClick={app.cancelPickStart}
+                aria-label={t('close')}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!racing && !app.pickingStart && <SearchAreaButton />}
         <MapControls racing={racing} />
       </main>
 

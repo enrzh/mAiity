@@ -138,6 +138,13 @@
 html, body, #root { height: 100%; margin: 0; }
 body { overscroll-behavior: none; }
 
+/* Pick-start mode: map invites a tap for the route origin. */
+.maps-pick-start .map,
+.maps-pick-start.map,
+.map.maps-pick-start {
+  cursor: crosshair !important;
+}
+
 /* Map engine code-split loading surface */
 .maps-map-loading {
   display: grid;

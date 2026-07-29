@@ -63,8 +63,9 @@ export function RoutePanel() {
         </Tabs>
 
         {route.status === 'loading' ? (
-          <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> {t('route-loading')}
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-muted/40 py-6 text-sm text-muted-foreground">
+            <Loader2 className="size-5 animate-spin text-primary" />
+            <span>{t('route-loading')}</span>
           </div>
         ) : route.status === 'error' ? (
           <p className="py-2 text-center text-sm text-destructive">{t(route.errorKey ?? 'err-unknown')}</p>

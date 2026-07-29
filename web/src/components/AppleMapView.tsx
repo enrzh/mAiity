@@ -7,6 +7,7 @@ import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
 import type { Place } from '../state'
 import { useApp } from '../state'
+import { cn } from '../lib/utils'
 
 const INITIAL_REGION = { lat: 51.16, lon: 10.45, latDelta: 8, lonDelta: 11 }
 
@@ -378,8 +379,13 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
 
   const tone = appleOverlayClass(app.mapPreferences.appleOverlayTone)
   return (
-    <div className="apple-map-shell">
-      <div ref={el} className="map apple-map" aria-label="Apple Maps" />
+    <div className={cn('apple-map-shell', app.pickingStart && 'maps-pick-start')}>
+      <div
+        ref={el}
+        className="map apple-map"
+        aria-label="Apple Maps"
+        style={app.pickingStart ? { cursor: 'crosshair' } : undefined}
+      />
       {tone && <div className={tone} aria-hidden="true" />}
     </div>
   )
