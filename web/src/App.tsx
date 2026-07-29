@@ -26,6 +26,7 @@ const RaceCar3D = lazy(() =>
 )
 import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
+import { isPortraitViewport, setDrivingLandscape } from './lib/drivingOrientation'
 
 type Panel = 'none' | 'saved' | 'packs'
 
@@ -135,6 +136,9 @@ function Shell() {
   const racing = app.driving.status === 'running'
     || app.driving.status === 'paused'
     || app.driving.status === 'finished'
+  /** Full driving game session (incl. ready / countdown) — always landscape. */
+  const drivingGame = app.driving.status !== 'idle'
+  const [portraitWhileDriving, setPortraitWhileDriving] = useState(false)
 
   const hasDetail = !!(app.selected || app.route || app.navigating || app.pois.length > 0 || panel !== 'none')
 
@@ -142,6 +146,26 @@ function Shell() {
   useEffect(() => {
     if (app.mapProvider !== 'apple') setAppleFailed(false)
   }, [app.mapProvider])
+
+  // Driving game always prefers landscape (native + mobile web).
+  useEffect(() => {
+    setDrivingLandscape(drivingGame)
+    if (!drivingGame) {
+      setPortraitWhileDriving(false)
+      return
+    }
+    const sync = () => setPortraitWhileDriving(isPortraitViewport())
+    sync()
+    const mq = window.matchMedia('(orientation: portrait)')
+    const onChange = () => sync()
+    mq.addEventListener('change', onChange)
+    window.addEventListener('orientationchange', onChange)
+    return () => {
+      mq.removeEventListener('change', onChange)
+      window.removeEventListener('orientationchange', onChange)
+      setDrivingLandscape(false)
+    }
+  }, [drivingGame])
 
   // / opens full-screen search
   useEffect(() => {
@@ -434,6 +458,21 @@ function Shell() {
         {!racing && !app.pickingStart && <SearchAreaButton />}
         <MapControls racing={racing} />
       </main>
+
+      {/* Rotate to landscape when the browser cannot force orientation. */}
+      {drivingGame && portraitWhileDriving && (
+        <div
+          className="maps-rotate-prompt"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="maps-rotate-prompt__card maps-glass-strong">
+            <Car className="size-8 text-primary" aria-hidden />
+            <p className="maps-rotate-prompt__title">{t('drive-rotate-title')}</p>
+            <p className="maps-rotate-prompt__body">{t('drive-rotate-hint')}</p>
+          </div>
+        </div>
+      )}
 
       <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} onPicked={onSearchPicked} />
       <AuthModal />

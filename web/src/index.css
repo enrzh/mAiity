@@ -558,3 +558,43 @@ body { overscroll-behavior: none; }
 @media (prefers-reduced-motion: reduce) {
   .maps-sheet { transition: none; }
 }
+
+/* ---- Driving game: landscape preference ---- */
+.maps-rotate-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: color-mix(in oklch, var(--background) 55%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+.maps-rotate-prompt__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 18rem;
+  padding: 1.5rem 1.25rem;
+  border-radius: 1.5rem;
+  text-align: center;
+  pointer-events: none;
+}
+.maps-rotate-prompt__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.maps-rotate-prompt__body {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+/* When already landscape, never show (extra safety). */
+@media (orientation: landscape) {
+  .maps-rotate-prompt { display: none; }
+}

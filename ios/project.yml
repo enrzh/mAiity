@@ -26,6 +26,8 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
         NSLocationWhenInUseUsageDescription: Zeigt deine Position auf der Karte. Standort wird nur lokal verwendet.
     entitlements:

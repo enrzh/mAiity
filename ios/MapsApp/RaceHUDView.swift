@@ -165,26 +165,27 @@ struct RaceHUDView: View {
     private var touchPads: some View {
         // UIKit hold buttons: SwiftUI DragGesture is single-touch, so Gas+steer
         // never worked together on a real phone.
-        HStack(spacing: 8) {
+        // Landscape game layout: wider pads, taller targets.
+        HStack(spacing: 10) {
             HoldPadButton(title: "←", accessibilityLabel: L.t("race-left")) { down in
                 model.setRaceSteerLeft(down)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: 64)
 
             HoldPadButton(title: L.t("race-brake"), accessibilityLabel: L.t("race-brake")) { down in
                 model.setRaceBrake(down)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: 64)
 
             HoldPadButton(title: L.t("race-go"), accessibilityLabel: L.t("race-go"), prominent: true) { down in
                 model.setRaceThrottle(down)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: 64)
 
             HoldPadButton(title: "→", accessibilityLabel: L.t("race-right")) { down in
                 model.setRaceSteerRight(down)
             }
-            .frame(maxWidth: .infinity, minHeight: 56)
+            .frame(maxWidth: .infinity, minHeight: 64)
         }
     }
 

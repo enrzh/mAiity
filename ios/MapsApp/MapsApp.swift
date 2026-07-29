@@ -1,7 +1,9 @@
 import SwiftUI
+import UIKit
 
 @main
 struct MapsApp: App {
+    @UIApplicationDelegateAdaptor(OrientationAppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
 
     var body: some Scene {
@@ -99,10 +101,17 @@ struct RootView: View {
             switch new {
             case .ready, .running, .paused, .finished:
                 model.showPackPicker = false
+                // Game always landscape — force rotate as soon as race is armed.
+                OrientationLock.setDriving(true)
             case .idle:
                 sheetShown = true
                 if detent == .height(1) { detent = .height(96) }
+                OrientationLock.setDriving(false)
             }
+        }
+        .onAppear {
+            // Restore lock if we cold-start mid-session (shouldn't, but safe).
+            OrientationLock.setDriving(!isIdle(model.driving))
         }
         .animation(.easeOut(duration: 0.22), value: raceImmersive)
     }
