@@ -138,6 +138,41 @@
 html, body, #root { height: 100%; margin: 0; }
 body { overscroll-behavior: none; }
 
+/* Map engine code-split loading surface */
+.maps-map-loading {
+  display: grid;
+  place-items: center;
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+}
+.maps-map-loading__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.maps-map-loading__pulse {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 2.5px solid hsl(var(--border));
+  border-top-color: hsl(var(--primary));
+  animation: maps-spin 0.8s linear infinite;
+}
+.maps-map-loading__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+@keyframes maps-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .maps-map-loading__pulse { animation: none; border-top-color: hsl(var(--border)); }
+}
+
 /* "You are here" dot — mirrors the platform convention (blue, haloed). */
 .maps-user-dot {
   width: 16px; height: 16px; border-radius: 9999px;

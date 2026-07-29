@@ -245,12 +245,19 @@ function Shell() {
       if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1); return }
       if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomBy(-1); return }
       if (e.key === 'Escape') {
-        setPanel('none')
+        // Close side panel first; if already clear, dismiss ready/finished race HUD.
+        if (panel !== 'none') {
+          setPanel('none')
+          return
+        }
+        if (app.driving.status === 'ready' || app.driving.status === 'finished') {
+          app.exitDrivingMode()
+        }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [collapsed])
+  }, [collapsed, panel, app.driving.status, app.exitDrivingMode])
 
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.

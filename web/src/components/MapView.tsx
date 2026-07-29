@@ -31,19 +31,11 @@ const MapLibreMapView = lazy(() =>
 
 function MapFallback() {
   return (
-    <div
-      className="map maps-map-loading"
-      role="status"
-      aria-live="polite"
-      style={{
-        display: 'grid',
-        placeItems: 'center',
-        background: 'hsl(var(--muted) / 0.35)',
-        color: 'hsl(var(--muted-foreground))',
-        fontSize: 14,
-      }}
-    >
-      …
+    <div className="map maps-map-loading" role="status" aria-live="polite" aria-busy="true">
+      <div className="maps-map-loading__inner">
+        <span className="maps-map-loading__pulse" aria-hidden />
+        <span className="maps-map-loading__label">Map</span>
+      </div>
     </div>
   )
 }
