@@ -46,9 +46,18 @@ function detentPx(d: Detent): number {
 function MapControls() {
   const app = useApp()
   const t = useT()
-  if (app.activePack === 'light') return null
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
+  if (app.activePack === 'light') {
+    return (
+      <div className="absolute bottom-[calc(var(--sheet-h,0px)+5.5rem)] right-4 z-20 md:bottom-20">
+        <Button variant="ghost" className={btn} onClick={locateUser}
+          aria-label={t('my-location')} title={t('my-location')}>
+          <Crosshair className="size-5" />
+        </Button>
+      </div>
+    )
+  }
   return (
     // On mobile the rail is a bottom sheet that would cover this stack — the
     // zoom buttons sat BEHIND it. Ride above it using the measured sheet
