@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "web/src/main.tsx": {
-    "mtime": 1784903677.5101519,
-    "ast_hash": "751d36d1e0ffd615ea678b3b7a1df616",
+    "mtime": 1785357498.8177037,
+    "ast_hash": "21d21b2d96ba039db6b4b2fbaad86a0b",
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
-    "mtime": 1785357200.6386676,
-    "ast_hash": "164c4d480be2f9718f84b6740169cccc",
+    "mtime": 1785357490.4019244,
+    "ast_hash": "8453138516ec4bb38664d6cbc996185a",
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
