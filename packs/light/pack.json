@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "light",
-  "name": "Light",
+  "name": "Apple-inspired Light",
   "version": "1.0.0",
   "author": "aiity",
-  "description": "Klare, helle Standard-Karte.",
+  "description": "Helle, ruhige Standardkarte im Apple-inspirierten Stil.",
   "styleFile": "style.json",
   "capability": "offline",
-  "preview": { "colors": ["#eae7df", "#a5cae8", "#ffffff"] }
+  "preview": { "colors": ["#f5f5f2", "#b7d9ee", "#ffffff"] }
 }
