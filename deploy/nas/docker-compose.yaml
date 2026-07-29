@@ -81,8 +81,15 @@ services:
       VALHALLA_URLS: "http://valhalla:8002,https://valhalla1.openstreetmap.de"
       API_PREFIX: /maps/api
       PACKS_PUBLIC_BASE: /maps/packs
+      # Optional Apple Maps Server API identifiers. The private key is mounted
+      # from the NAS-only secrets directory; never expose it to the web client.
+      APPLE_MAPS_TEAM_ID: ${APPLE_MAPS_TEAM_ID:-}
+      APPLE_MAPS_KEY_ID: ${APPLE_MAPS_KEY_ID:-}
+      APPLE_MAPS_ID: ${APPLE_MAPS_ID:-}
+      APPLE_MAPS_PRIVATE_KEY_FILE: /run/secrets/apple-maps.p8
     volumes:
       - ./data-api:/data
       - ./packs:/packs:ro
+      - ./secrets/apple-maps.p8:/run/secrets/apple-maps.p8:ro
     ports:
       - "100.93.237.25:3103:3103"

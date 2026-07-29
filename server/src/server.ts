@@ -12,6 +12,7 @@ import { registerRouteRoutes } from "./route";
 import { registerUserPackRoutes } from "./userpacks";
 import { PoiIndex } from "./pois";
 import { registerDemRoutes } from "./dem";
+import type { AppleMapsClient } from "./applemaps";
 
 export interface AppOpts {
   dbPath: string;
@@ -37,6 +38,7 @@ export interface AppOpts {
   poiDbPath?: string;
   /** Disk cache for proxied elevation tiles (3D terrain). */
   demCacheDir?: string;
+  appleMaps?: AppleMapsClient;
 }
 
 export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: Database }> {
@@ -87,7 +89,7 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
       registerUserDataRoutes(scope, db, signer);
       registerPackRoutes(scope, opts.packsDir, opts.packsPublicBase ?? "/maps/packs");
       registerUserPackRoutes(scope, db, signer, prefix);
-      registerGeocodeRoutes(scope, db, opts.geocoderUrls, pois);
+      registerGeocodeRoutes(scope, db, opts.geocoderUrls, pois, opts.appleMaps);
       registerRouteRoutes(scope, db, opts.valhallaUrls ?? ["https://valhalla1.openstreetmap.de"]);
       registerDemRoutes(scope, opts.demCacheDir ?? "/data/dem");
     },

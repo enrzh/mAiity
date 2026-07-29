@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { Database } from "bun:sqlite";
 import type { PoiIndex } from "./pois";
+import type { AppleMapsClient } from "./applemaps";
 
 /// Search component. Clients only ever call OUR api; the upstream engine is an
 /// implementation detail (public Photon today, self-hosted Photon later — the
@@ -105,6 +106,7 @@ export function registerGeocodeRoutes(
   db: Database,
   geocoderUrls: string[],
   pois?: PoiIndex,
+  appleMaps?: AppleMapsClient,
 ) {
   const getCached = db.query(`SELECT response, created_at AS createdAt FROM geocode_cache WHERE key = ?`);
   const putCached = db.query(
@@ -228,6 +230,26 @@ export function registerGeocodeRoutes(
     const { lang = "de", lat, lon } = req.query as Record<string, string>;
     const limit = Math.min(parseInt((req.query as Record<string, string>).limit ?? "8", 10) || 8, 15);
 
+    // Apple provides the strongest worldwide POI coverage. Keep the existing
+    // OSM chain as a fallback and merge it so custom/open data remains useful.
+    let appleResults: GeoResult[] = [];
+    if (appleMaps) {
+      try {
+        appleResults = (await appleMaps.search(q, lang, lat && lon ? {
+          lat: Number(lat), lon: Number(lon),
+        } : undefined)).map((r) => ({
+          name: r.name,
+          label: r.label,
+          lat: r.lat,
+          lon: r.lon,
+          kind: r.kind,
+        }));
+      } catch {
+        // Apple outages, quota errors, and malformed responses must not take
+        // search down; the existing Photon/OSM chain remains authoritative.
+      }
+    }
+
     const params = new URLSearchParams({ q, lang, limit: String(limit) });
     // Optional camera bias — rounded so the cache still hits while panning.
     let biasKey = "";
@@ -257,14 +279,16 @@ export function registerGeocodeRoutes(
         ),
       };
     });
-    if (!raw) return reply.code(502).send({ error: "geocoder_unavailable" });
+    // Apple is an independent worldwide provider. A Photon outage must not
+    // erase a valid Apple response, especially for foreign POIs.
+    if (!raw && appleResults.length === 0) return reply.code(502).send({ error: "geocoder_unavailable" });
 
     // Foreign places: the Germany-only index has no "Frankreich" the country,
     // but it DOES have a bench named "Frankreich" — an exact-name match that
     // convinces the coverage check, so the worldwide fallback never fires.
     // When nothing place-ranked matches the query name, ask the fallback
     // upstream's place-filtered endpoint directly (cached, rare, throttled).
-    let results = raw.results;
+    let results = [...appleResults, ...(raw?.results ?? [])];
     const fq2 = fold(q);
     // EXACT match on a significant place only — "Parishof" (hamlet) must
     // not suppress the worldwide lookup for "Paris".
