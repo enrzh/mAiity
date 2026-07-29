@@ -2,9 +2,8 @@ import CoreLocation
 import MapKit
 import SwiftUI
 
-/// Native Apple Maps renderer. Custom MapLibre packs remain available in the
-/// pack list, but the default experience uses the official Apple map, search
-/// presentation, location puck, and controls.
+/// Apple Maps is the default renderer. Real custom styles keep using the
+/// shared MapLibre style files instead of being approximated with map types.
 struct MapScreen: View {
     var sheetHeight: CGFloat = 96
 
@@ -19,6 +18,14 @@ struct MapScreen: View {
     )
 
     var body: some View {
+        if model.activePackId == "light" {
+            appleMap
+        } else {
+            CustomMapScreen(sheetHeight: sheetHeight)
+        }
+    }
+
+    private var appleMap: some View {
         Map(position: $position) {
             if location.isAuthorized {
                 UserAnnotation()
@@ -49,8 +56,6 @@ struct MapScreen: View {
         .mapControls {
             MapCompass(scope: mapScope)
             MapScaleView(scope: mapScope)
-            MapUserLocationButton(scope: mapScope)
-            MapPitchToggle(scope: mapScope)
         }
         .safeAreaInset(edge: .bottom) {
             Color.clear.frame(height: sheetHeight)
@@ -83,8 +88,6 @@ struct MapScreen: View {
         }
         .overlay(alignment: .bottomTrailing) {
             VStack(spacing: 10) {
-                MapUserLocationButton(scope: mapScope)
-                MapPitchToggle(scope: mapScope)
                 Button {
                     model.showPackPicker = true
                 } label: {
@@ -93,24 +96,22 @@ struct MapScreen: View {
                         .frame(width: 44, height: 44)
                         .background(.regularMaterial, in: Circle())
                 }
+                .accessibilityLabel(L.t("map-style"))
+
+                MapPitchToggle(scope: mapScope)
+                    .frame(width: 44, height: 44)
+                    .background(.regularMaterial, in: Circle())
+
+                MapUserLocationButton(scope: mapScope)
+                    .frame(width: 44, height: 44)
+                    .background(.regularMaterial, in: Circle())
             }
             .padding(.trailing, 14)
             .padding(.bottom, sheetHeight + 16)
         }
     }
 
-    private var selectedMapStyle: MapStyle {
-        switch model.activePackId {
-        case "dark":
-            return .standard(elevation: .realistic, emphasis: .muted)
-        case "paper", "gtav", "sanandreas":
-            return .imagery(elevation: .realistic)
-        case "gta", "minecraft":
-            return .hybrid(elevation: .realistic)
-        default:
-            return .standard(elevation: .realistic)
-        }
-    }
+    private var selectedMapStyle: MapStyle { .standard(elevation: .realistic) }
 
     private func coordinate(_ lat: Double, _ lon: Double) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: lat, longitude: lon)

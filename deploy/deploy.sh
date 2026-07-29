@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 #
 # Deploy maps to the NAS. Usage:
-#   SSHPASS='<nas password>' ./deploy/deploy.sh [web] [api] [packs]
+#   ./deploy/deploy.sh [web] [api] [packs]
 # No args = deploy everything.
 #
 set -euo pipefail
 cd "$(dirname "$0")/.."
 NAS=enrico@100.93.237.25
-SCP="sshpass -e scp -O -o StrictHostKeyChecking=no"
-SSH="sshpass -e ssh -o StrictHostKeyChecking=no"
-command -v sshpass >/dev/null || { PATH="/opt/homebrew/bin:$PATH"; }
+SCP="scp -O -o StrictHostKeyChecking=no"
+SSH="ssh -o StrictHostKeyChecking=no"
 
 WANT="${*:-web api packs}"
 

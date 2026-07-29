@@ -10,9 +10,13 @@ import { AppleMapView } from './AppleMapView'
 
 maplibregl.addProtocol('pmtiles', new Protocol().tile)
 
-/** Germany overview when the URL carries no #camera hash. */
-const DEFAULT_CENTER: [number, number] = [10.45, 51.16]
-const DEFAULT_ZOOM = 5.5
+/**
+ * The bundled PMTiles archive is regional. Starting at a Germany-wide camera
+ * renders only the style background until geolocation or search moves into
+ * the archive. Open on the archive's home region so the first frame is useful.
+ */
+const DEFAULT_CENTER: [number, number] = [6.71375, 51.19297]
+const DEFAULT_ZOOM = 13
 
 /** Live map handle for siblings that need camera reads (e.g. POI center). */
 export const liveMap: { current: MLMap | null } = { current: null }
