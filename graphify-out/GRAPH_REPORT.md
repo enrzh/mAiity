@@ -1,16 +1,16 @@
 # Graph Report - maps  (2026-07-29)
 
 ## Corpus Check
-- 147 files · ~110,040 words
+- 147 files · ~110,366 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1113 nodes · 2296 edges · 73 communities (51 shown, 22 thin omitted)
+- 1113 nodes · 2298 edges · 77 communities (57 shown, 20 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0aa94d21`
+- Built from commit: `e46e9a6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -81,8 +81,12 @@
 - .requestRoute
 - mAiity — Project Master Plan (web + native)
 - viewportStorage.ts
+- RaceHUDView
 - Global Constraints
 - mAiity racing mode — product vision (v2)
+- SwiftUI
+- Double
+- MapTokens
 - .pick
 - lucide-react
 - @tailwindcss/vite
@@ -95,8 +99,8 @@
 5. `APIClient` - 27 edges
 6. `createApp()` - 22 edges
 7. `MapLibreMapView()` - 20 edges
-8. `Button()` - 19 edges
-9. `AppProvider()` - 19 edges
+8. `AppProvider()` - 20 edges
+9. `Button()` - 19 edges
 10. `AppleMapView()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -106,31 +110,35 @@
   server/src/route.ts → web/src/maps/viewportStorage.ts
 - `storageFrom()` --indirect_call--> `key()`  [INFERRED]
   web/src/maps/providerPreferences.test.ts → web/src/maps/viewportStorage.ts
-- `AppModel` --calls--> `DrivingInput`  [INFERRED]
-  ios/MapsApp/AppModel.swift → ios/MapsApp/DrivingPhysics.swift
 - `makeApp()` --calls--> `createApp()`  [EXTRACTED]
   server/test/route-packs.test.ts → server/src/server.ts
+- `makeApp()` --calls--> `createApp()`  [EXTRACTED]
+  server/test/social.test.ts → server/src/server.ts
 
 ## Import Cycles
 - 3-file cycle: `web/src/maps/providerPreferences.ts -> web/src/maps/types.ts -> web/src/state.tsx -> web/src/maps/providerPreferences.ts`
 
-## Communities (73 total, 22 thin omitted)
+## Communities (77 total, 20 thin omitted)
 
 ### Community 0 - "server.ts"
 Cohesion: 0.15
 Nodes (13): AppOpts, appleJWKS, AppleWebOAuth, googleJWKS, makeSocialVerifier(), now(), registerSocialRoutes(), SessionIssuer (+5 more)
 
+### Community 1 - "AppModel"
+Cohesion: 0.13
+Nodes (11): AppModel, RouteUI, Int, Never, Pack, RouteMode, RouteResult, Task (+3 more)
+
 ### Community 2 - "state.tsx"
-Cohesion: 0.05
-Nodes (39): CheckedContinuation, CLAuthorizationStatus, CLLocation, CLLocationManager, CLLocationManagerDelegate, CustomMapScreen, CGFloat, CLLocationCoordinate2D (+31 more)
+Cohesion: 0.09
+Nodes (22): CheckedContinuation, CLAuthorizationStatus, CLLocation, CLLocationManager, CLLocationManagerDelegate, CustomMapScreen, CGFloat, CLLocationCoordinate2D (+14 more)
 
 ### Community 3 - "APIClient"
-Cohesion: 0.10
+Cohesion: 0.11
 Nodes (21): Data, Encodable, Error, APIClient, APIError, Bookmark, Bool, Double (+13 more)
 
 ### Community 4 - "make_pack_textures.swift"
-Cohesion: 0.07
-Nodes (38): CGMutablePath, CGPoint, CoreGraphics, Foundation, ImageIO, mapOutline(), rgb(), CGColor (+30 more)
+Cohesion: 0.08
+Nodes (35): CoreGraphics, Foundation, ImageIO, rgb(), CGColor, CGFloat, UInt32, blockFace() (+27 more)
 
 ### Community 5 - "App.tsx"
 Cohesion: 0.13
@@ -141,8 +149,8 @@ Cohesion: 0.19
 Nodes (10): fmtDist(), fmtDur(), RoutePanel(), Badge(), badgeVariants, Button(), buttonVariants, Separator() (+2 more)
 
 ### Community 7 - "Models.swift"
-Cohesion: 0.22
-Nodes (25): Codable, Equatable, Identifiable, Bookmark, GeoResponse, GeoResult, NearbyCategory, Pack (+17 more)
+Cohesion: 0.11
+Nodes (33): Codable, Equatable, Identifiable, MKCoordinateRegion, MapPersistence, MapPreferences, SavedViewport, Double (+25 more)
 
 ### Community 8 - "PlaceCard.tsx"
 Cohesion: 0.07
@@ -173,8 +181,8 @@ Cohesion: 0.18
 Nodes (10): de, DICTS, en, es, fr, it, makeT(), nl (+2 more)
 
 ### Community 15 - "Nav"
-Cohesion: 0.16
-Nodes (11): Element, DrivingPhysics, DrivingPhysicsState, Double, TimeInterval, Array, Nav, Snapped (+3 more)
+Cohesion: 0.26
+Nodes (7): Element, Array, Nav, Snapped, Double, Int, RouteStep
 
 ### Community 16 - "dependencies"
 Cohesion: 0.15
@@ -185,8 +193,8 @@ Cohesion: 0.17
 Nodes (11): bun-types, test, compilerOptions, module, moduleResolution, noEmit, strict, target (+3 more)
 
 ### Community 18 - "SheetView"
-Cohesion: 0.12
-Nodes (17): ASAuthorization, AuthenticationServices, CaseIterable, AppConfig, AuthSheet, Mode, login, register (+9 more)
+Cohesion: 0.27
+Nodes (8): AuthenticationServices, CaseIterable, AppConfig, AuthSheet, Mode, login, register, String
 
 ### Community 19 - "devDependencies"
 Cohesion: 0.18
@@ -233,8 +241,8 @@ Cohesion: 0.22
 Nodes (8): Accessibility & Inclusion, Anti-references, Brand Personality, Design Principles, Product, Product Purpose, Register, Users
 
 ### Community 37 - "pmtiles"
-Cohesion: 0.43
-Nodes (3): L, Language, String
+Cohesion: 0.22
+Nodes (9): Color, SheetView, Bool, Int, PresentationDetent, String, TimeInterval, Void (+1 more)
 
 ### Community 42 - "@tailwindcss/vite"
 Cohesion: 0.18
@@ -257,8 +265,8 @@ Cohesion: 0.22
 Nodes (8): Apple Configuration, Apple Web Login Design, Authentication Flow, Failure Handling, Goal, Security, Verification, Web UI
 
 ### Community 50 - "MapScreen"
-Cohesion: 0.06
-Nodes (31): ColorScheme, CoreLocation, Float, MKCoordinateRegion, MapPersistence, MapPreferences, SavedViewport, Double (+23 more)
+Cohesion: 0.19
+Nodes (10): ColorScheme, MapScreen, CGFloat, CLLocationCoordinate2D, Double, MKCoordinateRegion, String, Void (+2 more)
 
 ### Community 51 - "CustomMapScreen"
 Cohesion: 0.25
@@ -281,28 +289,32 @@ Cohesion: 0.33
 Nodes (5): Apple Web Login Implementation Plan, Global Constraints, Task 1: Backend OAuth flow, Task 2: Web login integration, Task 3: Apple portal and deployment
 
 ### Community 56 - "userpacks.ts"
-Cohesion: 0.21
-Nodes (6): NavCamera, NavState, CLLocationCoordinate2D, Double, Task, NearbyCategory
+Cohesion: 0.17
+Nodes (10): Date, DrivingRun, DrivingRunStore, NavCamera, NavState, CLLocationCoordinate2D, Double, TimeInterval (+2 more)
 
 ### Community 61 - "drivingCamera.ts"
 Cohesion: 0.50
 Nodes (6): carPositionAt(), offsetAlongBearing(), offsetLateral(), RaceCamera, raceCameraAt(), LngLat
 
 ### Community 62 - "AppModel.swift"
-Cohesion: 0.13
-Nodes (14): Date, CameraEvent, DrivingRun, DrivingRunStore, SheetPanel, none, packs, saved (+6 more)
+Cohesion: 0.50
+Nodes (4): Status, error, loading, ready
 
 ### Community 63 - "String"
-Cohesion: 0.16
-Nodes (9): AppModel, Bool, Int, Never, Pack, String, URL, User (+1 more)
+Cohesion: 0.12
+Nodes (9): ASAuthorization, Bool, String, User, Error, L, Language, String (+1 more)
 
 ### Community 65 - ".requestRoute"
-Cohesion: 0.19
-Nodes (7): RouteUI, Bookmark, GeoResult, Place, RouteMode, RouteResult, Place
+Cohesion: 0.13
+Nodes (10): CameraEvent, SheetPanel, none, packs, saved, Bookmark, GeoResult, Place (+2 more)
 
 ### Community 66 - "mAiity — Project Master Plan (web + native)"
 Cohesion: 0.17
 Nodes (11): Architecture notes, Definition of done (project health), Layout contract (do not violate), mAiity — Project Master Plan (web + native), P1 — next, P2 — polish, Principles, Related docs (+3 more)
+
+### Community 68 - "RaceHUDView"
+Cohesion: 0.19
+Nodes (11): CGMutablePath, CGPoint, RaceHUDView, Bool, Double, Int, String, TimeInterval (+3 more)
 
 ### Community 69 - "Global Constraints"
 Cohesion: 0.22
@@ -312,25 +324,41 @@ Nodes (8): Driving Game Mode Implementation Plan, Global Constraints, Task 1: Sh
 Cohesion: 0.25
 Nodes (7): Acceptance checks, Bugfix pass (post ship), Intent, mAiity racing mode — product vision (v2), Must-have experience, Out of scope for first ship of this vision, Phased delivery
 
+### Community 71 - "SwiftUI"
+Cohesion: 0.21
+Nodes (8): CoreLocation, PackPickerSheet, MapKit, MapLibre, MapLibreSwiftDSL, MapLibreSwiftUI, SwiftUI, UIKit
+
+### Community 72 - "Double"
+Cohesion: 0.42
+Nodes (4): DrivingPhysics, DrivingPhysicsState, Double, TimeInterval
+
+### Community 73 - "MapTokens"
+Cohesion: 0.33
+Nodes (5): Float, MapTokens, Double, UInt32, UIColor
+
+### Community 74 - ".pick"
+Cohesion: 0.38
+Nodes (6): InstallPackSheet, Source, json, url, Bool, String
+
 ## Knowledge Gaps
 - **278 isolated node(s):** `build-poi-db.sh script`, `build-pois.sh script`, `build-tiles.sh script`, `deploy.sh script`, `loading` (+273 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `key()` connect `AppleMapView.tsx` to `PlaceCard.tsx`, `PoiIndex`, `route-packs.test.ts`?**
   _High betweenness centrality (0.080) - this node is a cross-community bridge._
-- **Why does `AppModel` connect `String` to `.requestRoute`, `AppModel`, `APIClient`, `state.tsx`, `pmtiles`, `.pick`, `MapScreen`, `SheetView`, `CustomMapScreen`, `RaceHUDView`, `userpacks.ts`, `AppModel.swift`?**
+- **Why does `AppModel` connect `AppModel` to `.requestRoute`, `state.tsx`, `APIClient`, `RaceHUDView`, `pmtiles`, `Models.swift`, `SwiftUI`, `.pick`, `SheetView`, `CustomMapScreen`, `MapScreen`, `RaceHUDView`, `userpacks.ts`, `String`?**
   _High betweenness centrality (0.080) - this node is a cross-community bridge._
 - **Why does `cn()` connect `cn` to `App.tsx`, `PackSwitcher.tsx`, `@tailwindcss/vite`, `PackSwitcher.tsx`, `AppleMapView.tsx`, `CustomMapScreen`?**
   _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **What connects `build-poi-db.sh script`, `build-pois.sh script`, `build-tiles.sh script` to the rest of the system?**
   _278 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `AppModel` be split into smaller, more focused modules?**
+  _Cohesion score 0.13105413105413105 - nodes in this community are weakly interconnected._
 - **Should `state.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05367231638418079 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08669354838709678 - nodes in this community are weakly interconnected._
 - **Should `APIClient` be split into smaller, more focused modules?**
-  _Cohesion score 0.10374149659863946 - nodes in this community are weakly interconnected._
-- **Should `make_pack_textures.swift` be split into smaller, more focused modules?**
-  _Cohesion score 0.0696969696969697 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10638297872340426 - nodes in this community are weakly interconnected._

@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785357183.52648,
-    "ast_hash": "a8b5451f2cd70f5bfed3ef23e64611ce",
+    "mtime": 1785357742.1185834,
+    "ast_hash": "160ab44a90a268427cecac3ee8bcfdb6",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785357183.52645,
-    "ast_hash": "0384db0875a62cf650559153f1149010",
+    "mtime": 1785357662.06843,
+    "ast_hash": "21c15e089eee2dfa23cff9bf7fd3b1a4",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -575,13 +575,13 @@
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
-    "mtime": 1785357490.4019244,
-    "ast_hash": "8453138516ec4bb38664d6cbc996185a",
+    "mtime": 1785357726.328221,
+    "ast_hash": "9ca460e84d21e34b0d19afda22a2fe79",
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
-    "mtime": 1785356593.1488695,
-    "ast_hash": "9731eed44fcb6b29867ff0f7efacfe5c",
+    "mtime": 1785357717.0118675,
+    "ast_hash": "5319413a0695abefa081a7606a4c606d",
     "semantic_hash": ""
   },
   "web/src/lib/markerTokens.ts": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "web/src/components/MapLibreMapView.tsx": {
-    "mtime": 1785357200.6385121,
-    "ast_hash": "c83da762e430c96f15a798228830b01d",
+    "mtime": 1785357898.0121503,
+    "ast_hash": "8db7def86500b50e18433c7175b6f9a9",
     "semantic_hash": ""
   },
   "web/src/components/MapStatus.tsx": {
