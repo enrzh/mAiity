@@ -12,18 +12,28 @@ import { cn } from '../lib/utils'
 const INITIAL_REGION = { lat: 51.16, lon: 10.45, latDelta: 8, lonDelta: 11 }
 
 function regionForPlace(mk: any, place: Place) {
-  if (place.extent) {
-    const [west, north, east, south] = place.extent
-    return new mk.CoordinateRegion(
-      new mk.Coordinate((north + south) / 2, (west + east) / 2),
-      new mk.CoordinateSpan(
-        Math.max(0.002, Math.abs(north - south) * 1.25),
-        Math.max(0.002, Math.abs(east - west) * 1.25),
-      ),
-    )
-  }
+  // Clamp spans — MapKit can hard-crash the page on NaN/insane spans from
+  // geocode extents (observed as a blank #root after picking a search result).
+  const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
+  try {
+    if (place.extent && place.extent.length >= 4) {
+      const [west, north, east, south] = place.extent
+      if ([west, north, east, south, place.lat, place.lon].every(Number.isFinite)) {
+        const latDelta = clamp(Math.abs(north - south) * 1.25, 0.002, 12)
+        const lonDelta = clamp(Math.abs(east - west) * 1.25, 0.002, 12)
+        const centerLat = clamp((north + south) / 2, -85, 85)
+        const centerLon = clamp((west + east) / 2, -180, 180)
+        return new mk.CoordinateRegion(
+          new mk.Coordinate(centerLat, centerLon),
+          new mk.CoordinateSpan(latDelta, lonDelta),
+        )
+      }
+    }
+  } catch { /* fall through to point region */ }
+  const lat = Number.isFinite(place.lat) ? place.lat : 51.16
+  const lon = Number.isFinite(place.lon) ? place.lon : 10.45
   return new mk.CoordinateRegion(
-    new mk.Coordinate(place.lat, place.lon),
+    new mk.Coordinate(lat, lon),
     new mk.CoordinateSpan(0.035, 0.035),
   )
 }
@@ -265,15 +275,24 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   useEffect(() => {
     if (!map) return
     const mk = (window as any).mapkit
-    if (selectedAnnotation.current) map.removeAnnotation(selectedAnnotation.current)
-    selectedAnnotation.current = null
-    if (!app.selected) return
-    selectedAnnotation.current = new mk.MarkerAnnotation(
-      new mk.Coordinate(app.selected.lat, app.selected.lon),
-      { title: app.selected.name, subtitle: app.selected.label, color: '#111111' },
-    )
-    map.addAnnotation(selectedAnnotation.current)
-    map.setRegionAnimated(regionForPlace(mk, app.selected), true)
+    try {
+      if (selectedAnnotation.current) map.removeAnnotation(selectedAnnotation.current)
+      selectedAnnotation.current = null
+      if (!app.selected) return
+      if (!Number.isFinite(app.selected.lat) || !Number.isFinite(app.selected.lon)) return
+      selectedAnnotation.current = new mk.MarkerAnnotation(
+        new mk.Coordinate(app.selected.lat, app.selected.lon),
+        { title: app.selected.name, subtitle: app.selected.label || '', color: '#111111' },
+      )
+      map.addAnnotation(selectedAnnotation.current)
+      try {
+        map.setRegionAnimated(regionForPlace(mk, app.selected), true)
+      } catch {
+        map.setCenterAnimated?.(new mk.Coordinate(app.selected.lat, app.selected.lon), true)
+      }
+    } catch (e) {
+      console.error('[mapkit] select place failed', e)
+    }
   }, [map, app.selected])
 
   useEffect(() => {
