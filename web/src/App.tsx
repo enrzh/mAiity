@@ -213,10 +213,11 @@ function Shell() {
   const [detent, setDetent] = useState<Detent>('peek')
   const [dragH, setDragH] = useState<number | null>(null)
   const dragFrom = useRef<{ y: number; h: number } | null>(null)
+  // Immersive = actively racing. "Ready" keeps the rail/sheet so the route
+  // stays visible alongside the Start race HUD (less jarring).
   const racing = app.driving.status === 'running'
     || app.driving.status === 'paused'
     || app.driving.status === 'finished'
-    || app.driving.status === 'ready'
   useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
   useEffect(() => {
     if (app.mapProvider !== 'apple') setAppleFailed(false)
@@ -300,9 +301,9 @@ function Shell() {
   // open they loaded into a slot BELOW it in the precedence chain, so the
   // chips looked broken. One thing at a time, like Maps.
   useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
-  // Driving mode: one surface — free the map completely (hide mobile sheet).
+  // Active race: free the map (hide mobile sheet, collapse desktop rail).
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished' || app.driving.status === 'ready') {
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') {
       setPanel('none')
       setCollapsed(true)
       setDetent('peek')

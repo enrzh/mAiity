@@ -31,10 +31,11 @@ struct RootView: View {
         }
     }
 
+    /// Hide sheet only while actively racing (not merely ready).
     private var raceImmersive: Bool {
         switch model.driving {
-        case .idle: return false
-        default: return true
+        case .running, .paused, .finished: return true
+        default: return false
         }
     }
 
@@ -64,10 +65,11 @@ struct RootView: View {
                 .transition(.opacity)
             }
 
-            if raceImmersive {
+            // Race HUD whenever session is armed (ready…finished).
+            if !isIdle(model.driving) {
                 RaceHUDView()
                     .padding(.horizontal, 10)
-                    .padding(.bottom, 10)
+                    .padding(.bottom, raceImmersive ? 10 : max(sheetHeight * 0.08, 8))
                     .safeAreaPadding(.bottom, 4)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -92,13 +94,20 @@ struct RootView: View {
         }
         .onChange(of: model.driving) { _, new in
             switch new {
+            case .running, .paused, .finished:
+                model.showPackPicker = false
             case .idle:
                 sheetShown = true
-                detent = .height(96)
-            default:
-                model.showPackPicker = false
+                if detent == .height(1) { detent = .height(96) }
+            case .ready:
+                sheetShown = true
             }
         }
         .animation(.easeOut(duration: 0.22), value: raceImmersive)
+    }
+
+    private func isIdle(_ state: AppModel.DrivingState) -> Bool {
+        if case .idle = state { return true }
+        return false
     }
 }

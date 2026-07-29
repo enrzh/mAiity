@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Check, Layers3, Map, Palette, Plus, Trash2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -27,127 +26,123 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <Card className="gap-2 border-border/60 py-4 shadow-none">
-        <CardHeader className="flex flex-row items-center justify-between px-4">
-          <CardTitle className="text-base">{t('map-style')}</CardTitle>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold tracking-tight">{t('map-style')}</h2>
           <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={t('close')}>
             <X className="size-4" />
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-4 px-3">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={app.mapProvider === 'apple' ? 'default' : 'outline'}
-              onClick={() => {
-                app.setMapProvider('apple')
-                // Apple appearance options stay open for type/tone; only pack
-                // picks auto-close (see texture buttons below).
-              }}
-            >
-              <Map className="size-4" /> Apple Maps
-            </Button>
-            <Button
-              variant={app.mapProvider === 'custom' ? 'default' : 'outline'}
-              onClick={() => app.setMapProvider('custom')}
-            >
-              <Layers3 className="size-4" /> {app.lang === 'de' ? 'Eigene Stile' : 'Custom styles'}
-            </Button>
-          </div>
+        </div>
 
-          {app.mapProvider === 'apple' ? (
-            <div className="space-y-4">
-              <OptionGroup
-                label={app.lang === 'de' ? 'Kartentyp' : 'Map type'}
-                value={app.mapPreferences.appleMapType}
-                options={[
-                  ['standard', app.lang === 'de' ? 'Standard' : 'Standard'],
-                  ['muted', app.lang === 'de' ? 'Dezent' : 'Muted'],
-                  ['satellite', app.lang === 'de' ? 'Satellit' : 'Satellite'],
-                  ['hybrid', 'Hybrid'],
-                ]}
-                onChange={(appleMapType) => app.setAppleAppearance({ appleMapType: appleMapType as typeof app.mapPreferences.appleMapType })}
-              />
-              <OptionGroup
-                label={app.lang === 'de' ? 'Darstellung' : 'Appearance'}
-                value={app.mapPreferences.appleColorScheme}
-                options={[
-                  ['adaptive', app.lang === 'de' ? 'Automatisch' : 'Automatic'],
-                  ['light', app.lang === 'de' ? 'Hell' : 'Light'],
-                  ['dark', app.lang === 'de' ? 'Dunkel' : 'Dark'],
-                ]}
-                onChange={(appleColorScheme) => app.setAppleAppearance({ appleColorScheme: appleColorScheme as typeof app.mapPreferences.appleColorScheme })}
-              />
-              <OptionGroup
-                label={app.lang === 'de' ? 'Farbton' : 'Tone'}
-                value={app.mapPreferences.appleOverlayTone}
-                options={[
-                  ['none', app.lang === 'de' ? 'Original' : 'Original'],
-                  ['cool', app.lang === 'de' ? 'Kühl' : 'Cool'],
-                  ['warm', app.lang === 'de' ? 'Warm' : 'Warm'],
-                  ['reduced-color', app.lang === 'de' ? 'Reduziert' : 'Reduced'],
-                ]}
-                onChange={(appleOverlayTone) => app.setAppleAppearance({ appleOverlayTone: appleOverlayTone as typeof app.mapPreferences.appleOverlayTone })}
-              />
-              <p className="px-1 text-xs leading-relaxed text-muted-foreground">
-                {app.lang === 'de'
-                  ? 'Apple-Kartendaten bleiben interaktiv. Eigene Vollstile sind technisch nur im eigenen Kartenmodus möglich.'
-                  : 'Apple map data stays interactive. Full custom styling is available only with the custom renderer.'}
-              </p>
-            </div>
-          ) : app.packs.filter((pack) => pack.id !== 'light').length === 0 ? (
-            <div className="space-y-3 p-2 text-center text-sm text-muted-foreground">
-              <p>{app.packsError ? t('styles-load-failed') : t('styles-loading')}</p>
-              {app.packsError && <Button onClick={() => app.loadPacks()}>{t('retry')}</Button>}
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {app.packs.filter((pack) => pack.id !== 'light').map((p) => (
-                <li key={p.id} className="flex items-center gap-1">
-                  <button
-                    className={cn(
-                      'flex min-w-0 flex-1 items-center gap-3 rounded-xl border-2 bg-muted/40 px-3 py-2.5 text-left hover:bg-accent',
-                      app.activePack === p.id ? 'border-primary bg-accent' : 'border-transparent',
-                    )}
-                    aria-pressed={app.activePack === p.id}
-                    onClick={() => {
-                      app.setActivePack(p.id)
-                      // Choosing a texture pack is a complete action — return to
-                      // the route/place rail so packs and driving don't stack.
-                      onClose()
-                    }}
-                  >
-                    {p.preview?.colors?.length ? (
-                      <span className="flex gap-1" aria-hidden="true">
-                        {p.preview.colors.slice(0, 3).map((c) => (
-                          <span key={c} className="size-4 rounded-full border border-black/10" style={{ background: c }} />
-                        ))}
-                      </span>
-                    ) : (
-                      <Badge variant="secondary" className="px-1.5 text-[10px]">{t('badge-custom')}</Badge>
-                    )}
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate text-sm font-semibold">{p.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">{p.description}</span>
-                    </span>
-                    {app.activePack === p.id && <Check className="size-4 shrink-0 text-primary" />}
-                  </button>
-                  {p.custom && (
-                    <Button
-                      variant="ghost" size="icon-sm"
-                      className="text-muted-foreground/60 hover:text-destructive"
-                      aria-label={`${p.name} ${t('remove')}`}
-                      onClick={() => app.removePack(p.id).catch(() => toast.error(t('pack-remove-failed')))}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            size="sm"
+            variant={app.mapProvider === 'apple' ? 'default' : 'outline'}
+            onClick={() => app.setMapProvider('apple')}
+          >
+            <Map className="size-4" /> {t('map-switch-apple')}
+          </Button>
+          <Button
+            size="sm"
+            variant={app.mapProvider === 'custom' ? 'default' : 'outline'}
+            onClick={() => app.setMapProvider('custom')}
+          >
+            <Layers3 className="size-4" /> {t('map-switch-custom')}
+          </Button>
+        </div>
+
+        {app.mapProvider === 'apple' ? (
+          <div className="space-y-3">
+            <OptionGroup
+              label={t('apple-map-type')}
+              value={app.mapPreferences.appleMapType}
+              options={[
+                ['standard', t('apple-type-standard')],
+                ['muted', t('apple-type-muted')],
+                ['satellite', t('apple-type-satellite')],
+                ['hybrid', t('apple-type-hybrid')],
+              ]}
+              onChange={(appleMapType) => app.setAppleAppearance({ appleMapType: appleMapType as typeof app.mapPreferences.appleMapType })}
+            />
+            <OptionGroup
+              label={t('apple-appearance')}
+              value={app.mapPreferences.appleColorScheme}
+              options={[
+                ['adaptive', t('apple-scheme-adaptive')],
+                ['light', t('apple-scheme-light')],
+                ['dark', t('apple-scheme-dark')],
+              ]}
+              onChange={(appleColorScheme) => app.setAppleAppearance({ appleColorScheme: appleColorScheme as typeof app.mapPreferences.appleColorScheme })}
+            />
+            <OptionGroup
+              label={t('apple-tone')}
+              value={app.mapPreferences.appleOverlayTone}
+              options={[
+                ['none', t('apple-tone-none')],
+                ['cool', t('apple-tone-cool')],
+                ['warm', t('apple-tone-warm')],
+                ['reduced-color', t('apple-tone-reduced')],
+              ]}
+              onChange={(appleOverlayTone) => app.setAppleAppearance({ appleOverlayTone: appleOverlayTone as typeof app.mapPreferences.appleOverlayTone })}
+            />
+            <p className="text-xs leading-relaxed text-muted-foreground">{t('apple-style-hint')}</p>
+          </div>
+        ) : app.packs.filter((pack) => pack.id !== 'light').length === 0 ? (
+          <div className="space-y-3 rounded-xl bg-muted/40 px-3 py-4 text-center text-sm text-muted-foreground">
+            <p>{app.packsError ? t('styles-load-failed') : t('styles-loading')}</p>
+            {app.packsError && <Button onClick={() => app.loadPacks()}>{t('retry')}</Button>}
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {app.packs.filter((pack) => pack.id !== 'light').map((p) => (
+              <li key={p.id} className="flex items-center gap-1">
+                <button
+                  className={cn(
+                    'flex min-w-0 flex-1 items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors hover:bg-accent',
+                    app.activePack === p.id ? 'border-primary bg-accent' : 'border-transparent bg-muted/40',
                   )}
-                </li>
-              ))}
-            </ul>
-          )}
-          {app.mapProvider === 'custom' && <div className="flex gap-2">
+                  aria-pressed={app.activePack === p.id}
+                  onClick={() => {
+                    app.setActivePack(p.id)
+                    onClose()
+                  }}
+                >
+                  {p.preview?.colors?.length ? (
+                    <span className="flex gap-1" aria-hidden="true">
+                      {p.preview.colors.slice(0, 3).map((c) => (
+                        <span key={c} className="size-3.5 rounded-full border border-black/10" style={{ background: c }} />
+                      ))}
+                    </span>
+                  ) : (
+                    <Badge variant="secondary" className="px-1.5 text-[10px]">{t('badge-custom')}</Badge>
+                  )}
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm font-semibold">{p.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">{p.description}</span>
+                  </span>
+                  {app.activePack === p.id && <Check className="size-4 shrink-0 text-primary" />}
+                </button>
+                {p.custom && (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground/60 hover:text-destructive"
+                    aria-label={`${p.name} ${t('remove')}`}
+                    onClick={() => app.removePack(p.id).catch(() => toast.error(t('pack-remove-failed')))}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {app.mapProvider === 'custom' && (
+          <div className="flex gap-2">
             <Button
-              variant="outline" className="flex-1"
+              size="sm"
+              variant="outline"
+              className="flex-1"
               onClick={() => {
                 if (!app.user) { onClose(); app.setAuthOpen(true); return }
                 setEditorOpen(true)
@@ -156,7 +151,9 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
               <Palette className="size-4" /> {t('create')}
             </Button>
             <Button
-              variant="outline" className="flex-1"
+              size="sm"
+              variant="outline"
+              className="flex-1"
               onClick={() => {
                 if (!app.user) { onClose(); app.setAuthOpen(true); return }
                 setInstallOpen(true)
@@ -164,9 +161,9 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
             >
               <Plus className="size-4" /> {t('install')}
             </Button>
-          </div>}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
       <InstallDialog open={installOpen} onOpenChange={setInstallOpen} />
       <PackEditor open={editorOpen} onOpenChange={setEditorOpen} />
     </>
@@ -187,11 +184,12 @@ function OptionGroup({
   return (
     <fieldset className="space-y-2">
       <legend className="px-1 text-xs font-semibold text-muted-foreground">{label}</legend>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-1.5">
         {options.map(([id, text]) => (
           <Button
             key={id}
             type="button"
+            size="sm"
             variant={value === id ? 'default' : 'outline'}
             className="min-w-0 justify-center"
             onClick={() => onChange(id)}
