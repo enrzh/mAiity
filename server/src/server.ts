@@ -7,7 +7,12 @@ import { makeAccessSigner, makeSessionIssuer, registerAuthRoutes } from "./auth"
 import { registerUserDataRoutes } from "./bookmarks";
 import { registerPackRoutes } from "./packs";
 import { registerGeocodeRoutes } from "./geocode";
-import { makeSocialVerifier, registerSocialRoutes, type SocialVerifier } from "./social";
+import {
+  makeSocialVerifier,
+  registerSocialRoutes,
+  type AppleWebOAuth,
+  type SocialVerifier,
+} from "./social";
 import { registerRouteRoutes } from "./route";
 import { registerUserPackRoutes } from "./userpacks";
 import { PoiIndex } from "./pois";
@@ -30,6 +35,8 @@ export interface AppOpts {
   googleAudiences?: string[];
   /** Test seam — replaces the JWKS-backed verifier. */
   socialVerifier?: SocialVerifier;
+  /** Server-owned Sign in with Apple web OAuth code exchange. */
+  appleWebOAuth?: AppleWebOAuth;
   /** Allow localhost CORS origins (dev only). */
   devCors?: boolean;
   /** Valhalla-compatible routing engines, tried in order (self-host → public). */
@@ -60,6 +67,13 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
   const signer = makeAccessSigner(opts.jwtSecret);
 
   await app.register(cookie);
+  app.addContentTypeParser(
+    "application/x-www-form-urlencoded",
+    { parseAs: "string" },
+    (_req, body, done) => {
+      done(null, Object.fromEntries(new URLSearchParams(body)));
+    },
+  );
   await app.register(cors, {
     // Production is same-origin only; localhost origins are dev-opt-in.
     // maps.aiity.de is the sole canonical domain — privatenas.nl/maps now
@@ -102,7 +116,14 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
         appleAudiences: opts.appleAudiences ?? [],
         googleAudiences: opts.googleAudiences ?? [],
       });
-      registerSocialRoutes(scope, db, verifier, makeSessionIssuer(authOpts, signer));
+      registerSocialRoutes(
+        scope,
+        db,
+        verifier,
+        makeSessionIssuer(authOpts, signer),
+        opts.appleWebOAuth,
+        opts.secureCookies ?? true,
+      );
       registerUserDataRoutes(scope, db, signer);
       registerPackRoutes(scope, opts.packsDir, opts.packsPublicBase ?? "/maps/packs");
       registerUserPackRoutes(scope, db, signer, prefix);

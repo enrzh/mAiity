@@ -166,9 +166,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Boot: packs + resume session (cookie) + user data.
   useEffect(() => {
     loadPacks()
+    const params = new URLSearchParams(window.location.search)
+    const appleLogin = params.get('apple_login')
+    if (appleLogin) {
+      params.delete('apple_login')
+      const query = params.toString()
+      history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`)
+      if (appleLogin !== 'success' && appleLogin !== 'cancelled') {
+        notify(tr('err-apple-login-failed'))
+      }
+    }
     const e = epoch.current
     session.resume().then(async (u) => {
-      if (!u || e !== epoch.current) return
+      if (!u || e !== epoch.current) {
+        if (appleLogin === 'success') notify(tr('err-apple-login-failed'))
+        return
+      }
       setUser(u)
       loadBookmarks()
       loadCustomPacks()

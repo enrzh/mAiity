@@ -6,6 +6,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Apple } from 'lucide-react'
 import { ApiError } from '../lib/api'
 import { type TKey } from '../lib/i18n'
 import { useT } from '../lib/useT'
@@ -67,6 +68,19 @@ function AuthDialogContent() {
           <TabsTrigger value="register" className="flex-1">{t('register')}</TabsTrigger>
         </TabsList>
       </Tabs>
+      <Button
+        type="button"
+        className="w-full bg-black text-white hover:bg-black/85"
+        onClick={() => window.location.assign('/maps/api/auth/apple/start')}
+      >
+        <Apple aria-hidden="true" />
+        {t('continue-with-apple')}
+      </Button>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        <span>{t('or-email')}</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="auth-email">{t('email')}</Label>
@@ -88,11 +102,6 @@ function AuthDialogContent() {
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? '…' : mode === 'login' ? t('sign-in') : t('create-account')}
         </Button>
-        {mode === 'register' && (
-          <p className="text-center text-xs text-muted-foreground">
-            {t('auth-more-options')}
-          </p>
-        )}
       </form>
     </DialogContent>
   )

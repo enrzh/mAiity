@@ -35,6 +35,9 @@ const de = {
   'email': 'E-Mail',
   'password': 'Passwort',
   'auth-more-options': 'Weitere Anmelde-Optionen (Apple, Google) folgen in der App.',
+  'continue-with-apple': 'Mit Apple fortfahren',
+  'or-email': 'oder mit E-Mail',
+  'err-apple-login-failed': 'Apple-Anmeldung fehlgeschlagen — bitte erneut versuchen.',
 
   // Search
   'search-placeholder': 'Ort, Adresse suchen …',
@@ -189,6 +192,9 @@ const en: Record<TKey, string> = {
   'email': 'Email',
   'password': 'Password',
   'auth-more-options': 'More sign-in options (Apple, Google) are coming to the app.',
+  'continue-with-apple': 'Continue with Apple',
+  'or-email': 'or with email',
+  'err-apple-login-failed': 'Apple sign-in failed — please try again.',
 
   'search-placeholder': 'Search place, address …',
   'search': 'Search',
@@ -331,6 +337,9 @@ const fr: Record<TKey, string> = {
   'email': 'E-mail',
   'password': 'Mot de passe',
   'auth-more-options': 'D’autres options de connexion (Apple, Google) arrivent dans l’application.',
+  'continue-with-apple': 'Continuer avec Apple',
+  'or-email': 'ou avec e-mail',
+  'err-apple-login-failed': 'La connexion Apple a échoué — veuillez réessayer.',
 
   'search-placeholder': 'Rechercher un lieu, une adresse …',
   'search': 'Recherche',
@@ -473,6 +482,9 @@ const es: Record<TKey, string> = {
   'email': 'Correo electrónico',
   'password': 'Contraseña',
   'auth-more-options': 'Pronto habrá más opciones de inicio de sesión (Apple, Google) en la app.',
+  'continue-with-apple': 'Continuar con Apple',
+  'or-email': 'o con correo electrónico',
+  'err-apple-login-failed': 'Error al iniciar sesión con Apple — inténtalo de nuevo.',
 
   'search-placeholder': 'Buscar lugar, dirección …',
   'search': 'Buscar',
@@ -615,6 +627,9 @@ const it: Record<TKey, string> = {
   'email': 'Email',
   'password': 'Password',
   'auth-more-options': 'Altre opzioni di accesso (Apple, Google) arriveranno nell’app.',
+  'continue-with-apple': 'Continua con Apple',
+  'or-email': 'o con e-mail',
+  'err-apple-login-failed': 'Accesso con Apple non riuscito — riprova.',
 
   'search-placeholder': 'Cerca luogo, indirizzo …',
   'search': 'Cerca',
@@ -757,6 +772,9 @@ const nl: Record<TKey, string> = {
   'email': 'E-mail',
   'password': 'Wachtwoord',
   'auth-more-options': 'Meer inlogopties (Apple, Google) volgen in de app.',
+  'continue-with-apple': 'Ga door met Apple',
+  'or-email': 'of met e-mail',
+  'err-apple-login-failed': 'Inloggen met Apple is mislukt — probeer het opnieuw.',
 
   'search-placeholder': 'Zoek plaats, adres …',
   'search': 'Zoeken',
@@ -899,6 +917,9 @@ const pl: Record<TKey, string> = {
   'email': 'E-mail',
   'password': 'Hasło',
   'auth-more-options': 'Więcej opcji logowania (Apple, Google) pojawi się w aplikacji.',
+  'continue-with-apple': 'Kontynuuj z Apple',
+  'or-email': 'lub przez e-mail',
+  'err-apple-login-failed': 'Logowanie przez Apple nie powiodło się — spróbuj ponownie.',
 
   'search-placeholder': 'Szukaj miejsca, adresu …',
   'search': 'Szukaj',
@@ -1041,6 +1062,9 @@ const tr: Record<TKey, string> = {
   'email': 'E-posta',
   'password': 'Şifre',
   'auth-more-options': 'Diğer giriş seçenekleri (Apple, Google) yakında uygulamaya gelecek.',
+  'continue-with-apple': 'Apple ile devam et',
+  'or-email': 'veya e-posta ile',
+  'err-apple-login-failed': 'Apple ile giriş başarısız oldu — tekrar deneyin.',
 
   'search-placeholder': 'Yer, adres ara …',
   'search': 'Ara',

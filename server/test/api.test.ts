@@ -77,6 +77,103 @@ describe("health + packs", () => {
 });
 
 describe("auth", () => {
+  test("Apple web OAuth start and callback issue a web session", async () => {
+    const app = await createApp({
+      dbPath: ":memory:",
+      packsDir: PACKS_DIR,
+      geocoderUrls: [],
+      jwtSecret: SECRET,
+      prefix: "/maps/api",
+      secureCookies: false,
+      appleAudiences: ["de.aiity.maps.web"],
+      appleWebOAuth: {
+        clientId: "de.aiity.maps.web",
+        redirectUri: "https://maps.aiity.de/maps/api/auth/apple/callback",
+        exchangeCode: async (code: string) => {
+          expect(code).toBe("valid-code");
+          return { identityToken: "verified-apple-token" };
+        },
+      },
+      socialVerifier: {
+        verifyApple: async (token: string) => {
+          expect(token).toBe("verified-apple-token");
+          return {
+            sub: "apple-web-user",
+            email: "apple@aiity.de",
+            emailVerified: true,
+            name: null,
+          };
+        },
+        verifyGoogle: async () => { throw new Error("unused"); },
+      },
+    } as any);
+
+    const start = await app.inject({
+      method: "GET",
+      url: "/maps/api/auth/apple/start",
+    });
+    expect(start.statusCode).toBe(302);
+    const authorization = new URL(start.headers.location!);
+    expect(authorization.origin).toBe("https://appleid.apple.com");
+    expect(authorization.searchParams.get("client_id")).toBe("de.aiity.maps.web");
+    expect(authorization.searchParams.get("response_mode")).toBe("form_post");
+    const state = authorization.searchParams.get("state");
+    expect(state).toBeTruthy();
+    const stateCookie = start.cookies.find((cookie) => cookie.name === "maps_apple_state");
+    expect(stateCookie?.httpOnly).toBe(true);
+
+    const callback = await app.inject({
+      method: "POST",
+      url: "/maps/api/auth/apple/callback",
+      headers: {
+        cookie: `maps_apple_state=${stateCookie!.value}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      payload: `code=valid-code&state=${encodeURIComponent(state!)}`,
+    });
+    expect(callback.statusCode).toBe(302);
+    expect(callback.headers.location).toBe("/maps/?apple_login=success");
+    expect(callback.cookies.find((cookie) => cookie.name === "maps_rt")?.httpOnly).toBe(true);
+  });
+
+  test("Apple web OAuth rejects a mismatched state before token exchange", async () => {
+    let exchanged = false;
+    const app = await createApp({
+      dbPath: ":memory:",
+      packsDir: PACKS_DIR,
+      geocoderUrls: [],
+      jwtSecret: SECRET,
+      prefix: "/maps/api",
+      secureCookies: false,
+      appleAudiences: ["de.aiity.maps.web"],
+      appleWebOAuth: {
+        clientId: "de.aiity.maps.web",
+        redirectUri: "https://maps.aiity.de/maps/api/auth/apple/callback",
+        exchangeCode: async () => {
+          exchanged = true;
+          return { identityToken: "should-not-run" };
+        },
+      },
+      socialVerifier: {
+        verifyApple: async () => { throw new Error("should-not-run"); },
+        verifyGoogle: async () => { throw new Error("unused"); },
+      },
+    } as any);
+
+    const callback = await app.inject({
+      method: "POST",
+      url: "/maps/api/auth/apple/callback",
+      headers: {
+        cookie: "maps_apple_state=expected",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      payload: "code=valid-code&state=wrong",
+    });
+    expect(callback.statusCode).toBe(302);
+    expect(callback.headers.location).toBe("/maps/?apple_login=invalid_oauth_state");
+    expect(exchanged).toBe(false);
+  });
+
   test("register → me roundtrip", async () => {
     const app = await makeApp();
     const reg = await registerUser(app);

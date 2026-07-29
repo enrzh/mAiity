@@ -88,9 +88,16 @@ services:
       APPLE_MAPS_ID: ${APPLE_MAPS_ID:-}
       APPLE_MAPKIT_JS_TOKEN: ${APPLE_MAPKIT_JS_TOKEN:-}
       APPLE_MAPS_PRIVATE_KEY_FILE: /run/secrets/apple-maps.p8
+      APPLE_AUDIENCES: "de.aiity.maps,de.aiity.maps.web"
+      APPLE_LOGIN_TEAM_ID: "H8FW6W6K2D"
+      APPLE_LOGIN_KEY_ID: "KLVV3WU9F3"
+      APPLE_LOGIN_CLIENT_ID: "de.aiity.maps.web"
+      APPLE_LOGIN_REDIRECT_URI: "https://maps.aiity.de/maps/api/auth/apple/callback"
+      APPLE_LOGIN_PRIVATE_KEY_FILE: /run/secrets/apple-login.p8
     volumes:
       - ./data-api:/data
       - ./packs:/packs:ro
       - ./secrets/apple-maps.p8:/run/secrets/apple-maps.p8:ro
+      - ./secrets/apple-login.p8:/run/secrets/apple-login.p8:ro
     ports:
       - "100.93.237.25:3103:3103"
