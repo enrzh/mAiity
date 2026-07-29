@@ -16,6 +16,7 @@ import {
   toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
 import { stepDrivingGame, type DrivingInput } from './lib/drivingGame'
+import { activeMapViewport } from './maps/rendererController'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -409,33 +410,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelected(null)
     setPickingStart(false)
     let from: { lat: number; lon: number }
+    let fromLabel: Place | null = fromPlace
     if (fromPlace) {
       from = { lat: fromPlace.lat, lon: fromPlace.lon }
     } else {
+      // Prefer GPS; fall back to the visible map center so routing still works
+      // when geolocation is denied/unavailable (common in automated browsers).
       try {
         const pos = await new Promise<GeolocationPosition>((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000, maximumAge: 60_000 }))
+          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5_000, maximumAge: 60_000 }))
         from = { lat: pos.coords.latitude, lon: pos.coords.longitude }
       } catch {
-        if (seq !== routeSeq.current) return
-        setRoute({
-          from: fromPlace, to, mode, status: 'error',
-          errorKey: 'route-err-no-location',
-        })
-        return
+        const viewport = activeMapViewport()
+        if (viewport?.center && Number.isFinite(viewport.center.lat) && Number.isFinite(viewport.center.lon)) {
+          from = { lat: viewport.center.lat, lon: viewport.center.lon }
+          fromLabel = {
+            name: tr('map-center-start'),
+            label: '',
+            lat: from.lat,
+            lon: from.lon,
+          }
+        } else {
+          if (seq !== routeSeq.current) return
+          setRoute({
+            from: fromPlace, to, mode, status: 'error',
+            errorKey: 'route-err-no-location',
+          })
+          return
+        }
       }
     }
     try {
       const result = await api.route(from, to, mode)
       if (seq !== routeSeq.current) return
-      setRoute({ from: fromPlace, to, mode, status: 'ready', result })
+      setRoute({ from: fromLabel, to, mode, status: 'ready', result })
       // Race mode is car-only; bike/foot routes must not arm the race HUD.
       setDriving(createDrivingSessionForMode(mode, result))
     } catch (e) {
       if (seq !== routeSeq.current) return
       const code = (e as { code?: string })?.code
       setRoute({
-        from: fromPlace, to, mode, status: 'error',
+        from: fromLabel, to, mode, status: 'error',
         errorKey: code === 'no_route_found' ? 'route-err-not-found' : 'route-err-unavailable',
       })
     }

@@ -299,9 +299,9 @@ function Shell() {
   // (provider/style). That is handled by content precedence below, not by
   // forcing panel off on every route identity change.
   useEffect(() => {
-    // Only clear side panels when a NEW route/place appears from "none", not
-    // when the user intentionally opens packs while routing.
-    if (app.selected && !app.route) setPanel('none')
+    // Clear side panels when place/route content takes the rail.
+    // User can re-open packs/saved afterward; those still outrank route in render.
+    if (app.selected || app.route) setPanel('none')
   }, [app.selected, app.route])
   // Selecting something while collapsed should reveal it, like Maps does.
   // Exception: race mode is immersive — keep the rail collapsed.
@@ -323,10 +323,12 @@ function Shell() {
   }, [app.driving.status])
   // New contextual content while the mobile sheet is at peek would be
   // invisible — lift to half so a tap on the map/chips visibly answers.
+  // Keep 'full' if the user already expanded; never leave content at peek.
   useEffect(() => {
     if (racing) return
-    if (app.selected || app.route || app.pois.length > 0)
-      setDetent((d) => (d === 'peek' ? 'half' : d))
+    if (app.selected || app.route || app.pois.length > 0) {
+      setDetent((d) => (d === 'full' ? d : 'half'))
+    }
   }, [app.selected, app.route, app.pois, racing])
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on

@@ -61,6 +61,7 @@ const de = {
   'off-route': 'Abseits der Route — neu berechnen …',
   'nav-then': 'danach:',
   'current-position': 'Aktuelle Position',
+  'map-center-start': 'Kartenmitte',
 
   // Route panel
   'route': 'Route',
@@ -249,6 +250,7 @@ const en: Record<TKey, string> = {
   'off-route': 'Off route — recalculating …',
   'nav-then': 'then:',
   'current-position': 'Current position',
+  'map-center-start': 'Map center',
 
   'route': 'Route',
   'route-change-start': 'Change starting point — then search for a place or tap the map',
@@ -428,6 +430,7 @@ const fr: Record<TKey, string> = {
   'off-route': 'Hors itinéraire — recalcul en cours …',
   'nav-then': 'puis :',
   'current-position': 'Position actuelle',
+  'map-center-start': 'Centre de la carte',
 
   'route': 'Itinéraire',
   'route-change-start': 'Modifier le point de départ — puis recherchez un lieu ou touchez la carte',
@@ -607,6 +610,7 @@ const es: Record<TKey, string> = {
   'off-route': 'Fuera de ruta — recalculando …',
   'nav-then': 'después:',
   'current-position': 'Posición actual',
+  'map-center-start': 'Centro del mapa',
 
   'route': 'Ruta',
   'route-change-start': 'Cambiar punto de partida — luego busca un lugar o toca el mapa',
@@ -786,6 +790,7 @@ const it: Record<TKey, string> = {
   'off-route': 'Fuori percorso — ricalcolo …',
   'nav-then': 'poi:',
   'current-position': 'Posizione attuale',
+  'map-center-start': 'Centro mappa',
 
   'route': 'Percorso',
   'route-change-start': 'Cambia punto di partenza — poi cerca un luogo o tocca la mappa',
@@ -965,6 +970,7 @@ const nl: Record<TKey, string> = {
   'off-route': 'Van de route af — opnieuw berekenen …',
   'nav-then': 'daarna:',
   'current-position': 'Huidige positie',
+  'map-center-start': 'Kaartmidden',
 
   'route': 'Route',
   'route-change-start': 'Startpunt wijzigen — zoek daarna een plaats of tik op de kaart',
@@ -1144,6 +1150,7 @@ const pl: Record<TKey, string> = {
   'off-route': 'Poza trasą — przeliczanie …',
   'nav-then': 'następnie:',
   'current-position': 'Obecna pozycja',
+  'map-center-start': 'Środek mapy',
 
   'route': 'Trasa',
   'route-change-start': 'Zmień punkt startowy — potem wyszukaj miejsce lub dotknij mapy',
@@ -1323,6 +1330,7 @@ const tr: Record<TKey, string> = {
   'off-route': 'Rota dışında — yeniden hesaplanıyor …',
   'nav-then': 'sonra:',
   'current-position': 'Mevcut konum',
+  'map-center-start': 'Harita merkezi',
 
   'route': 'Rota',
   'route-change-start': 'Başlangıç noktasını değiştir — sonra bir yer ara veya haritaya dokun',

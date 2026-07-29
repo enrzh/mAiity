@@ -41,23 +41,39 @@ function regionForPlace(mk: any, place: Place) {
 function fitPlaces(map: any, mk: any, places: Place[]) {
   if (places.length === 0) return
   if (places.length === 1) {
-    map.setRegionAnimated(regionForPlace(mk, places[0]), true)
+    try {
+      map.setRegionAnimated(regionForPlace(mk, places[0]), true)
+    } catch {
+      const p = places[0]
+      if (Number.isFinite(p.lat) && Number.isFinite(p.lon)) {
+        map.setCenterAnimated?.(new mk.Coordinate(p.lat, p.lon), true)
+      }
+    }
     return
   }
   let north = -90, south = 90, east = -180, west = 180
+  let any = false
   for (const place of places) {
+    if (!Number.isFinite(place.lat) || !Number.isFinite(place.lon)) continue
+    any = true
     north = Math.max(north, place.lat)
     south = Math.min(south, place.lat)
     east = Math.max(east, place.lon)
     west = Math.min(west, place.lon)
   }
-  map.setRegionAnimated(new mk.CoordinateRegion(
-    new mk.Coordinate((north + south) / 2, (east + west) / 2),
-    new mk.CoordinateSpan(
-      Math.max(0.015, (north - south) * 1.35),
-      Math.max(0.015, (east - west) * 1.35),
-    ),
-  ), true)
+  if (!any) return
+  const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
+  try {
+    map.setRegionAnimated(new mk.CoordinateRegion(
+      new mk.Coordinate(clamp((north + south) / 2, -85, 85), clamp((east + west) / 2, -180, 180)),
+      new mk.CoordinateSpan(
+        clamp(Math.max(0.015, (north - south) * 1.35), 0.015, 40),
+        clamp(Math.max(0.015, (east - west) * 1.35), 0.015, 40),
+      ),
+    ), true)
+  } catch (e) {
+    console.error('[mapkit] fitPlaces failed', e)
+  }
 }
 
 function addSelectionListener(annotation: any, select: () => void) {
@@ -336,16 +352,29 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   useEffect(() => {
     if (!map) return
     const mk = (window as any).mapkit
-    if (routeOverlay.current) map.removeOverlay(routeOverlay.current)
-    routeOverlay.current = null
-    const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
-    if (!geometry || geometry.length < 2 || !mk.PolylineOverlay) return
-    const coordinates = geometry.map(([lon, lat]) => new mk.Coordinate(lat, lon))
-    routeOverlay.current = new mk.PolylineOverlay(coordinates, {
-      style: new mk.Style({ lineWidth: 6, strokeColor: '#1677ff', lineJoin: 'round', lineCap: 'round' }),
-    })
-    map.addOverlay(routeOverlay.current)
-    fitPlaces(map, mk, geometry.map(([lon, lat]) => ({ name: '', label: '', lat, lon })))
+    try {
+      if (routeOverlay.current) map.removeOverlay(routeOverlay.current)
+      routeOverlay.current = null
+      const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
+      if (!geometry || geometry.length < 2 || !mk.PolylineOverlay) return
+      // Filter non-finite coords — bad geometry can crash MapKit hard.
+      const pts = geometry.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]))
+      if (pts.length < 2) return
+      const coordinates = pts.map(([lon, lat]) => new mk.Coordinate(lat, lon))
+      routeOverlay.current = new mk.PolylineOverlay(coordinates, {
+        style: new mk.Style({ lineWidth: 6, strokeColor: '#1677ff', lineJoin: 'round', lineCap: 'round' }),
+      })
+      map.addOverlay(routeOverlay.current)
+      // Fit using endpoints only (cheap + safe for long polylines).
+      const a = pts[0]
+      const b = pts[pts.length - 1]
+      fitPlaces(map, mk, [
+        { name: '', label: '', lat: a[1], lon: a[0] },
+        { name: '', label: '', lat: b[1], lon: b[0] },
+      ])
+    } catch (e) {
+      console.error('[mapkit] route overlay failed', e)
+    }
   }, [map, app.route])
 
   useEffect(() => {
