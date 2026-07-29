@@ -465,9 +465,6 @@ struct SheetView: View {
                                 .frame(maxWidth: .infinity, minHeight: 32).fontWeight(.semibold)
                         }
                         .buttonStyle(.borderedProminent)
-                        if route.mode == .car {
-                            drivingSection
-                        }
                         ForEach(Array(r.steps.enumerated()), id: \.offset) { i, step in
                             HStack(alignment: .top, spacing: 10) {
                                 Text("\(i + 1)")
@@ -486,32 +483,6 @@ struct SheetView: View {
                 }
             }
         }
-    }
-
-    private var drivingSection: some View {
-        let state = model.driving
-        // Full controls live in RaceHUDView (map overlay). Sheet keeps a short entry.
-        return VStack(alignment: .leading, spacing: 8) {
-            Label(L.t("race-mode"), systemImage: "car.fill")
-                .font(.subheadline.bold())
-            HStack(spacing: 8) {
-                switch state {
-                case .ready:
-                    Button(L.t("race-start")) { model.requestStartRace() }
-                        .buttonStyle(.borderedProminent)
-                case .running, .paused:
-                    Text(L.t("race-active-hint"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                case .finished:
-                    Button(L.t("race-again")) { model.resetDriving() }
-                        .buttonStyle(.borderedProminent)
-                case .idle:
-                    EmptyView()
-                }
-            }
-        }
-        .padding(.vertical, 6)
     }
 
     static func fmtDist(_ m: Int) -> String {

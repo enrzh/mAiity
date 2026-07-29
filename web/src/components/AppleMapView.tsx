@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
-import {
-  raceCameraAt,
-  RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M, RACE_PITCH,
-} from '../lib/drivingCamera'
-import { getDrivingLive } from '../lib/drivingLive'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
@@ -531,73 +526,6 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     }
   }, [map, app.route])
 
-  // Chase camera from high-frequency drivingLive — never animate while running.
-  useEffect(() => {
-    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
-    const mk = (window as any).mapkit
-    let raf = 0
-    let wasRacing = false
-
-    const apply = (animated: boolean) => {
-      if (!aliveRef.current || !mapIsLive(map, el.current)) return
-      const live = getDrivingLive()
-      const racing = live.status !== 'idle'
-      try {
-        if (typeof map.showsBuildings !== 'undefined') map.showsBuildings = racing
-        if (typeof map.showsCompass !== 'undefined' && mk.FeatureVisibility) {
-          map.showsCompass = racing ? mk.FeatureVisibility.Hidden : mk.FeatureVisibility.Adaptive
-        }
-      } catch { /* older MapKit */ }
-
-      if (!racing) {
-        if (wasRacing) {
-          try {
-            const center = map.center
-            if (mk.Camera && center) {
-              const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
-              if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
-              else if ('camera' in map) map.camera = cam
-            }
-          } catch { /* ok */ }
-        }
-        wasRacing = false
-        return
-      }
-      wasRacing = true
-      if (!(live.status === 'running' || live.status === 'paused' || live.status === 'ready')) return
-      if (!Number.isFinite(live.lon) || !Number.isFinite(live.lat)) return
-
-      const ready = live.status === 'ready'
-      const cam = raceCameraAt([live.lon, live.lat], live.heading, {
-        lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
-        altitudeM: ready ? RACE_ALTITUDE_READY_M : RACE_ALTITUDE_M,
-        pitch: Math.min(RACE_PITCH, 85),
-      })
-      const coord = new mk.Coordinate(cam.center[1], cam.center[0])
-      try {
-        if (mk.Camera) {
-          const camera = new mk.Camera(coord, {
-            heading: cam.bearing,
-            pitch: cam.pitch,
-            altitude: cam.altitudeM,
-          })
-          // Never animate while running — queued animations = lag.
-          if (typeof map.setCameraAnimated === 'function') {
-            map.setCameraAnimated(camera, animated && ready)
-          } else if ('camera' in map) {
-            map.camera = camera
-          }
-        }
-      } catch { /* camera API quirks */ }
-    }
-
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      apply(false)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [map])
 
   const tone = appleOverlayClass(app.mapPreferences.appleOverlayTone)
   return (

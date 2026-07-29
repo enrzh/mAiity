@@ -57,11 +57,6 @@ struct CustomMapScreen: View {
                 .color(MapTokens.selected)
                 .strokeWidth(MapTokens.selectedStrokeWidth)
                 .strokeColor(MapTokens.markerStroke)
-            CircleStyleLayer(identifier: "driving-car", source: drivingSource)
-                .radius(10)
-                .color(.blue)
-                .strokeWidth(3)
-                .strokeColor(.white)
         }
         .unsafeMapViewControllerModifier { controller in
             let wanted = location.isAuthorized
@@ -92,13 +87,6 @@ struct CustomMapScreen: View {
                         pitch: is3D ? 60 : 0,
                         direction: is3D ? 20 : 0
                     )
-                }
-
-                mapButton(
-                    symbol: "car.fill",
-                    label: L.t("free-drive")
-                ) {
-                    model.prepareFreeDriving()
                 }
 
                 mapButton(
@@ -143,20 +131,12 @@ struct CustomMapScreen: View {
         .onChange(of: model.navCamera) { _, target in
             guard let target else { return }
             lastCenter = target.center
-            let racing: Bool = {
-                switch model.driving {
-                case .ready, .running, .paused, .finished: return true
-                default: return false
-                }
-            }()
-            // Street-scale race: closer zoom so roads read larger (parity with web ~18.6).
             let reduceMotion = UIAccessibility.isReduceMotionEnabled
-            let z = racing ? 18.4 : 17.0
-            currentZoom = z
+            currentZoom = 17.0
             camera = .center(
                 target.center,
-                zoom: z,
-                pitch: reduceMotion ? (racing ? 40 : 0) : (racing ? 66 : 60),
+                zoom: 17.0,
+                pitch: reduceMotion ? 0 : 55,
                 direction: target.heading
             )
             model.noteMapRegion(MKCoordinateRegion(
@@ -213,32 +193,6 @@ struct CustomMapScreen: View {
             if let geometry = model.route?.result?.geometry, geometry.count > 1 {
                 let points = geometry.map { coordinate($0[1], $0[0]) }
                 MLNPolylineFeature(coordinates: points, count: UInt(points.count))
-            }
-        }
-    }
-
-    private var drivingSource: ShapeSource {
-        ShapeSource(identifier: "driving-source") {
-            // Show car from ready (start line) through finished — not only mid-run.
-            let active: Bool = {
-                switch model.driving {
-                case .idle: return false
-                default: return true
-                }
-            }()
-            if active {
-                if model.driveKind == .free {
-                    MLNPointFeature(coordinate: coordinate(model.carLat, model.carLon))
-                } else if let geometry = model.route?.result?.geometry, geometry.count > 1 {
-                    let car = DrivingPhysics.carPosition(
-                        progress: model.driving.progress,
-                        lateral: model.raceLateral,
-                        geometry: geometry
-                    )
-                    MLNPointFeature(coordinate: coordinate(car.lat, car.lon))
-                } else {
-                    MLNPointFeature(coordinate: coordinate(model.carLat, model.carLon))
-                }
             }
         }
     }

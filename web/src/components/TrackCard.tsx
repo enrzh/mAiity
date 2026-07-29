@@ -77,12 +77,6 @@ export function TrackCard({ className }: { className?: string }) {
             {t('nav-start')}
           </Button>
         )}
-        {route.mode === 'car' && app.driving.status === 'idle' && (
-          <Button variant="secondary" className={actionClass('secondary')} onClick={app.armDrivingMode}>
-            <Car className="size-4" />
-            {t('race-start')}
-          </Button>
-        )}
       </div>
     </Surface>
   )

@@ -70,22 +70,6 @@ export function RoutePanel() {
           <p className="py-2 text-center text-sm text-destructive">{t(route.errorKey ?? 'err-unknown')}</p>
         ) : route.result ? (
           <>
-            {/* Track stats are shown via TrackCard above; keep steps + secondary actions here. */}
-            {route.mode === 'car' && app.driving.status === 'ready' && (
-              <Button className="h-11 w-full gap-2 rounded-full font-semibold" variant="secondary" onClick={() => { app.startDrivingMode() }}>
-                <Car className="size-4" />
-                {t('race-start')}
-              </Button>
-            )}
-            {route.mode === 'car' && app.driving.status === 'finished' && (
-              <Button className="h-11 w-full gap-2 rounded-full font-semibold" variant="secondary" onClick={app.resetDrivingMode}>
-                <Car className="size-4" />
-                {t('race-again')}
-              </Button>
-            )}
-            {route.mode === 'car' && (app.driving.status === 'running' || app.driving.status === 'paused') && (
-              <p className="text-center text-xs text-muted-foreground">{t('race-active-hint')}</p>
-            )}
             <Separator className="opacity-50" />
             <ol className="max-h-[36vh] space-y-2 overflow-y-auto overscroll-contain pr-1 text-sm md:max-h-none">
               {(route.result.steps ?? []).map((s, i) => (

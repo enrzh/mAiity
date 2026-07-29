@@ -10,61 +10,7 @@ import { readMapPreferences, writeMapPreferences } from './maps/providerPreferen
 import type {
   AppleColorScheme, AppleMapType, AppleOverlayTone, MapPreferences, MapProvider,
 } from './maps/types'
-import {
-  createDrivingSession, createDrivingSessionForMode, createFreeDrivingSession, finishDriving,
-  idleSession, loadDrivingRuns,
-  pauseDriving, resetDriving, resumeDriving, saveDrivingRun, startDriving, tickDriving,
-  toDrivingRun, type DrivingRun, type DrivingSession,
-} from './lib/drivingSession'
-import { stepDrivingGame, stepFreeDrive, type DrivingInput } from './lib/drivingGame'
-import {
-  activeMapViewport,
-  queryActiveMapBuildingsNear,
-  queryActiveMapRoadsNear,
-} from './maps/rendererController'
-import { pointAtProgress, bearingAtProgress } from './lib/driving'
-import { carPositionAt, RACE_CAR_RADIUS_M } from './lib/drivingCamera'
-import { resolveBuildingCollision, softRoadBias } from './lib/drivingCollision'
-import { resetDrivingLive, setDrivingLive } from './lib/drivingLive'
-
-/** Throttled building footprint cache for free-drive collision. */
-let buildingCache: { lon: number; lat: number; at: number; fps: { ring: [number, number][] }[] } | null = null
-function nearbyBuildings(lon: number, lat: number) {
-  const now = Date.now()
-  // Never stick empty results — tiles often load mid-drive.
-  const ttl = buildingCache?.fps.length ? 120 : 40
-  if (
-    buildingCache
-    && now - buildingCache.at < ttl
-    && Math.abs(buildingCache.lon - lon) < 0.00015
-    && Math.abs(buildingCache.lat - lat) < 0.00015
-  ) {
-    return buildingCache.fps
-  }
-  const fps = queryActiveMapBuildingsNear(lon, lat, 65)
-  buildingCache = { lon, lat, at: now, fps }
-  return fps
-}
-
-/** Throttled road segments for soft free-drive road bias. */
-let roadCache: {
-  lon: number; lat: number; at: number
-  segs: Array<{ a: [number, number]; b: [number, number] }>
-} | null = null
-function nearbyRoads(lon: number, lat: number) {
-  const now = Date.now()
-  if (
-    roadCache
-    && now - roadCache.at < 220
-    && Math.abs(roadCache.lon - lon) < 0.00025
-    && Math.abs(roadCache.lat - lat) < 0.00025
-  ) {
-    return roadCache.segs
-  }
-  const segs = queryActiveMapRoadsNear(lon, lat, 55)
-  roadCache = { lon, lat, at: now, segs }
-  return segs
-}
+import { activeMapViewport } from './maps/rendererController'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -138,21 +84,6 @@ interface AppState {
   beginPickStart: () => void
   cancelPickStart: () => void
   clearRoute: () => void
-  driving: DrivingSession
-  drivingRuns: DrivingRun[]
-  startDrivingMode: () => void
-  pauseDrivingMode: () => void
-  resumeDrivingMode: () => void
-  resetDrivingMode: () => void
-  /** Arm race HUD for the current car route (idle → ready). */
-  armDrivingMode: () => void
-  /** Free roam: drive from map center / GPS without a route. */
-  armFreeDrivingMode: () => void
-  /** Hide race HUD without clearing the route (any → idle). */
-  exitDrivingMode: () => void
-  tickDrivingMode: (now?: number) => void
-  driveDrivingMode: (input: DrivingInput, now?: number) => void
-  finishDrivingMode: () => void
   showCategory: (
     cat: NearbyCategory,
     center: { lat: number; lon: number },
@@ -200,31 +131,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
   const [is3D, setIs3D] = useState(false)
   const [navigating, setNavigating] = useState(false)
-  const [driving, setDriving] = useState<DrivingSession>(() => idleSession())
-  const drivingRef = useRef<DrivingSession>(idleSession())
-  const drivePublishAt = useRef(0)
-  const [drivingRuns, setDrivingRuns] = useState<DrivingRun[]>(() => loadDrivingRuns())
-
-  // Keep ref in sync when session status changes from non-physics paths.
-  useEffect(() => {
-    drivingRef.current = driving
-    if (driving.status === 'idle') resetDrivingLive()
-    else {
-      setDrivingLive({
-        status: driving.status,
-        kind: driving.kind,
-        lon: driving.lon,
-        lat: driving.lat,
-        heading: driving.heading,
-        speedMps: driving.speedMps,
-        lateral: driving.lateral,
-        progress: driving.progress,
-        distanceM: driving.distanceM,
-        elapsedMs: driving.elapsedMs,
-        lastHitAt: driving.lastHitAt ?? null,
-      })
-    }
-  }, [driving])
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
   // bookmark mutation counter — stale fetches must never clobber newer state.
@@ -479,7 +385,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const requestRoute = useCallback(async (fromPlace: Place | null, to: Place, mode: RouteMode) => {
     const seq = ++routeSeq.current
     setRoute({ from: fromPlace, to, mode, status: 'loading' })
-    setDriving(idleSession())
     setSelected(null)
     setPickingStart(false)
     let from: { lat: number; lon: number }
@@ -517,12 +422,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const result = await api.route(from, to, mode)
       if (seq !== routeSeq.current) return
       setRoute({ from: fromLabel, to, mode, status: 'ready', result })
-      // Race mode is car-only; bike/foot routes must not arm the race HUD.
-      const geo = result.geometry
-      const startPose = geo?.[0]
-        ? { lon: geo[0][0], lat: geo[0][1], heading: bearingAtProgress(geo as [number, number][], 0) }
-        : { lon: from.lon, lat: from.lat, heading: 0 }
-      setDriving(createDrivingSessionForMode(mode, result, startPose))
     } catch (e) {
       if (seq !== routeSeq.current) return
       const code = (e as { code?: string })?.code
@@ -555,221 +454,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRoute(null)
     setPickingStart(false)
     setNavigating(false)
-    setDriving(idleSession())
   }, [])
 
-  const startDrivingMode = useCallback(() => setDriving((s) => startDriving(s)), [])
-  const pauseDrivingMode = useCallback(() => setDriving((s) => pauseDriving(s)), [])
-  const resumeDrivingMode = useCallback(() => setDriving((s) => resumeDriving(s)), [])
-  const resetDrivingMode = useCallback(() => setDriving((s) => resetDriving(s)), [])
-  const armDrivingMode = useCallback(() => {
-    const r = routeRef.current
-    if (r?.status === 'ready' && r.mode === 'car' && r.result) {
-      // Race and turn-by-turn are exclusive.
-      setNavigating(false)
-      const geo = r.result.geometry as [number, number][] | undefined
-      const start = geo?.[0]
-      const pose = start
-        ? { lon: start[0], lat: start[1], heading: bearingAtProgress(geo!, 0) }
-        : undefined
-      setDriving(createDrivingSessionForMode('car', r.result, pose))
-      setIs3D(true)
-    }
-  }, [])
-  const armFreeDrivingMode = useCallback(() => {
-    const vp = activeMapViewport()
-    const center = vp?.center
-    const heading = Number.isFinite(vp?.bearing) ? ((vp!.bearing! % 360) + 360) % 360 : 0
-    const pose = center && Number.isFinite(center.lat) && Number.isFinite(center.lon)
-      ? { lon: center.lon, lat: center.lat, heading }
-      : { lon: 6.7735, lat: 51.2277, heading: 0 } // Düsseldorf fallback
-    setNavigating(false)
-    setDriving(createFreeDrivingSession(pose))
-    setIs3D(true)
-  }, [])
-  const exitDrivingMode = useCallback(() => {
-    setDriving(idleSession())
-  }, [])
-  const tickDrivingMode = useCallback((now = Date.now()) => {
-    setDriving((s) => {
-      const next = tickDriving(s, now)
-      if (next.kind === 'route' && next.status === 'running' && next.progress >= 1) {
-        const finished = finishDriving(next, now)
-        const run = toDrivingRun(finished, now)
-        setDrivingRuns(() => {
-          try { return saveDrivingRun(run) } catch { return [run] }
-        })
-        return finished
-      }
-      return next
-    })
-  }, [])
-  /**
-   * Physics step at display rate. Writes high-frequency pose to drivingLive
-   * (map + 3D car). React state is throttled (~18 Hz) so the tree does not
-   * re-render 60×/s (main cause of laggy drive).
-   */
-  const driveDrivingMode = useCallback((input: DrivingInput, now = Date.now()) => {
-    const s = drivingRef.current
-    if (s.status !== 'running') return
-
-    const dt = Math.min(0.05, Math.max(0.001, (now - (s.lastInputAt ?? now)) / 1000))
-    const frameMs = Math.min(50, Math.max(0, now - (s.lastInputAt ?? now)))
-    let next: DrivingSession
-
-    if (s.kind === 'free') {
-      const prevLon = s.lon
-      const prevLat = s.lat
-      let free = stepFreeDrive(
-        {
-          lon: s.lon, lat: s.lat, heading: s.heading,
-          speedMps: s.speedMps, lateral: s.lateral, distanceM: s.distanceM,
-        },
-        input,
-        dt,
-      )
-      let lastHitAt = s.lastHitAt ?? null
-      try {
-        // Buildings first (hard walls), then light road bias only if not blocked.
-        const fps = nearbyBuildings(free.lon, free.lat)
-        if (fps.length > 0) {
-          const resolved = resolveBuildingCollision(
-            {
-              lon: free.lon,
-              lat: free.lat,
-              heading: free.heading,
-              speedMps: free.speedMps,
-            },
-            fps,
-            RACE_CAR_RADIUS_M,
-            { lon: prevLon, lat: prevLat },
-          )
-          free = {
-            ...free,
-            lon: resolved.lon,
-            lat: resolved.lat,
-            heading: resolved.heading,
-            speedMps: resolved.speedMps,
-          }
-          if (resolved.hit) {
-            lastHitAt = now
-            try {
-              if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(12)
-            } catch { /* ignore */ }
-          }
-        }
-        // Soft road pull only when not in a wall this frame
-        if (lastHitAt !== now) {
-          const roads = nearbyRoads(free.lon, free.lat)
-          if (roads.length > 0) {
-            const biased = softRoadBias(
-              {
-                lon: free.lon,
-                lat: free.lat,
-                heading: free.heading,
-                speedMps: free.speedMps,
-              },
-              roads,
-              { pullM: 0.2, headingBlend: 0.05, maxDistM: 22 },
-            )
-            free = {
-              ...free,
-              lon: biased.lon,
-              lat: biased.lat,
-              heading: biased.heading,
-            }
-          }
-        }
-      } catch { /* collision optional */ }
-
-      next = {
-        ...s,
-        ...free,
-        lastHitAt,
-        progress: 0,
-        elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
-        lastInputAt: now,
-      }
-    } else {
-      const nextPhysics = stepDrivingGame(
-        { progress: s.progress, speedMps: s.speedMps, lateral: s.lateral },
-        input,
-        dt,
-        s.distanceM,
-      )
-      let lon = s.lon, lat = s.lat, heading = s.heading
-      const geo = routeRef.current?.result?.geometry as [number, number][] | undefined
-      if (geo && geo.length >= 2) {
-        const pt = pointAtProgress(geo, nextPhysics.progress)
-        const brg = bearingAtProgress(geo, nextPhysics.progress)
-        const car = carPositionAt(pt, brg, nextPhysics.lateral)
-        lon = car[0]; lat = car[1]; heading = brg
-      }
-      next = {
-        ...s,
-        ...nextPhysics,
-        lon, lat, heading,
-        elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
-        lastInputAt: now,
-      }
-      if (next.progress >= 1) {
-        const finished = finishDriving(next, now)
-        const run = toDrivingRun(finished, now)
-        drivingRef.current = finished
-        setDriving(finished)
-        setDrivingLive({
-          status: finished.status,
-          kind: finished.kind,
-          lon: finished.lon,
-          lat: finished.lat,
-          heading: finished.heading,
-          speedMps: 0,
-          lateral: 0,
-          progress: 1,
-          distanceM: finished.distanceM,
-          elapsedMs: finished.elapsedMs,
-          lastHitAt: null,
-        })
-        setDrivingRuns(() => {
-          try { return saveDrivingRun(run) } catch { return [run] }
-        })
-        return
-      }
-    }
-
-    drivingRef.current = next
-    // Always publish live pose for map/car (no React).
-    setDrivingLive({
-      status: next.status,
-      kind: next.kind,
-      lon: next.lon,
-      lat: next.lat,
-      heading: next.heading,
-      speedMps: next.speedMps,
-      lateral: next.lateral,
-      progress: next.progress,
-      distanceM: next.distanceM,
-      elapsedMs: next.elapsedMs,
-      lastHitAt: next.lastHitAt ?? null,
-    })
-    // Throttle React HUD updates (~18fps). Force on hit flash.
-    const force = next.lastHitAt != null && next.lastHitAt === now
-    if (force || now - drivePublishAt.current >= 55) {
-      drivePublishAt.current = now
-      setDriving(next)
-    }
-  }, [])
-  const finishDrivingMode = useCallback(() => {
-    setDriving((s) => {
-      const finished = finishDriving(s)
-      if (finished.status !== 'finished') return finished
-      const run = toDrivingRun(finished)
-      setDrivingRuns(() => {
-        try { return saveDrivingRun(run) } catch { return [run] }
-      })
-      return finished
-    })
-  }, [])
 
   // ---- POI category browsing ----------------------------------------------
   const poiSeq = useRef(0)
@@ -828,18 +514,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggle3D: () => setIs3D((v) => !v),
     setIs3D,
     navigating,
-    startNavigation: () => {
-      // Turn-by-turn and race game are exclusive.
-      setDriving(idleSession())
-      setNavigating(true)
-    },
+    startNavigation: () => setNavigating(true),
     stopNavigation: () => setNavigating(false),
     setAuthOpen, login, register, logout, select, selectResult,
     setMapProvider, setAppleAppearance, setCustomPack, setActivePack,
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, cancelPickStart, clearRoute,
-    driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
-    resetDrivingMode, armDrivingMode, armFreeDrivingMode, exitDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

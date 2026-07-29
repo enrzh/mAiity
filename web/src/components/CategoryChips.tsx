@@ -25,7 +25,6 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
   const app = useApp()
   const t = useT()
   if (app.route || app.navigating) return null
-  if (app.driving.status === 'running' || app.driving.status === 'paused') return null
 
   const pick = (cat: NearbyCategory) => {
     if (app.activeCategory === cat) { app.clearPois(); return }

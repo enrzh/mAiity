@@ -3,7 +3,6 @@ import UIKit
 
 @main
 struct MapsApp: App {
-    @UIApplicationDelegateAdaptor(OrientationAppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
 
     var body: some Scene {
@@ -14,15 +13,13 @@ struct MapsApp: App {
     }
 }
 
-/// Full-screen map with the always-presented bottom sheet (Apple-Maps layout).
-/// Race mode hides the sheet so HUD + map controls don't fight for the bottom.
+/// Full-screen map with Apple-Maps-style bottom sheet.
 struct RootView: View {
     @EnvironmentObject private var model: AppModel
     @State private var detent: PresentationDetent = .height(96)
     @State private var sheetShown = true
 
     private var sheetHeight: CGFloat {
-        if raceImmersive { return 0 }
         let screen = UIScreen.main.bounds.height
         switch detent {
         case .height(96): return 96
@@ -33,21 +30,12 @@ struct RootView: View {
         }
     }
 
-    /// Any armed race session: hide sheet so Start / touch pads aren't buried.
-    private var raceImmersive: Bool {
-        switch model.driving {
-        case .idle: return false
-        default: return true
-        }
-    }
-
     var body: some View {
         ZStack(alignment: .bottom) {
-            MapScreen(sheetHeight: raceImmersive ? 168 : sheetHeight)
+            MapScreen(sheetHeight: sheetHeight)
                 .ignoresSafeArea()
 
-            // Search-this-area: TOP centre — never bottom (HUD / sheet zone).
-            if model.mapMovedForCategory, model.activeCategory != nil, !raceImmersive {
+            if model.mapMovedForCategory, model.activeCategory != nil {
                 VStack {
                     Button {
                         model.searchThisArea()
@@ -57,67 +45,30 @@ struct RootView: View {
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                             .background(.regularMaterial, in: Capsule())
-                            .shadow(color: .black.opacity(0.18), radius: 8, y: 3)
+                            .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 12)
                     Spacer()
                 }
                 .frame(maxWidth: .infinity)
-                .transition(.opacity)
-            }
-
-            // Race HUD above the map; zIndex so multi-touch pads beat Map gestures.
-            if !isIdle(model.driving) {
-                RaceHUDView()
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 10)
-                    .safeAreaPadding(.bottom, 4)
-                    .zIndex(50)
-                    .allowsHitTesting(true)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(isPresented: Binding(
-            get: { sheetShown && !raceImmersive },
-            set: { sheetShown = $0 || raceImmersive }
-        )) {
+        .sheet(isPresented: $sheetShown) {
             SheetView(detent: $detent)
                 .presentationDetents([.height(96), .height(220), .medium, .large], selection: $detent)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
                 .presentationBackground(.ultraThinMaterial)
-                .presentationCornerRadius(24)
+                .presentationCornerRadius(20)
                 .environmentObject(model)
         }
         .task { await model.boot() }
         .onChange(of: model.selected) { place in
-            if place != nil && detent == .height(96) && !raceImmersive {
+            if place != nil && detent == .height(96) {
                 detent = .height(220)
             }
         }
-        .onChange(of: model.driving) { _, new in
-            switch new {
-            case .ready, .running, .paused, .finished:
-                model.showPackPicker = false
-                // Game always landscape — force rotate as soon as race is armed.
-                OrientationLock.setDriving(true)
-            case .idle:
-                sheetShown = true
-                if detent == .height(1) { detent = .height(96) }
-                OrientationLock.setDriving(false)
-            }
-        }
-        .onAppear {
-            // Restore lock if we cold-start mid-session (shouldn't, but safe).
-            OrientationLock.setDriving(!isIdle(model.driving))
-        }
-        .animation(.easeOut(duration: 0.22), value: raceImmersive)
-    }
-
-    private func isIdle(_ state: AppModel.DrivingState) -> Bool {
-        if case .idle = state { return true }
-        return false
     }
 }

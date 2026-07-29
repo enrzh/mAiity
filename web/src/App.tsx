@@ -1,16 +1,18 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Box, Car, ChevronLeft, ChevronRight, Crosshair, Minus, Plus, MapPin, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Box, Check, Crosshair, Globe, LogOut, Minus, Palette, Plus, Star, User, X, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { cn } from '@/lib/utils'
 import { useT } from '@/lib/useT'
-import { readSidebarCollapsed, writeSidebarCollapsed } from '@/lib/sidebarState'
 import { AppProvider, useApp } from './state'
 import { MapView, locateUser, railInset, set3D, zoomBy } from './components/MapView'
 import { CategoryChips } from './components/CategoryChips'
 import { activeMapViewport } from './maps/rendererController'
-import { ChromeBar } from './components/ChromeBar'
 import { SearchOverlay } from './components/SearchOverlay'
 import { PlaceCard } from './components/PlaceCard'
 import { PoiResults } from './components/PoiResults'
@@ -19,61 +21,138 @@ import { RoutePanel } from './components/RoutePanel'
 import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
-import { DrivingModePanel } from './components/DrivingModePanel'
 import { TrackCard } from './components/TrackCard'
-const RaceCar3D = lazy(() =>
-  import('./components/RaceCar3D').then((m) => ({ default: m.RaceCar3D })),
-)
 import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
-import { isPortraitViewport, setDrivingLandscape } from './lib/drivingOrientation'
-import { Surface, SheetGrabber } from './components/ui/surface'
-import { mapFabClass, surface as surfaceStyles } from './lib/styles'
+import { Surface } from './components/ui/surface'
 
 type Panel = 'none' | 'saved' | 'packs'
 
+const LANGS: Array<[string, string]> = [
+  ['de', 'Deutsch'], ['en', 'English'], ['fr', 'Français'], ['es', 'Español'],
+  ['it', 'Italiano'], ['nl', 'Nederlands'], ['pl', 'Polski'], ['tr', 'Türkçe'],
+]
+
 /**
- * Liquid-glass iOS Maps shell.
- * Chrome: [Saved] [Me] ····· [Search]
- * Search expands to full-screen overlay; pick → shrink sheet + place/route track.
+ * Map-first shell: top chrome only, full-bleed map, contextual bottom card.
+ * shadcn + clean/minimal — no sidebar, no game mode.
  */
 
-type Detent = 'peek' | 'half' | 'full'
-const DETENTS: Detent[] = ['peek', 'half', 'full']
-function detentPx(d: Detent): number {
-  // Peek: chrome bar only — map stays the hero.
-  return d === 'peek' ? 88 : Math.round(window.innerHeight * (d === 'half' ? 0.4 : 0.88))
-}
-
-function MapControls({ racing }: { racing: boolean }) {
+function TopBar({
+  panel, onSaved, onPacks, onSearch,
+}: {
+  panel: Panel
+  onSaved: () => void
+  onPacks: () => void
+  onSearch: () => void
+}) {
   const app = useApp()
   const t = useT()
-  const zoomStack = (
-    <Surface variant="float" radius="lg" className="flex flex-col overflow-hidden">
-      <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
-        <Plus className="size-4" />
-      </Button>
-      <Separator className="opacity-40" />
-      <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
-        <Minus className="size-4" />
-      </Button>
-    </Surface>
-  )
-  if (racing) {
-    return (
-      <div className="absolute bottom-[calc(var(--race-hud-h,12rem)+0.75rem)] right-3 z-30 hidden flex-col items-end gap-2 md:flex">
-        <Button variant="ghost" className={mapFabClass()} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
-          <Crosshair className="size-4" />
-        </Button>
-        {zoomStack}
-      </div>
-    )
-  }
+
   return (
-    <div className="absolute bottom-[calc(var(--sheet-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
+    <header
+      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
+    >
+      <div className="pointer-events-auto flex w-full max-w-xl items-center gap-1.5 rounded-2xl border border-border/60 bg-background/95 p-1.5 shadow-md backdrop-blur-md">
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-10 min-w-0 flex-1 justify-start gap-2 rounded-xl px-3 font-normal text-muted-foreground hover:text-foreground"
+          onClick={onSearch}
+        >
+          <span className="truncate text-left text-sm">{t('search-placeholder')}</span>
+        </Button>
+
+        <Button
+          type="button"
+          variant={panel === 'saved' ? 'secondary' : 'ghost'}
+          size="sm"
+          className="h-10 shrink-0 gap-1.5 rounded-xl px-3"
+          onClick={onSaved}
+          aria-pressed={panel === 'saved'}
+        >
+          <Star className={cn('size-3.5', panel === 'saved' && 'fill-current')} />
+          <span className="hidden sm:inline">{t('chrome-saved')}</span>
+        </Button>
+
+        {app.user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="ghost" size="sm" className="h-10 shrink-0 gap-1.5 rounded-xl px-3">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                  {(app.user.email ?? '?')[0].toUpperCase()}
+                </span>
+                <span className="hidden sm:inline">{t('chrome-me')}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 rounded-xl">
+              <DropdownMenuLabel className="truncate font-medium">
+                {app.user.displayName ?? app.user.email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onPacks}>
+                <Palette className="size-4" /> {t('map-style')}
+              </DropdownMenuItem>
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {t('language')}
+              </DropdownMenuLabel>
+              {LANGS.map(([code, label]) => (
+                <DropdownMenuItem key={code} onClick={() => app.setLang(code)}>
+                  <span className="flex-1">{label}</span>
+                  {app.lang === code && <Check className="size-4" />}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => app.logout()}>
+                <LogOut className="size-4" /> {t('sign-out')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="ghost" size="sm" className="h-10 shrink-0 gap-1.5 rounded-xl px-3">
+                <User className="size-3.5" />
+                <span className="hidden sm:inline">{t('chrome-me')}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 rounded-xl">
+              <DropdownMenuItem onClick={() => app.setAuthOpen(true)}>
+                <User className="size-4" /> {t('sign-in')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPacks}>
+                <Palette className="size-4" /> {t('map-style')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {t('language')}
+              </DropdownMenuLabel>
+              {LANGS.map(([code, label]) => (
+                <DropdownMenuItem key={code} onClick={() => app.setLang(code)}>
+                  <Globe className="size-4 opacity-40" />
+                  <span className="flex-1">{label}</span>
+                  {app.lang === code && <Check className="size-4" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </header>
+  )
+}
+
+function MapFabs() {
+  const app = useApp()
+  const t = useT()
+  const fab =
+    'size-10 rounded-full border border-border/60 bg-background/95 shadow-md backdrop-blur-md hover:bg-background'
+
+  return (
+    <div className="absolute bottom-[calc(var(--detail-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
       <Button
-        variant="ghost"
-        className={mapFabClass(app.is3D)}
+        variant={app.is3D ? 'default' : 'ghost'}
+        className={cn(fab, app.is3D && 'bg-primary text-primary-foreground')}
         onClick={() => {
           const next = !app.is3D
           app.setIs3D(next)
@@ -85,24 +164,18 @@ function MapControls({ racing }: { racing: boolean }) {
       >
         <Box className="size-4" />
       </Button>
-      {app.driving.status === 'idle' && (
-        <Button
-          variant="ghost"
-          className={mapFabClass()}
-          onClick={() => {
-            app.armFreeDrivingMode()
-            set3D(true)
-          }}
-          aria-label={t('free-drive')}
-          title={t('free-drive')}
-        >
-          <Car className="size-4" />
-        </Button>
-      )}
-      <Button variant="ghost" className={mapFabClass()} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
+      <Button variant="ghost" className={fab} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
         <Crosshair className="size-4" />
       </Button>
-      {zoomStack}
+      <div className="flex flex-col overflow-hidden rounded-full border border-border/60 bg-background/95 shadow-md backdrop-blur-md">
+        <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
+          <Plus className="size-4" />
+        </Button>
+        <Separator />
+        <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
+          <Minus className="size-4" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -112,52 +185,28 @@ function Shell() {
   const t = useT()
   const [panel, setPanel] = useState<Panel>('none')
   const [searchOpen, setSearchOpen] = useState(false)
-  const [collapsed, setCollapsed] = useState(() => readSidebarCollapsed())
   const [appleFailed, setAppleFailed] = useState(false)
   const [mapKey, setMapKey] = useState(0)
-  const railRef = useRef<HTMLElement>(null)
-  const raceHudRef = useRef<HTMLDivElement>(null)
-  const [sheetH, setSheetH] = useState(0)
-  const [raceHudH, setRaceHudH] = useState(0)
-  const [detent, setDetent] = useState<Detent>('peek')
-  const [dragH, setDragH] = useState<number | null>(null)
-  const dragFrom = useRef<{ y: number; h: number } | null>(null)
+  const [detailExpanded, setDetailExpanded] = useState(false)
 
-  const racing = app.driving.status === 'running'
-    || app.driving.status === 'paused'
-    || app.driving.status === 'finished'
-  /** Full driving game session (incl. ready / countdown) — always landscape. */
-  const drivingGame = app.driving.status !== 'idle'
-  const [portraitWhileDriving, setPortraitWhileDriving] = useState(false)
+  // No left rail — map framing uses full width.
+  useEffect(() => {
+    railInset.current = 0
+  }, [])
 
-  const hasDetail = !!(app.selected || app.route || app.navigating || app.pois.length > 0 || panel !== 'none')
-
-  useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
   useEffect(() => {
     if (app.mapProvider !== 'apple') setAppleFailed(false)
   }, [app.mapProvider])
 
-  // Driving game always prefers landscape (native + mobile web).
   useEffect(() => {
-    setDrivingLandscape(drivingGame)
-    if (!drivingGame) {
-      setPortraitWhileDriving(false)
-      return
-    }
-    const sync = () => setPortraitWhileDriving(isPortraitViewport())
-    sync()
-    const mq = window.matchMedia('(orientation: portrait)')
-    const onChange = () => sync()
-    mq.addEventListener('change', onChange)
-    window.addEventListener('orientationchange', onChange)
-    return () => {
-      mq.removeEventListener('change', onChange)
-      window.removeEventListener('orientationchange', onChange)
-      setDrivingLandscape(false)
-    }
-  }, [drivingGame])
+    if (app.selected || app.route) setPanel('none')
+  }, [app.selected, app.route])
 
-  // / opens full-screen search
+  useEffect(() => {
+    if (app.pois.length > 0) setPanel('none')
+  }, [app.pois])
+
+  // / opens search
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement | null)?.tagName
@@ -165,7 +214,6 @@ function Shell() {
       if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault()
         setSearchOpen(true)
-        if (collapsed) setCollapsed(false)
         return
       }
       if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1); return }
@@ -174,124 +222,32 @@ function Shell() {
         if (searchOpen) { setSearchOpen(false); return }
         if (app.pickingStart) { app.cancelPickStart(); return }
         if (panel !== 'none') { setPanel('none'); return }
-        if (app.driving.status === 'ready' || app.driving.status === 'finished') {
-          app.exitDrivingMode()
-        }
+        if (app.navigating) { app.stopNavigation(); return }
+        if (app.route) { app.clearRoute(); return }
+        if (app.selected) { app.select(null); return }
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [collapsed, panel, searchOpen, app.driving.status, app.exitDrivingMode, app.pickingStart, app.cancelPickStart])
+  }, [searchOpen, panel, app])
 
-  const toggle = (p: Panel) => {
-    if (collapsed) setCollapsed(false)
-    setDetent((d) => (d === 'peek' ? 'half' : d))
-    setPanel((cur) => (cur === p ? 'none' : p))
-  }
+  const hasDetail = !!(
+    panel !== 'none'
+    || app.navigating
+    || app.route
+    || app.selected
+    || app.pois.length > 0
+  )
 
-  const openSearch = () => {
-    setSearchOpen(true)
-    setPanel('none')
-  }
-
-  /** After picking a search result — leave list mode, show map + detail sheet. */
-  const onSearchPicked = () => {
-    setSearchOpen(false)
-    setPanel('none')
-    setCollapsed(false)
-    setDetent('half')
-  }
-
-  const onHandleDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    dragFrom.current = { y: e.clientY, h: railRef.current?.offsetHeight ?? detentPx(detent) }
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
-  const onHandleMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const from = dragFrom.current
-    if (!from) return
-    const h = from.h + (from.y - e.clientY)
-    setDragH(Math.min(detentPx('full'), Math.max(detentPx('peek'), h)))
-  }
-  const onHandleUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const from = dragFrom.current
-    if (!from) return
-    dragFrom.current = null
-    const h = from.h + (from.y - e.clientY)
-    let best: Detent = 'peek'
-    for (const d of DETENTS) if (Math.abs(detentPx(d) - h) < Math.abs(detentPx(best) - h)) best = d
-    setDetent(best)
-    setDragH(null)
-  }
-
+  // Expand detail when content appears
   useEffect(() => {
-    if (app.selected || app.route) setPanel('none')
-  }, [app.selected, app.route])
+    if (hasDetail) setDetailExpanded(true)
+  }, [hasDetail, app.selected, app.route, app.navigating, panel, app.pois.length])
 
-  useEffect(() => {
-    if (racing) return
-    if (app.selected || app.route) setCollapsed(false)
-  }, [app.selected, app.route, racing])
+  const detailH = !hasDetail ? 0 : detailExpanded ? Math.min(420, Math.round(window.innerHeight * 0.48)) : 120
 
-  useEffect(() => {
-    if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) }
-  }, [app.pois])
-
-  useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') {
-      setPanel('none')
-      setCollapsed(true)
-      setDetent('peek')
-      setSearchOpen(false)
-    }
-  }, [app.driving.status])
-
-  // Place / route → shrink sheet to half (map visible above)
-  useEffect(() => {
-    if (racing || searchOpen) return
-    if (app.selected || app.route || app.pois.length > 0) {
-      setDetent((d) => (d === 'full' ? 'half' : d === 'peek' ? 'half' : d))
-    }
-  }, [app.selected, app.route, app.pois, racing, searchOpen])
-
-  const [leftChrome, setLeftChrome] = useState(0)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 768px)')
-    const apply = () => {
-      const w = !mq.matches ? 0 : collapsed ? 0 : 360
-      setLeftChrome(w)
-      railInset.current = collapsed || !mq.matches || racing ? 0 : 360
-    }
-    apply()
-    mq.addEventListener('change', apply)
-    return () => mq.removeEventListener('change', apply)
-  }, [collapsed, racing])
-
-  useEffect(() => {
-    const el = railRef.current
-    if (!el) return
-    const mq = window.matchMedia('(min-width: 768px)')
-    const measure = () => {
-      if (racing && !mq.matches) { setSheetH(0); return }
-      setSheetH(mq.matches ? 0 : el.offsetHeight)
-    }
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    mq.addEventListener('change', measure)
-    return () => { ro.disconnect(); mq.removeEventListener('change', measure) }
-  }, [racing, detent, hasDetail])
-
-  useEffect(() => {
-    const el = raceHudRef.current
-    if (!el || app.driving.status === 'idle') { setRaceHudH(0); return }
-    const measure = () => setRaceHudH(el.offsetHeight)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [app.driving.status, app.driving.progress])
-
-  const bodyContent = panel === 'packs' ? <PackSwitcher onClose={() => setPanel('none')} />
+  const body =
+    panel === 'packs' ? <PackSwitcher onClose={() => setPanel('none')} />
     : panel === 'saved' ? <SavedPanel onClose={() => setPanel('none')} />
     : app.navigating ? <NavigationPanel />
     : app.route ? (
@@ -302,73 +258,18 @@ function Shell() {
     )
     : app.selected ? <PlaceCard />
     : app.pois.length > 0 ? <PoiResults />
-    : <EmptyRail />
+    : null
 
   return (
     <div
-      className={cn('relative flex h-full min-h-0 overflow-hidden bg-muted/20', racing && 'maps-shell--racing')}
-      style={{
-        '--sheet-h': `${racing ? 0 : sheetH}px`,
-        '--left-chrome': `${leftChrome}px`,
-        '--race-hud-h': `${raceHudH}px`,
-      } as React.CSSProperties}
+      className="relative h-full min-h-0 overflow-hidden bg-muted/20"
+      style={{ '--detail-h': `${detailH}px` } as React.CSSProperties}
     >
-      {/* ---- Liquid glass sheet ---------------------------------------- */}
-      <aside
-        ref={railRef}
-        style={{ '--detent-h': `${dragH ?? detentPx(detent)}px` } as React.CSSProperties}
-        className={cn(
-          'maps-sheet absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-2.5 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]',
-          surfaceStyles.glass,
-          'rounded-t-[1.25rem]',
-          dragH === null && 'transition-[height,transform,opacity] duration-300 ease-[var(--ease-ios)]',
-          'md:absolute md:inset-y-3 md:left-3 md:right-auto md:h-auto md:max-h-[calc(100%-1.5rem)] md:w-[360px] md:gap-3 md:rounded-[1.25rem] md:p-3.5',
-          'md:transition-transform md:duration-300 md:ease-[var(--ease-ios)] md:will-change-transform',
-          collapsed ? 'md:-translate-x-[120%]' : 'md:translate-x-0',
-          racing && 'max-md:pointer-events-none max-md:translate-y-full max-md:opacity-0',
-        )}
-        aria-hidden={racing ? true : undefined}
-      >
-        <div
-          className="-mb-1 -mt-0.5 cursor-grab touch-none active:cursor-grabbing md:hidden"
-          onPointerDown={onHandleDown}
-          onPointerMove={onHandleMove}
-          onPointerUp={onHandleUp}
-          onPointerCancel={onHandleUp}
-        >
-          <SheetGrabber />
-        </div>
-
-        {/* Compact chrome: Saved · Me · Search */}
-        <ChromeBar
-          panel={panel}
-          onSaved={() => toggle('saved')}
-          onPacks={() => toggle('packs')}
-          onSearch={openSearch}
+      <main className="absolute inset-0">
+        <MapView
+          key={mapKey}
+          onAppleFailed={() => setAppleFailed(true)}
         />
-
-        {/* Categories only when not in dense detail mode */}
-        {!app.route && !app.navigating && panel === 'none' && (
-          <div className={cn(detent === 'peek' && 'max-md:hidden')}>
-            <CategoryChips getCenter={() => activeMapViewport()?.center ?? null} />
-          </div>
-        )}
-
-        <div
-          className={cn(
-            'min-h-0 flex-1 overscroll-contain',
-            detent === 'peek' && !hasDetail
-              ? 'overflow-y-hidden max-md:hidden md:overflow-y-auto'
-              : 'overflow-y-auto',
-          )}
-        >
-          {bodyContent}
-        </div>
-      </aside>
-
-      {/* ---- Map ------------------------------------------------------- */}
-      <main className="relative min-h-0 h-full min-w-0 flex-1">
-        <MapView key={mapKey} onAppleFailed={() => setAppleFailed(true)} />
         <MapStatus
           appleFailed={appleFailed}
           onRetryApple={() => {
@@ -376,67 +277,11 @@ function Shell() {
             setMapKey((k) => k + 1)
           }}
         />
+        <MapFabs />
+        {!app.pickingStart && <SearchAreaButton />}
 
-        {app.driving.status !== 'idle' && app.driving.status !== 'finished' && (
-          <Suspense fallback={null}>
-            <RaceCar3D
-              lateral={app.driving.lateral ?? 0}
-              speedMps={app.driving.speedMps ?? 0}
-              active={app.driving.status === 'running'}
-              lon={app.driving.lon}
-              lat={app.driving.lat}
-              heading={app.driving.heading}
-            />
-          </Suspense>
-        )}
-
-        {app.driving.status !== 'idle' && (
-          <div
-            ref={raceHudRef}
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:justify-start md:p-4 md:pl-4 md:pr-24"
-          >
-            <div className="pointer-events-auto w-full max-w-md md:max-w-sm">
-              <DrivingModePanel />
-            </div>
-          </div>
-        )}
-
-        {/* Desktop collapsed: floating glass chrome */}
-        {collapsed && !racing && (
-          <div className="pointer-events-none absolute left-3 right-3 top-3 z-20 hidden flex-col gap-2 md:flex">
-            <div className="pointer-events-auto w-full max-w-md">
-              <ChromeBar
-                floating
-                panel={panel}
-                onSaved={() => { setCollapsed(false); toggle('saved') }}
-                onPacks={() => { setCollapsed(false); toggle('packs') }}
-                onSearch={() => { setCollapsed(false); openSearch() }}
-              />
-            </div>
-          </div>
-        )}
-
-        {!racing && (
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
-            title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
-            className={cn(
-              surfaceStyles.float,
-              'absolute top-1/2 z-40 hidden h-11 w-5 -translate-y-1/2 items-center justify-center rounded-r-xl text-muted-foreground transition-[left] duration-300 ease-[var(--ease-ios)] hover:text-foreground md:flex',
-              collapsed ? 'md:left-0' : 'md:left-[calc(0.75rem+360px)]',
-            )}
-          >
-            {collapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
-          </button>
-        )}
-
-        {app.pickingStart && !racing && (
-          <div
-            className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-3 z-[36] flex -translate-x-1/2 px-3 md:top-4"
-            role="status"
-          >
+        {app.pickingStart && (
+          <div className="pointer-events-none absolute left-1/2 top-[4.5rem] z-[36] flex -translate-x-1/2 px-3" role="status">
             <Surface variant="float" radius="pill" padding="sm" className="pointer-events-auto flex max-w-md items-center gap-2 text-[13px] font-medium">
               <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
               <span className="min-w-0">{t('route-pick-start')}</span>
@@ -446,46 +291,57 @@ function Shell() {
             </Surface>
           </div>
         )}
-
-        {!racing && !app.pickingStart && <SearchAreaButton />}
-        <MapControls racing={racing} />
       </main>
 
-      {/* Rotate to landscape when the browser cannot force orientation. */}
-      {drivingGame && portraitWhileDriving && (
-        <div
-          className="maps-rotate-prompt"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="maps-rotate-prompt__card maps-glass-strong">
-            <Car className="size-8 text-primary" aria-hidden />
-            <p className="maps-rotate-prompt__title">{t('drive-rotate-title')}</p>
-            <p className="maps-rotate-prompt__body">{t('drive-rotate-hint')}</p>
+      <TopBar
+        panel={panel}
+        onSaved={() => setPanel((p) => (p === 'saved' ? 'none' : 'saved'))}
+        onPacks={() => setPanel((p) => (p === 'packs' ? 'none' : 'packs'))}
+        onSearch={() => setSearchOpen(true)}
+      />
+
+      {/* Category chips float under top bar when idle */}
+      {!hasDetail && !app.pickingStart && (
+        <div className="pointer-events-none absolute inset-x-0 top-[4.25rem] z-20 flex justify-center px-3 md:top-[4.5rem]">
+          <div className="pointer-events-auto max-w-xl overflow-x-auto">
+            <CategoryChips getCenter={() => activeMapViewport()?.center ?? null} />
           </div>
         </div>
       )}
 
-      <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} onPicked={onSearchPicked} />
-      <AuthModal />
-      <Toaster position="top-center" offset={64} gap={8} />
-    </div>
-  )
-}
+      {/* Contextual detail card — bottom only */}
+      {hasDetail && body && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div
+            className="pointer-events-auto flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/95 shadow-lg backdrop-blur-md transition-[height] duration-200 ease-out"
+            style={{ height: detailH }}
+          >
+            <button
+              type="button"
+              className="flex shrink-0 justify-center py-2"
+              onClick={() => setDetailExpanded((e) => !e)}
+              aria-label={detailExpanded ? t('close') : t('search')}
+            >
+              <span className="h-1 w-9 rounded-full bg-muted-foreground/30" />
+            </button>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
+              {body}
+            </div>
+          </div>
+        </div>
+      )}
 
-function EmptyRail() {
-  const app = useApp()
-  const t = useT()
-  return (
-    <div className="hidden h-full flex-col justify-end gap-2 px-0.5 pb-1 md:flex">
-      <Surface variant="soft" radius="lg" padding="md">
-        <p className="text-sm font-semibold tracking-tight">
-          {app.user ? t('welcome-back') : t('explore-map')}
-        </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-          {t('empty-hint')}
-        </p>
-      </Surface>
+      <SearchOverlay
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onPicked={() => {
+          setSearchOpen(false)
+          setPanel('none')
+          setDetailExpanded(true)
+        }}
+      />
+      <AuthModal />
+      <Toaster position="top-center" offset={72} gap={8} />
     </div>
   )
 }

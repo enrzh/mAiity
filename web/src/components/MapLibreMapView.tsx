@@ -16,11 +16,6 @@ import {
 import { readViewport, writeViewport } from '../maps/viewportStorage'
 import { railInset } from '../maps/railInset'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
-import {
-  raceCameraAt,
-  RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M,
-} from '../lib/drivingCamera'
-import { getDrivingLive, subscribeDrivingLive } from '../lib/drivingLive'
 import { useApp } from '../state'
 import { cn } from '../lib/utils'
 
@@ -786,83 +781,6 @@ export function MapLibreMapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
 
-  // Race / free-drive camera — reads high-frequency drivingLive (NOT React state).
-  // jumpTo every frame: easeTo stacking was the main lag source.
-  const racePrevStatus = useRef(app.driving.status)
-  useEffect(() => {
-    if (!map) return
-    drivingMarker.current?.remove(); drivingMarker.current = null
-
-    let raf = 0
-    let sceneryReady = false
-    const reduced = typeof window !== 'undefined'
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-    const tick = () => {
-      raf = requestAnimationFrame(tick)
-      const live = getDrivingLive()
-      if (live.status === 'idle') return
-      if (!(live.status === 'running' || live.status === 'paused' || live.status === 'ready')) return
-      if (!Number.isFinite(live.lon) || !Number.isFinite(live.lat)) return
-
-      if (!sceneryReady) {
-        sceneryReady = true
-        try { ensure3DScenery(map) } catch { /* optional */ }
-        try { attachTerrainWhenReady(map) } catch { /* optional */ }
-      }
-
-      try {
-        const ready = live.status === 'ready'
-        const cam = raceCameraAt([live.lon, live.lat], live.heading, {
-          lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
-        })
-        // Instant camera follow while running — no animation queue lag.
-        if (live.status === 'running' || reduced) {
-          map.jumpTo({
-            center: cam.center as [number, number],
-            bearing: cam.bearing,
-            pitch: cam.pitch,
-            zoom: cam.zoom,
-            padding: { top: 12, bottom: 140, left: 12, right: 56 },
-          })
-        } else {
-          map.easeTo({
-            center: cam.center as [number, number],
-            bearing: cam.bearing,
-            pitch: cam.pitch,
-            zoom: cam.zoom,
-            duration: ready ? 350 : 0,
-            essential: true,
-            padding: { top: 12, bottom: 140, left: 12, right: 56 },
-          })
-        }
-      } catch { /* map disposed mid-frame */ }
-    }
-
-    const unsub = subscribeDrivingLive(() => {
-      // Kick loop; continuous rAF keeps camera smooth while live updates.
-    })
-    raf = requestAnimationFrame(tick)
-
-    return () => {
-      cancelAnimationFrame(raf)
-      unsub()
-      if (
-        racePrevStatus.current === 'running'
-        || racePrevStatus.current === 'paused'
-        || racePrevStatus.current === 'finished'
-        || racePrevStatus.current === 'ready'
-      ) {
-        try {
-          map.easeTo({ pitch: 0, bearing: 0, duration: reduced ? 0 : 500, essential: true })
-        } catch { /* ok */ }
-      }
-    }
-  }, [map])
-
-  useEffect(() => {
-    racePrevStatus.current = app.driving.status
-  }, [app.driving.status])
 
   // POI category markers (teal), replaced wholesale per category.
   const poiMarkers = useRef<Marker[]>([])

@@ -63,16 +63,6 @@ struct MapScreen: View {
                         .stroke(.blue, lineWidth: 6)
                 }
 
-                if let car = drivingCoordinate {
-                    Annotation("Driving position", coordinate: car) {
-                        Image(systemName: "car.fill")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .padding(8)
-                            .background(.blue, in: Circle())
-                            .overlay(Circle().stroke(.white, lineWidth: 2))
-                    }
-                }
             }
             .mapStyle(selectedMapStyle)
             .preferredColorScheme(preferredMapColorScheme)
@@ -133,42 +123,21 @@ struct MapScreen: View {
         }
         .onChange(of: model.navCamera) { _, camera in
             guard let camera else { return }
-            // Race mode uses a tighter street-level chase cam; turn-by-turn stays wider.
-            let racing: Bool = {
-                switch model.driving {
-                case .ready, .running, .paused, .finished: return true
-                default: return false
-                }
-            }()
             let reduceMotion = UIAccessibility.isReduceMotionEnabled
             position = .camera(MapCamera(
                 centerCoordinate: camera.center,
-                // Street-scale race: closer camera so roads dominate (web ~72 m alt).
-                distance: racing ? 110 : 900,
+                distance: 900,
                 heading: camera.heading,
-                pitch: reduceMotion ? (racing ? 45 : 0) : (racing ? 66 : 55)
+                pitch: reduceMotion ? 0 : 55
             ))
         }
         .overlay(alignment: .bottomTrailing) {
-            // Slim stack during race so it clears the HUD; hide style picker mid-race.
-            let racing: Bool = {
-                switch model.driving {
-                case .idle: return false
-                default: return true
-                }
-            }()
-            VStack(spacing: racing ? 8 : 10) {
-                if !racing {
-                    mapButton("paintpalette") { model.showPackPicker = true }
-                        .accessibilityLabel(L.t("map-style"))
+            VStack(spacing: 10) {
+                mapButton("paintpalette") { model.showPackPicker = true }
+                    .accessibilityLabel(L.t("map-style"))
 
-                    mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
-                        .accessibilityLabel(L.t("view-3d"))
-
-                    // Free drive — no route required.
-                    mapButton("car.fill") { model.prepareFreeDriving() }
-                        .accessibilityLabel(L.t("free-drive"))
-                }
+                mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
+                    .accessibilityLabel(L.t("view-3d"))
 
                 mapButton("location.fill") { locate() }
                     .accessibilityLabel(L.t("my-location"))
@@ -188,7 +157,7 @@ struct MapScreen: View {
                 .fixedSize()
             }
             .padding(.trailing, 12)
-            .padding(.bottom, max(sheetHeight, racing ? 168 : 0) + 12)
+            .padding(.bottom, max(sheetHeight, 0) + 12)
         }
     }
 
@@ -213,27 +182,6 @@ struct MapScreen: View {
 
     private func coordinate(_ lat: Double, _ lon: Double) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: lat, longitude: lon)
-    }
-
-    private var drivingCoordinate: CLLocationCoordinate2D? {
-        // Show car from ready (start line) through finished — not only mid-run.
-        switch model.driving {
-        case .idle: return nil
-        default: break
-        }
-        if model.driveKind == .free || model.route?.result?.geometry == nil {
-            guard model.carLat != 0 || model.carLon != 0 else { return nil }
-            return coordinate(model.carLat, model.carLon)
-        }
-        guard let geometry = model.route?.result?.geometry, geometry.count > 1 else {
-            return coordinate(model.carLat, model.carLon)
-        }
-        let car = DrivingPhysics.carPosition(
-            progress: model.driving.progress,
-            lateral: model.raceLateral,
-            geometry: geometry
-        )
-        return coordinate(car.lat, car.lon)
     }
 
     private func regionAround(_ lat: Double, _ lon: Double, span: Double) -> MKCoordinateRegion {

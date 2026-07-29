@@ -4,28 +4,6 @@ import MapKit
 import SwiftUI
 import UIKit
 
-struct DrivingRun: Codable, Equatable, Identifiable {
-    let id: UUID
-    let createdAt: Date
-    let duration: TimeInterval
-    let distanceM: Double
-    let averageSpeedKmh: Double
-}
-
-enum DrivingRunStore {
-    private static let key = "maps.drivingRuns.v1"
-    static func load() -> [DrivingRun] {
-        guard let data = UserDefaults.standard.data(forKey: key),
-              let runs = try? JSONDecoder().decode([DrivingRun].self, from: data) else { return [] }
-        return Array(runs.prefix(20))
-    }
-    static func append(_ run: DrivingRun) -> [DrivingRun] {
-        let runs = Array(([run] + load()).prefix(20))
-        if let data = try? JSONEncoder().encode(runs) { UserDefaults.standard.set(data, forKey: key) }
-        return runs
-    }
-}
-
 /// Single app-wide observable state. All mutations happen on the main actor;
 /// network work is delegated to APIClient.
 struct RouteUI: Equatable {
@@ -75,8 +53,6 @@ final class AppModel: ObservableObject {
     @Published var recents: [GeoResult] = []
     /// Live turn-by-turn session (nil when not navigating).
     @Published var nav: NavState?
-    @Published var driving: DrivingState = .idle
-    @Published var drivingRuns: [DrivingRun] = DrivingRunStore.load()
     /// Current center of the native Apple map, used to bias nearby searches.
     @Published var mapCenter = CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45)
 
@@ -88,40 +64,6 @@ final class AppModel: ObservableObject {
         var offRoute = false
     }
 
-    enum DriveKind: Equatable { case route, free }
-
-    enum DrivingState: Equatable {
-        case idle
-        case ready(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
-        case running(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
-        case paused(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
-        case finished(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
-
-        var progress: Double {
-            switch self { case .idle: return 0; case let .ready(_, p, _, _), let .running(_, p, _, _), let .paused(_, p, _, _), let .finished(_, p, _, _): return p }
-        }
-        var elapsed: TimeInterval {
-            switch self { case .idle: return 0; case let .ready(e, _, _, _), let .running(e, _, _, _), let .paused(e, _, _, _), let .finished(e, _, _, _): return e }
-        }
-        var distanceM: Double {
-            switch self { case .idle: return 0; case let .ready(_, _, _, d), let .running(_, _, _, d), let .paused(_, _, _, d), let .finished(_, _, _, d): return d }
-        }
-        var isImmersive: Bool {
-            switch self { case .running, .paused, .finished: return true; default: return false }
-        }
-    }
-    /// Route time-trial vs open free drive.
-    @Published var driveKind: DriveKind = .route
-    /// Live vehicle pose (route car or free roam).
-    @Published var carLon: Double = 0
-    @Published var carLat: Double = 0
-    @Published var carHeading: Double = 0
-    /// Live race input + physics (mirrors web drivingGame).
-    @Published var raceInput = DrivingInput()
-    @Published var raceSpeedMps: Double = 0
-    @Published var raceLateral: Double = 0
-    /// Shared 3-2-1 countdown (nil = idle). Driven by RaceHUDView.
-    @Published var raceCountdown: Int? = nil
     /// Set by the floating map button; the sheet presents the pack picker.
     @Published var showPackPicker = false
     /// One-shot startup position so the map opens where the user is.
@@ -586,278 +528,13 @@ final class AppModel: ObservableObject {
         route = nil
         pickingStart = false
         stopNavigation()
-        stopDriving()
     }
 
-    // MARK: - Driving mode
-
-    private var drivingTask: Task<Void, Never>?
-
-    func prepareDriving() {
-        guard let r = route?.result, r.mode == "car", r.geometry.count > 1 else {
-            stopDriving()
-            return
-        }
-        let duration = max(30, Double(r.durationS) * 0.72)
-        driveKind = .route
-        raceInput = DrivingInput()
-        raceSpeedMps = 0
-        raceLateral = 0
-        let start = DrivingPhysics.carPosition(progress: 0, lateral: 0, geometry: r.geometry)
-        carLon = start.lon
-        carLat = start.lat
-        carHeading = start.heading
-        driving = .ready(elapsed: 0, progress: 0, duration: duration, distanceM: Double(r.distanceM))
-        publishDrivingCameraFromPose()
-    }
-
-    /// Free drive at current map center — no route required.
-    func prepareFreeDriving() {
-        stopNavigation()
-        driveKind = .free
-        raceInput = DrivingInput()
-        raceSpeedMps = 0
-        raceLateral = 0
-        carLon = mapCenter.longitude
-        carLat = mapCenter.latitude
-        carHeading = 0
-        driving = .ready(elapsed: 0, progress: 0, duration: 3600, distanceM: 0)
-        publishDrivingCameraFromPose()
-    }
-
-    /// Begin 3-2-1 countdown; HUD completes it and calls `startDriving()`.
-    func requestStartRace() {
-        guard case .ready = driving else { return }
-        raceCountdown = 3
-    }
-
-    func cancelRaceCountdown() { raceCountdown = nil }
-
-    func startDriving() {
-        guard case let .ready(elapsed, progress, duration, distance) = driving else { return }
-        raceCountdown = nil
-        startDrivingLoop(elapsed: elapsed, progress: progress, duration: duration, distance: distance)
-    }
-
-    func pauseDriving() {
-        guard case let .running(elapsed, progress, duration, distance) = driving else { return }
-        drivingTask?.cancel(); drivingTask = nil
-        raceInput = DrivingInput()
-        raceSteerLeft = false
-        raceSteerRight = false
-        // Keep physics progress (do not recompute from wall clock).
-        driving = .paused(elapsed: elapsed, progress: progress, duration: duration, distanceM: distance)
-    }
-
-    func resumeDriving() {
-        guard case let .paused(elapsed, progress, duration, distance) = driving else { return }
-        startDrivingLoop(elapsed: elapsed, progress: progress, duration: duration, distance: distance)
-    }
-
-    func finishDriving() {
-        switch driving {
-        case let .running(elapsed, _, duration, distance), let .paused(elapsed, _, duration, distance):
-            completeDriving(elapsed: elapsed, duration: duration, distance: distance)
-        default:
-            return
-        }
-    }
-
-    /// Re-arm the same car route / free pose for another run after finish.
-    func resetDriving() {
-        if driveKind == .free {
-            drivingTask?.cancel(); drivingTask = nil
-            raceInput = DrivingInput()
-            raceSpeedMps = 0
-            raceLateral = 0
-            // Keep last car position as the new start.
-            driving = .ready(elapsed: 0, progress: 0, duration: 3600, distanceM: 0)
-            publishDrivingCameraFromPose()
-            return
-        }
-        guard case let .finished(_, _, duration, distance) = driving else {
-            prepareDriving()
-            return
-        }
-        drivingTask?.cancel(); drivingTask = nil
-        raceInput = DrivingInput()
-        raceSpeedMps = 0
-        raceLateral = 0
-        driving = .ready(elapsed: 0, progress: 0, duration: duration, distanceM: distance)
-        if let geometry = route?.result?.geometry, geometry.count > 1 {
-            let start = DrivingPhysics.carPosition(progress: 0, lateral: 0, geometry: geometry)
-            carLon = start.lon; carLat = start.lat; carHeading = start.heading
-        }
-        publishDrivingCameraFromPose()
-    }
-
-    func stopDriving() {
-        drivingTask?.cancel(); drivingTask = nil
-        driving = .idle
-        driveKind = .route
-        raceInput = DrivingInput()
-        raceSteerLeft = false
-        raceSteerRight = false
-        raceSpeedMps = 0
-        raceLateral = 0
-        navCamera = nil
-    }
-
-    /// Independent hold flags so Gas+steer multi-touch works and releasing
-    /// one side does not clear the other.
-    private var raceSteerLeft = false
-    private var raceSteerRight = false
-
-    func setRaceThrottle(_ on: Bool) { raceInput.throttle = on }
-    func setRaceBrake(_ on: Bool) { raceInput.brake = on }
-    func setRaceSteerLeft(_ on: Bool) {
-        raceSteerLeft = on
-        recomputeRaceSteer()
-    }
-    func setRaceSteerRight(_ on: Bool) {
-        raceSteerRight = on
-        recomputeRaceSteer()
-    }
-    /// Legacy single-axis setter (sheet / tests).
-    func setRaceSteer(_ value: Double) {
-        raceSteerLeft = value < -0.1
-        raceSteerRight = value > 0.1
-        recomputeRaceSteer()
-    }
-    private func recomputeRaceSteer() {
-        if raceSteerLeft && !raceSteerRight { raceInput.steer = -1 }
-        else if raceSteerRight && !raceSteerLeft { raceInput.steer = 1 }
-        else { raceInput.steer = 0 }
-    }
-
-    private func startDrivingLoop(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distance: Double) {
-        drivingTask?.cancel()
-        let startSpeed = elapsed > 0.05 ? raceSpeedMps : 0
-        var elapsedAcc = elapsed
-        var lastTick = Date()
-
-        if driveKind == .free {
-            var free = FreeDriveState(
-                lon: carLon, lat: carLat, heading: carHeading,
-                speedMps: startSpeed, lateral: raceLateral, distanceM: distance
-            )
-            driving = .running(elapsed: elapsed, progress: 0, duration: duration, distanceM: free.distanceM)
-            publishDrivingCameraFromPose()
-            drivingTask = Task { @MainActor [weak self] in
-                while !Task.isCancelled {
-                    guard let self else { return }
-                    let now = Date()
-                    let dt = min(0.05, max(1.0 / 120.0, now.timeIntervalSince(lastTick)))
-                    lastTick = now
-                    free = DrivingPhysics.stepFree(free, input: self.raceInput, dt: dt)
-                    elapsedAcc = min(duration, elapsedAcc + dt)
-                    self.raceSpeedMps = free.speedMps
-                    self.raceLateral = free.lateral
-                    self.carLon = free.lon
-                    self.carLat = free.lat
-                    self.carHeading = free.heading
-                    self.driving = .running(
-                        elapsed: elapsedAcc,
-                        progress: 0,
-                        duration: duration,
-                        distanceM: free.distanceM
-                    )
-                    self.publishDrivingCameraFromPose()
-                    try? await Task.sleep(nanoseconds: 16_000_000)
-                }
-            }
-            return
-        }
-
-        var state = DrivingPhysicsState(progress: progress, speedMps: startSpeed, lateral: raceLateral)
-        driving = .running(elapsed: elapsed, progress: progress, duration: duration, distanceM: distance)
-        publishDrivingCamera(progress: progress, lateral: raceLateral)
-        drivingTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                guard let self else { return }
-                let now = Date()
-                // Cap dt so a background hitch doesn't teleport the car.
-                let dt = min(0.05, max(1.0 / 120.0, now.timeIntervalSince(lastTick)))
-                lastTick = now
-                state = DrivingPhysics.step(state, input: self.raceInput, dt: dt, distanceM: distance)
-                elapsedAcc = min(duration, elapsedAcc + dt)
-                self.raceSpeedMps = state.speedMps
-                self.raceLateral = state.lateral
-                if let geometry = self.route?.result?.geometry, geometry.count > 1 {
-                    let car = DrivingPhysics.carPosition(
-                        progress: state.progress, lateral: state.lateral, geometry: geometry
-                    )
-                    self.carLon = car.lon
-                    self.carLat = car.lat
-                    self.carHeading = car.heading
-                }
-                self.driving = .running(
-                    elapsed: elapsedAcc,
-                    progress: state.progress,
-                    duration: duration,
-                    distanceM: distance
-                )
-                self.publishDrivingCamera(progress: state.progress, lateral: state.lateral)
-                if state.progress >= 1 {
-                    self.completeDriving(elapsed: elapsedAcc, duration: duration, distance: distance)
-                    return
-                }
-                try? await Task.sleep(nanoseconds: 16_000_000) // ~60 fps for smoother mobile feel
-            }
-        }
-    }
-
-    /// Street-level chase cam from live vehicle pose.
-    private func publishDrivingCameraFromPose() {
-        let lookM = 26.0
-        let rad = carHeading * .pi / 180
-        let dLat = (lookM / 111_320) * cos(rad)
-        let cosLat = max(0.2, cos(carLat * .pi / 180))
-        let dLon = (lookM / (111_320 * cosLat)) * sin(rad)
-        navCamera = NavCamera(
-            center: CLLocationCoordinate2D(latitude: carLat + dLat, longitude: carLon + dLon),
-            heading: carHeading
-        )
-    }
-
-    /// Street-level first-person-ish chase cam for route race mode.
-    private func publishDrivingCamera(progress: Double, lateral: Double) {
-        guard let geometry = route?.result?.geometry, geometry.count > 1 else {
-            publishDrivingCameraFromPose()
-            return
-        }
-        let car = DrivingPhysics.carPosition(progress: progress, lateral: lateral, geometry: geometry)
-        carLon = car.lon
-        carLat = car.lat
-        carHeading = car.heading
-        publishDrivingCameraFromPose()
-    }
-
-    private func completeDriving(elapsed: TimeInterval, duration: TimeInterval, distance: Double) {
-        drivingTask?.cancel(); drivingTask = nil
-        raceInput = DrivingInput()
-        raceSpeedMps = 0
-        let dist = driveKind == .free ? distance : distance
-        let progress: Double = driveKind == .free ? 0 : 1
-        driving = .finished(
-            elapsed: min(elapsed, duration),
-            progress: progress,
-            duration: duration,
-            distanceM: dist
-        )
-        let hours = max(0.0001, elapsed / 3600)
-        drivingRuns = DrivingRunStore.append(DrivingRun(
-            id: UUID(), createdAt: Date(), duration: elapsed, distanceM: dist,
-            averageSpeedKmh: dist / 1000 / hours
-        ))
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
-    }
 
     private func requestRoute(from fromPlace: Place?, to place: Place, mode: RouteMode) {
         routeTask?.cancel()
         selected = nil
         pickingStart = false
-        stopDriving()
         route = RouteUI(from: fromPlace, to: place, mode: mode, status: .loading)
         routeTask = Task { [weak self] in
             guard let self else { return }
@@ -878,7 +555,6 @@ final class AppModel: ObservableObject {
                     from: from, to: (place.lat, place.lon), mode: mode)
                 if !Task.isCancelled {
                     self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .ready, result: result)
-                    if mode == .car { self.prepareDriving() }
                 }
             } catch let e as APIClient.APIError where e.code == "no_route_found" {
                 if !Task.isCancelled {
