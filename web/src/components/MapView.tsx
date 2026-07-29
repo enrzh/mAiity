@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import maplibregl, { Map as MLMap, Marker, type GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol } from 'pmtiles'
@@ -480,8 +480,9 @@ function MapLibreMapView() {
 export function MapView() {
   const app = useApp()
   const [appleFailed, setAppleFailed] = useState(false)
+  const handleAppleFailure = useCallback(() => setAppleFailed(true), [])
   if (app.activePack === 'light' && !appleFailed) {
-    return <AppleMapView onFailure={() => setAppleFailed(true)} />
+    return <AppleMapView onFailure={handleAppleFailure} />
   }
   return <MapLibreMapView />
 }

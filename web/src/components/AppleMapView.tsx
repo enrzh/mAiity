@@ -54,6 +54,8 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       map.showsCompass = true
       map.showsScale = true
       map.showsMapTypeControl = true
+      map.showsZoomControl = true
+      map.showsUserLocationControl = true
       unregisterController = registerMapController({
         zoomBy: (delta) => {
           const region = map.region
@@ -67,11 +69,10 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
             ),
           ), true)
         },
-        set3D: (on) => {
-          map.cameraPitch = on ? 55 : 0
-          if (on) map.cameraHeading = -18
-        },
+        set3D: () => {},
         locate: () => {
+          map.showsUserLocation = true
+          map.tracksUserLocation = true
           if (!navigator.geolocation) return
           navigator.geolocation.getCurrentPosition((position) => {
             const coordinate = new mk.Coordinate(

@@ -46,6 +46,7 @@ function detentPx(d: Detent): number {
 function MapControls() {
   const app = useApp()
   const t = useT()
+  if (app.activePack === 'light') return null
   const btn =
     'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
