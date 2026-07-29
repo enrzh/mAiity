@@ -76,8 +76,14 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
       scope.get("/healthz", async () => ({ ok: true }));
       scope.get("/mapkit-token", async (req, reply) => {
         if (!opts.appleMaps) return reply.code(501).send({ error: "apple_maps_unconfigured" });
+        // Same-origin GET requests do not have to send an Origin header.
+        // Accept the production Host in that case; the returned MapKit token
+        // remains domain-bound by Apple.
         const origin = String(req.headers.origin ?? "");
-        const allowed = origin === "https://maps.aiity.de" || (opts.devCors && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+        const host = String(req.headers["x-forwarded-host"] ?? req.headers.host ?? "").split(",")[0].trim();
+        const allowed = origin === "https://maps.aiity.de"
+          || (!origin && host === "maps.aiity.de")
+          || (opts.devCors && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
         if (!allowed) return reply.code(403).send({ error: "origin_not_allowed" });
         try {
           return await opts.appleMaps.mapKitToken("maps.aiity.de");

@@ -46,6 +46,34 @@ describe("health + packs", () => {
     const light = res.json().packs.find((p: { id: string }) => p.id === "light");
     expect(light.styleUrl).toBe("/maps/packs/light/style.json");
   });
+
+  test("MapKit token accepts a same-origin GET without an Origin header", async () => {
+    const app = await createApp({
+      dbPath: ":memory:",
+      packsDir: PACKS_DIR,
+      geocoderUrls: [],
+      jwtSecret: SECRET,
+      prefix: "/maps/api",
+      secureCookies: false,
+      appleMaps: {
+        mapKitToken: async () => ({ token: "domain-bound-token", expiresInSeconds: 60 }),
+      } as never,
+    });
+    const ok = await app.inject({
+      method: "GET",
+      url: "/maps/api/mapkit-token",
+      headers: { host: "maps.aiity.de" },
+    });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().token).toBe("domain-bound-token");
+
+    const foreign = await app.inject({
+      method: "GET",
+      url: "/maps/api/mapkit-token",
+      headers: { host: "attacker.example" },
+    });
+    expect(foreign.statusCode).toBe(403);
+  });
 });
 
 describe("auth", () => {
