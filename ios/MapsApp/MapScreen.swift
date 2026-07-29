@@ -10,6 +10,7 @@ struct MapScreen: View {
 
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var location = LocationService.shared
+    @Namespace private var mapScope
     @State private var position: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
@@ -43,11 +44,13 @@ struct MapScreen: View {
                     .stroke(.blue, lineWidth: 6)
             }
         }
-        .mapStyle(.standard(elevation: .realistic))
+        .mapStyle(selectedMapStyle)
+        .mapScope(mapScope)
         .mapControls {
-            MapCompass()
-            MapScaleView()
-            MapUserLocationButton()
+            MapCompass(scope: mapScope)
+            MapScaleView(scope: mapScope)
+            MapUserLocationButton(scope: mapScope)
+            MapPitchToggle(scope: mapScope)
         }
         .safeAreaInset(edge: .bottom) {
             Color.clear.frame(height: sheetHeight)
@@ -79,17 +82,33 @@ struct MapScreen: View {
             ))
         }
         .overlay(alignment: .bottomTrailing) {
-            Button {
-                model.showPackPicker = true
-            } label: {
-                Image(systemName: "paintpalette")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(width: 44, height: 44)
-                    .background(.regularMaterial, in: Circle())
+            VStack(spacing: 10) {
+                MapUserLocationButton(scope: mapScope)
+                MapPitchToggle(scope: mapScope)
+                Button {
+                    model.showPackPicker = true
+                } label: {
+                    Image(systemName: "paintpalette")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                        .background(.regularMaterial, in: Circle())
+                }
             }
-            .accessibilityLabel(L.t("map-style"))
             .padding(.trailing, 14)
             .padding(.bottom, sheetHeight + 16)
+        }
+    }
+
+    private var selectedMapStyle: MapStyle {
+        switch model.activePackId {
+        case "dark":
+            return .standard(elevation: .realistic, emphasis: .muted)
+        case "paper", "gtav", "sanandreas":
+            return .imagery(elevation: .realistic)
+        case "gta", "minecraft":
+            return .hybrid(elevation: .realistic)
+        default:
+            return .standard(elevation: .realistic)
         }
     }
 
