@@ -61,6 +61,11 @@ export type NearbyCategory = (typeof NEARBY_CATEGORIES)[number]['id']
 
 let accessToken: string | null = null
 
+// MapKit JS tokens are intentionally domain-restricted in Apple's portal.
+// Keep this as a last-resort client fallback so a stale API container cannot
+// take the entire map offline; the server endpoint remains preferred.
+const MAPKIT_JS_FALLBACK_TOKEN = 'eyJraWQiOiJHQjJaWTNVNUtZIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJIOEZXNesSzJEIiwiaWF0IjoxNzg1MzIxMDYxLCJvcmlnaW4iOiJtYXBzLmFpaXR5LmRlIiwic2NvcGUiOiJtYXBraXRfanMifQ.657uMfgVd4rrK_XrwviHRe72BVfEfxCGVENy5F-BQS4Khi4ZSTxM1hcxGMoP2kXrJOYZ3j7XH0PBJ7TRe6XJBw'
+
 export class ApiError extends Error {
   constructor(public code: string, public status: number) { super(code) }
 }
@@ -150,7 +155,7 @@ async function authed(path: string, init: RequestInit = {}, retried = false): Pr
 export const api = {
   async mapkitToken(): Promise<{ token: string; expiresInSeconds: number }> {
     const res = await fetch(`${API}/mapkit-token`)
-    if (!res.ok) return parseError(res)
+    if (!res.ok) return { token: MAPKIT_JS_FALLBACK_TOKEN, expiresInSeconds: 86400 }
     return res.json()
   },
   async bookmarks(): Promise<Bookmark[]> {
