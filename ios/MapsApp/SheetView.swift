@@ -84,20 +84,21 @@ struct SheetView: View {
 
     private var chromeSection: some View {
         Section {
-            HStack(spacing: 6) {
+            HStack(spacing: 4) {
                 Button {
                     model.panel = model.panel == .saved ? .none : .saved
                     if detent == .height(96) { detent = .medium }
                 } label: {
                     Label(L.t("chrome-saved"), systemImage: "star.fill")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.medium))
                         .labelStyle(.titleAndIcon)
                         .padding(.horizontal, 12)
-                        .frame(minHeight: 40)
+                        .frame(minHeight: MapTokens.controlHeight)
+                        .foregroundStyle(model.panel == .saved ? Color.white : Color.primary)
                         .background(
                             Capsule().fill(model.panel == .saved
-                                ? Color.accentColor.opacity(0.18)
-                                : Color(.secondarySystemFill))
+                                ? Color.accentColor
+                                : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)
@@ -138,28 +139,29 @@ struct SheetView: View {
                     }
                 } label: {
                     Label(L.t("chrome-me"), systemImage: "person.crop.circle")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.subheadline.weight(.medium))
                         .labelStyle(.titleAndIcon)
                         .padding(.horizontal, 12)
-                        .frame(minHeight: 40)
-                        .background(Capsule().fill(Color(.secondarySystemFill)))
+                        .frame(minHeight: MapTokens.controlHeight)
                 }
                 .accessibilityLabel(L.t("chrome-me"))
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 2)
 
                 Button {
                     searchExpanded = true
                 } label: {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(width: 40, height: 40)
-                        .background(Circle().fill(Color(.secondarySystemFill)))
+                        .font(.system(size: 16, weight: .medium))
+                        .frame(width: MapTokens.controlHeight, height: MapTokens.controlHeight)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.t("search"))
             }
-            .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+            .padding(.horizontal, 4)
+            .padding(.vertical, 3)
+            .mapsChrome(pill: true)
+            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
             .listRowBackground(Color.clear)
         }
     }

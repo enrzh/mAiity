@@ -37,10 +37,10 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
 
   return (
     <div
-      className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-0.5 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{
-        maskImage: 'linear-gradient(to right, #000 calc(100% - 24px), transparent)',
-        WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 24px), transparent)',
+        maskImage: 'linear-gradient(to right, #000 calc(100% - 20px), transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 20px), transparent)',
       }}
     >
       {NEARBY_CATEGORIES.map((c) => {
@@ -52,12 +52,12 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
             size="sm"
             variant={active ? 'default' : 'secondary'}
             className={cn(
-              'h-8 shrink-0 rounded-full border px-3 text-[12px] font-medium shadow-none',
-              !active && 'border-border/50 bg-background hover:bg-accent',
+              'h-8 shrink-0 gap-1.5 px-3 text-[12px] font-medium shadow-none',
+              !active && 'border border-border/40 bg-background/70 backdrop-blur-md',
             )}
             onClick={() => pick(c.id)}
           >
-            <Icon className="size-3.5" />
+            <Icon className="size-3.5 opacity-80" />
             {t(c.labelKey)}
             {active && <X className="size-3 opacity-70" />}
           </Button>

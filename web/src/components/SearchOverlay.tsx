@@ -169,7 +169,7 @@ export function SearchOverlay({ open, onOpenChange, onPicked }: Props) {
               aria-controls="search-overlay-results"
               aria-autocomplete="list"
               aria-activedescendant={listInteractive ? `search-ov-${activeIndex}` : undefined}
-              className="h-12 rounded-full border-border/50 bg-background/60 pl-10 pr-10 text-[16px] shadow-sm backdrop-blur-md"
+              className="h-11 rounded-full border-border/40 bg-muted/40 pl-10 pr-10 text-[16px] shadow-none"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={onKeyDown}

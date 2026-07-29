@@ -27,6 +27,8 @@ const RaceCar3D = lazy(() =>
 import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
 import { isPortraitViewport, setDrivingLandscape } from './lib/drivingOrientation'
+import { Surface, SheetGrabber } from './components/ui/surface'
+import { mapFabClass, surface as surfaceStyles } from './lib/styles'
 
 type Panel = 'none' | 'saved' | 'packs'
 
@@ -46,36 +48,32 @@ function detentPx(d: Detent): number {
 function MapControls({ racing }: { racing: boolean }) {
   const app = useApp()
   const t = useT()
+  const zoomStack = (
+    <Surface variant="float" radius="lg" className="flex flex-col overflow-hidden">
+      <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
+        <Plus className="size-4" />
+      </Button>
+      <Separator className="opacity-40" />
+      <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
+        <Minus className="size-4" />
+      </Button>
+    </Surface>
+  )
   if (racing) {
     return (
       <div className="absolute bottom-[calc(var(--race-hud-h,12rem)+0.75rem)] right-3 z-30 hidden flex-col items-end gap-2 md:flex">
-        <Button
-          variant="secondary"
-          className="maps-glass-pill size-10 rounded-full shadow-md"
-          onClick={locateUser}
-          aria-label={t('my-location')}
-          title={t('my-location')}
-        >
+        <Button variant="ghost" className={mapFabClass()} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
           <Crosshair className="size-4" />
         </Button>
-        <div className="maps-glass-pill flex flex-col overflow-hidden rounded-2xl">
-          <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(1)} aria-label={t('zoom-in')}>
-            <Plus className="size-4" />
-          </Button>
-          <Separator />
-          <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')}>
-            <Minus className="size-4" />
-          </Button>
-        </div>
+        {zoomStack}
       </div>
     )
   }
-  const btn = 'maps-glass-pill size-11 rounded-full shadow-lg hover:bg-background/80'
   return (
     <div className="absolute bottom-[calc(var(--sheet-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
       <Button
-        variant={app.is3D ? 'default' : 'secondary'}
-        className={cn(btn, app.is3D && 'bg-primary text-primary-foreground shadow-md')}
+        variant="ghost"
+        className={mapFabClass(app.is3D)}
         onClick={() => {
           const next = !app.is3D
           app.setIs3D(next)
@@ -85,12 +83,12 @@ function MapControls({ racing }: { racing: boolean }) {
         aria-pressed={app.is3D}
         title={t('view-3d')}
       >
-        <Box className="size-5" />
+        <Box className="size-4" />
       </Button>
       {app.driving.status === 'idle' && (
         <Button
-          variant="secondary"
-          className={btn}
+          variant="ghost"
+          className={mapFabClass()}
           onClick={() => {
             app.armFreeDrivingMode()
             set3D(true)
@@ -98,21 +96,13 @@ function MapControls({ racing }: { racing: boolean }) {
           aria-label={t('free-drive')}
           title={t('free-drive')}
         >
-          <Car className="size-5" />
+          <Car className="size-4" />
         </Button>
       )}
-      <Button variant="secondary" className={btn} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
-        <Crosshair className="size-5" />
+      <Button variant="ghost" className={mapFabClass()} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
+        <Crosshair className="size-4" />
       </Button>
-      <div className="maps-glass-pill flex flex-col overflow-hidden rounded-2xl shadow-lg">
-        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent" onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
-          <Plus className="size-5" />
-        </Button>
-        <Separator />
-        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
-          <Minus className="size-5" />
-        </Button>
-      </div>
+      {zoomStack}
     </div>
   )
 }
@@ -267,9 +257,9 @@ function Shell() {
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
     const apply = () => {
-      const w = !mq.matches ? 0 : collapsed ? 0 : 380
+      const w = !mq.matches ? 0 : collapsed ? 0 : 360
       setLeftChrome(w)
-      railInset.current = collapsed || !mq.matches || racing ? 0 : 380
+      railInset.current = collapsed || !mq.matches || racing ? 0 : 360
     }
     apply()
     mq.addEventListener('change', apply)
@@ -328,9 +318,11 @@ function Shell() {
         ref={railRef}
         style={{ '--detent-h': `${dragH ?? detentPx(detent)}px` } as React.CSSProperties}
         className={cn(
-          'maps-sheet maps-glass absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-2.5 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-xl',
+          'maps-sheet absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-2.5 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]',
+          surfaceStyles.glass,
+          'rounded-t-[1.25rem]',
           dragH === null && 'transition-[height,transform,opacity] duration-300 ease-[var(--ease-ios)]',
-          'md:absolute md:inset-y-3 md:left-3 md:right-auto md:h-auto md:max-h-[calc(100%-1.5rem)] md:w-[380px] md:gap-3 md:rounded-[1.75rem] md:border md:p-4',
+          'md:absolute md:inset-y-3 md:left-3 md:right-auto md:h-auto md:max-h-[calc(100%-1.5rem)] md:w-[360px] md:gap-3 md:rounded-[1.25rem] md:p-3.5',
           'md:transition-transform md:duration-300 md:ease-[var(--ease-ios)] md:will-change-transform',
           collapsed ? 'md:-translate-x-[120%]' : 'md:translate-x-0',
           racing && 'max-md:pointer-events-none max-md:translate-y-full max-md:opacity-0',
@@ -338,14 +330,13 @@ function Shell() {
         aria-hidden={racing ? true : undefined}
       >
         <div
-          className="-mb-1 -mt-1 flex shrink-0 cursor-grab touch-none justify-center py-1.5 active:cursor-grabbing md:hidden"
+          className="-mb-1 -mt-0.5 cursor-grab touch-none active:cursor-grabbing md:hidden"
           onPointerDown={onHandleDown}
           onPointerMove={onHandleMove}
           onPointerUp={onHandleUp}
           onPointerCancel={onHandleUp}
-          aria-hidden
         >
-          <div className="maps-sheet__grabber" />
+          <SheetGrabber />
         </div>
 
         {/* Compact chrome: Saved · Me · Search */}
@@ -432,8 +423,9 @@ function Shell() {
             aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
             title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
             className={cn(
-              'maps-glass-pill absolute top-1/2 z-40 hidden h-12 w-6 -translate-y-1/2 items-center justify-center rounded-r-2xl text-muted-foreground transition-[left] duration-300 ease-[var(--ease-ios)] hover:text-foreground md:flex',
-              collapsed ? 'md:left-0' : 'md:left-[calc(0.75rem+380px)]',
+              surfaceStyles.float,
+              'absolute top-1/2 z-40 hidden h-11 w-5 -translate-y-1/2 items-center justify-center rounded-r-xl text-muted-foreground transition-[left] duration-300 ease-[var(--ease-ios)] hover:text-foreground md:flex',
+              collapsed ? 'md:left-0' : 'md:left-[calc(0.75rem+360px)]',
             )}
           >
             {collapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
@@ -445,13 +437,13 @@ function Shell() {
             className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-3 z-[36] flex -translate-x-1/2 px-3 md:top-4"
             role="status"
           >
-            <div className="maps-glass-pill pointer-events-auto flex max-w-md items-center gap-2 px-3 py-2 text-[13px] font-medium">
+            <Surface variant="float" radius="pill" padding="sm" className="pointer-events-auto flex max-w-md items-center gap-2 text-[13px] font-medium">
               <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden />
               <span className="min-w-0">{t('route-pick-start')}</span>
-              <Button type="button" variant="ghost" size="icon-sm" className="size-7 shrink-0 rounded-full" onClick={app.cancelPickStart} aria-label={t('close')}>
+              <Button type="button" variant="ghost" size="icon-sm" className="shrink-0" onClick={app.cancelPickStart} aria-label={t('close')}>
                 <X className="size-3.5" />
               </Button>
-            </div>
+            </Surface>
           </div>
         )}
 
@@ -485,15 +477,15 @@ function EmptyRail() {
   const app = useApp()
   const t = useT()
   return (
-    <div className="hidden h-full flex-col justify-end gap-2 px-1 pb-2 md:flex">
-      <div className="maps-glass-pill rounded-2xl px-3.5 py-3.5">
-        <p className="text-sm font-semibold tracking-tight text-foreground/90">
+    <div className="hidden h-full flex-col justify-end gap-2 px-0.5 pb-1 md:flex">
+      <Surface variant="soft" radius="lg" padding="md">
+        <p className="text-sm font-semibold tracking-tight">
           {app.user ? t('welcome-back') : t('explore-map')}
         </p>
         <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
           {t('empty-hint')}
         </p>
-      </div>
+      </Surface>
     </div>
   )
 }

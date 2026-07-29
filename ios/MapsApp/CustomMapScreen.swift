@@ -176,10 +176,11 @@ struct CustomMapScreen: View {
     private func mapButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 17, weight: .semibold))
-                .frame(width: 44, height: 44)
-                .background(.regularMaterial, in: Circle())
+                .font(.system(size: 16, weight: .medium))
+                .frame(width: MapTokens.fabSize, height: MapTokens.fabSize)
+                .mapsChrome(pill: true)
         }
+        .buttonStyle(.plain)
         .accessibilityLabel(label)
     }
 

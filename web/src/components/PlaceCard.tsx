@@ -64,11 +64,11 @@ export function PlaceCard() {
   }
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[20px] font-semibold leading-tight tracking-tight">{place.name}</h2>
-            <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
+            <h2 className="truncate text-[17px] font-semibold leading-snug tracking-tight">{place.name}</h2>
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
               {address || place.label}
             </p>
             {details?.kind && (
@@ -79,9 +79,9 @@ export function PlaceCard() {
             {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
           </div>
           <Button
-            variant="ghost"
-            size="icon"
-            className="size-9 shrink-0 rounded-full bg-muted/60"
+            variant="secondary"
+            size="icon-sm"
+            className="shrink-0"
             onClick={() => app.select(null)}
             aria-label={t('close')}
           >
@@ -89,15 +89,13 @@ export function PlaceCard() {
           </Button>
         </div>
 
-        {/* Primary actions — liquid glass pills */}
         <div className="flex gap-2">
-          <Button className="h-11 flex-1 gap-1.5 rounded-full font-semibold" onClick={() => app.startRoute(place)}>
+          <Button size="lg" className="flex-1 gap-1.5 font-medium" onClick={() => app.startRoute(place)}>
             <Navigation className="size-4" /> {t('route')}
           </Button>
           <Button
             variant="secondary"
-            size="icon"
-            className="size-11 rounded-full"
+            size="icon-lg"
             onClick={toggleSave}
             disabled={saving}
             aria-pressed={saved}
@@ -107,8 +105,7 @@ export function PlaceCard() {
           </Button>
           <Button
             variant="secondary"
-            size="icon"
-            className="size-11 rounded-full"
+            size="icon-lg"
             onClick={share}
             aria-label={t('share-place')}
           >
@@ -116,7 +113,6 @@ export function PlaceCard() {
           </Button>
         </div>
 
-        {/* Track strip when a route is already calculated to this place */}
         {app.route?.status === 'ready' && app.route.result && <TrackCard />}
 
         {loading ? (

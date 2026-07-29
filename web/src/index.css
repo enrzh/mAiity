@@ -49,45 +49,45 @@
 }
 
 :root {
-    /* Liquid glass / iOS Maps — system-blue primary, soft surfaces */
-    --background: oklch(0.99 0.005 250);
-    --foreground: oklch(0.18 0.02 260);
-    --card: oklch(1 0 0 / 0.72);
-    --card-foreground: oklch(0.18 0.02 260);
-    --popover: oklch(1 0 0 / 0.82);
-    --popover-foreground: oklch(0.18 0.02 260);
-    --primary: oklch(0.55 0.19 250); /* iOS-like blue */
+    /* Minimal modern maps UI — cool neutral + single blue accent */
+    --background: oklch(0.985 0.004 250);
+    --foreground: oklch(0.2 0.015 260);
+    --card: oklch(1 0 0 / 0.78);
+    --card-foreground: oklch(0.2 0.015 260);
+    --popover: oklch(1 0 0 / 0.88);
+    --popover-foreground: oklch(0.2 0.015 260);
+    --primary: oklch(0.52 0.17 255);
     --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.96 0.01 250);
-    --secondary-foreground: oklch(0.22 0.03 260);
-    --muted: oklch(0.96 0.008 250);
-    --muted-foreground: oklch(0.48 0.02 260);
-    --accent: oklch(0.95 0.02 250);
-    --accent-foreground: oklch(0.22 0.03 260);
-    --destructive: oklch(0.58 0.22 25);
-    --border: oklch(0.9 0.01 250 / 0.55);
-    --input: oklch(0.92 0.01 250 / 0.55);
-    --ring: oklch(0.55 0.19 250);
+    --secondary: oklch(0.955 0.008 250);
+    --secondary-foreground: oklch(0.24 0.02 260);
+    --muted: oklch(0.955 0.006 250);
+    --muted-foreground: oklch(0.5 0.015 260);
+    --accent: oklch(0.95 0.012 250);
+    --accent-foreground: oklch(0.24 0.02 260);
+    --destructive: oklch(0.55 0.2 25);
+    --border: oklch(0.88 0.01 250 / 0.45);
+    --input: oklch(0.9 0.01 250 / 0.5);
+    --ring: oklch(0.52 0.17 255);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --radius: 1rem;
-    --sidebar: oklch(0.985 0.005 250 / 0.75);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.55 0.19 250);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.96 0.015 250);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.9 0.01 250 / 0.45);
-    --sidebar-ring: oklch(0.55 0.19 250);
-    --glass-blur: 28px;
-    --glass-saturate: 1.65;
-    --glass-highlight: oklch(1 0 0 / 0.55);
-    --glass-shadow: 0 10px 40px oklch(0.2 0.04 260 / 0.14), 0 1px 0 var(--glass-highlight) inset;
-    --motion-fast: 180ms;
-    --motion-med: 320ms;
+    --radius: 0.875rem;
+    --sidebar: oklch(0.99 0.004 250 / 0.8);
+    --sidebar-foreground: oklch(0.2 0.015 260);
+    --sidebar-primary: oklch(0.52 0.17 255);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.95 0.01 250);
+    --sidebar-accent-foreground: oklch(0.24 0.02 260);
+    --sidebar-border: oklch(0.88 0.01 250 / 0.4);
+    --sidebar-ring: oklch(0.52 0.17 255);
+    --glass-blur: 24px;
+    --glass-saturate: 1.4;
+    --glass-highlight: oklch(1 0 0 / 0.4);
+    --glass-shadow: 0 4px 24px oklch(0.25 0.03 260 / 0.08), 0 1px 0 var(--glass-highlight) inset;
+    --motion-fast: 150ms;
+    --motion-med: 280ms;
     --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -319,25 +319,26 @@ body { overscroll-behavior: none; }
   padding: 12px;
   font-weight: 700;
 }
-/* Compact race HUD (map overlay — keeps the real street map visible) */
+/* Compact race HUD — dark glass, matches Surface float density */
 .maps-race-hud {
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 28rem;
+  max-width: 26rem;
   padding: 10px 12px;
-  border-radius: 16px;
-  border: 1px solid rgb(255 255 255 / 14%);
-  background: rgb(12 16 24 / 82%);
-  color: #f4f7fb;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 10px 28px rgb(0 0 0 / 32%);
+  border-radius: 1rem;
+  border: 1px solid oklch(1 0 0 / 12%);
+  background: oklch(0.18 0.02 260 / 0.78);
+  color: oklch(0.97 0.005 250);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: 0 8px 28px oklch(0 0 0 / 0.28);
 }
 .maps-race-hud--compact {
   gap: 6px;
   padding: 8px 10px;
-  border-radius: 14px;
+  border-radius: 0.875rem;
 }
 .maps-race-hud__top {
   display: flex;
@@ -495,65 +496,18 @@ body { overscroll-behavior: none; }
   .maps-driving-progress span { transition: none; }
 }
 
-/* ---- Liquid glass surfaces (iOS Maps chrome) ---- */
-.maps-glass {
-  background: color-mix(in oklch, var(--background) 68%, transparent);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
-  box-shadow: var(--glass-shadow);
-}
-.maps-glass-strong {
-  background: color-mix(in oklch, var(--background) 82%, transparent);
-  -webkit-backdrop-filter: blur(40px) saturate(1.8);
-  backdrop-filter: blur(40px) saturate(1.8);
-  border: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
-  box-shadow: var(--glass-shadow);
-}
+/* ---- Legacy glass class aliases → unified Surface tokens ---- */
+.maps-glass,
+.maps-glass-strong,
 .maps-glass-pill {
   background: color-mix(in oklch, var(--background) 72%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  backdrop-filter: blur(20px) saturate(1.5);
-  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
-  box-shadow: 0 4px 20px oklch(0.2 0.04 260 / 0.1), 0 1px 0 var(--glass-highlight) inset;
-}
-.maps-chrome-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 48px;
-  padding: 0.35rem 0.4rem 0.35rem 0.45rem;
-  border-radius: 9999px;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid color-mix(in oklch, var(--foreground) 7%, transparent);
+  box-shadow: var(--glass-shadow);
 }
 .maps-sheet {
-  border-radius: 1.5rem 1.5rem 0 0;
   transition: height var(--motion-med) var(--ease-ios), transform var(--motion-med) var(--ease-ios);
-}
-.maps-sheet__grabber {
-  width: 2.5rem;
-  height: 0.3rem;
-  border-radius: 9999px;
-  background: color-mix(in oklch, var(--muted-foreground) 35%, transparent);
-}
-.maps-track-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-.maps-track-stat__value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.15;
-}
-.maps-track-stat__label {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted-foreground);
 }
 @media (prefers-reduced-motion: reduce) {
   .maps-sheet { transition: none; }

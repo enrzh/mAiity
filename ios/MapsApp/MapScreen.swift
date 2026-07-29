@@ -283,13 +283,12 @@ struct MapScreen: View {
     private func mapButton(_ systemName: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 17, weight: .semibold))
-                .frame(width: 44, height: 44)
+                .font(.system(size: 16, weight: .medium))
+                .frame(width: MapTokens.fabSize, height: MapTokens.fabSize)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .frame(width: 44, height: 44)
-        .background(.regularMaterial, in: Circle())
+        .mapsChrome(pill: true)
         .fixedSize()
     }
 }
