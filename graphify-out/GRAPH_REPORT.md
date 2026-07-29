@@ -1,16 +1,16 @@
-# Graph Report - maps  (2026-07-26)
+# Graph Report - maps  (2026-07-29)
 
 ## Corpus Check
-- 100 files · ~72,431 words
+- 111 files · ~86,664 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 698 nodes · 1413 edges · 41 communities (25 shown, 16 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 9 edges (avg confidence: 0.8)
+- 792 nodes · 1640 edges · 59 communities (42 shown, 17 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1c26967d`
+- Built from commit: `48aacbd9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,8 +37,12 @@
 - devDependencies
 - SwiftUI
 - AuthSheet
+- View
 - maps — web + native map with swappable texture packs
 - package.json
+- route-packs.test.ts
+- CustomMapScreen
+- SwiftUI
 - dl-planet.sh
 - clsx
 - build-poi-db.sh
@@ -46,6 +50,7 @@
 - build-tiles.sh
 - deploy.sh
 - @fontsource-variable/geist
+- NavigationPanel.tsx
 - next-themes
 - pmtiles
 - react
@@ -54,24 +59,37 @@
 - tailwindcss
 - @tailwindcss/vite
 - tw-animate-css
+- AppleMapsClient
+- createApp
+- RoutePanel.tsx
+- Apple Web Login Design
+- MapScreen
+- server.ts
+- RootView
+- MapTokens
+- InstallPackSheet
+- Global Constraints
+- userpacks.ts
+- lucide-react
+- auth.test.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `cn()` - 64 edges
-2. `AppModel` - 59 edges
-3. `useApp()` - 33 edges
-4. `APIClient` - 27 edges
-5. `createApp()` - 22 edges
-6. `LocationService` - 17 edges
-7. `Button()` - 17 edges
-8. `PoiIndex` - 13 edges
-9. `compilerOptions` - 12 edges
-10. `SheetView` - 10 edges
+1. `cn()` - 66 edges
+2. `AppModel` - 63 edges
+3. `useApp()` - 38 edges
+4. `useT()` - 32 edges
+5. `APIClient` - 27 edges
+6. `createApp()` - 22 edges
+7. `LocationService` - 17 edges
+8. `Button()` - 17 edges
+9. `SheetView` - 13 edges
+10. `PoiIndex` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `AuthDialogContent()` --calls--> `useApp()`  [EXTRACTED]
-  web/src/components/AuthModal.tsx → web/src/state.tsx
-- `InstallDialog()` --calls--> `useApp()`  [EXTRACTED]
-  web/src/components/PackSwitcher.tsx → web/src/state.tsx
+- `makeApp()` --calls--> `createApp()`  [EXTRACTED]
+  server/test/route-packs.test.ts → server/src/server.ts
+- `makeApp()` --calls--> `createApp()`  [EXTRACTED]
+  server/test/social.test.ts → server/src/server.ts
 - `CardDescription()` --calls--> `cn()`  [EXTRACTED]
   web/src/components/ui/card.tsx → web/src/lib/utils.ts
 - `CardAction()` --calls--> `cn()`  [EXTRACTED]
@@ -82,19 +100,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (41 total, 16 thin omitted)
+## Communities (59 total, 17 thin omitted)
 
 ### Community 0 - "server.ts"
-Cohesion: 0.05
-Nodes (53): AccessSigner, AuthOpts, makeAccessSigner(), makeAuthGuard(), makeSessionIssuer(), newRefreshToken(), now(), registerAuthRoutes() (+45 more)
+Cohesion: 0.15
+Nodes (13): AppOpts, appleJWKS, AppleWebOAuth, googleJWKS, makeSocialVerifier(), now(), registerSocialRoutes(), SessionIssuer (+5 more)
 
 ### Community 1 - "AppModel"
 Cohesion: 0.06
-Nodes (34): App, AppModel, CameraEvent, NavCamera, NavState, RouteUI, Status, error (+26 more)
+Nodes (34): AppModel, CameraEvent, NavCamera, NavState, RouteUI, SheetPanel, none, packs (+26 more)
 
 ### Community 2 - "state.tsx"
-Cohesion: 0.08
-Nodes (47): applyMapLanguage(), DEFAULT_CENTER, ensure3DScenery(), flyDuration(), framePad(), liveMap, locateUser(), MapView() (+39 more)
+Cohesion: 0.06
+Nodes (52): AppleMapView(), applyMapLanguage(), DEFAULT_CENTER, ensure3DScenery(), flyDuration(), framePad(), locateUser(), MapLibreMapView() (+44 more)
 
 ### Community 3 - "APIClient"
 Cohesion: 0.10
@@ -105,20 +123,20 @@ Cohesion: 0.07
 Nodes (37): CGMutablePath, CoreGraphics, Foundation, ImageIO, mapOutline(), rgb(), CGColor, CGFloat (+29 more)
 
 ### Community 5 - "App.tsx"
-Cohesion: 0.15
-Nodes (19): EmptyRail(), LANGS, LanguageMenu(), MapControls(), Panel, RailControls(), Shell(), AuthModal() (+11 more)
+Cohesion: 0.13
+Nodes (27): Detent, detentPx(), DETENTS, EmptyRail(), LANGS, LanguageMenu(), MapControls(), Panel (+19 more)
 
 ### Community 6 - "PackSwitcher.tsx"
-Cohesion: 0.12
-Nodes (25): AuthDialogContent(), ERROR_TEXT, applySlots(), DEFAULTS, luminance(), PackEditor(), shade(), SLOT_LABELS (+17 more)
+Cohesion: 0.15
+Nodes (19): ERROR_KEY, liveMap, applySlots(), DEFAULTS, luminance(), shade(), SLOT_LABELS, Slots (+11 more)
 
 ### Community 7 - "Models.swift"
-Cohesion: 0.20
-Nodes (26): CaseIterable, Codable, Equatable, Identifiable, Bookmark, GeoResponse, GeoResult, NearbyCategory (+18 more)
+Cohesion: 0.22
+Nodes (25): Codable, Equatable, Identifiable, Bookmark, GeoResponse, GeoResult, NearbyCategory, Pack (+17 more)
 
 ### Community 8 - "PlaceCard.tsx"
-Cohesion: 0.19
-Nodes (15): fmtDistance(), PoiResults(), fmtDist(), fmtDur(), RoutePanel(), Button(), buttonVariants, Card() (+7 more)
+Cohesion: 0.24
+Nodes (10): fmtDistance(), PoiResults(), Card(), CardAction(), CardContent(), CardDescription(), CardFooter(), CardHeader() (+2 more)
 
 ### Community 9 - "PoiIndex"
 Cohesion: 0.11
@@ -130,7 +148,7 @@ Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent 
 
 ### Community 11 - "cn"
 Cohesion: 0.10
-Nodes (20): DropdownMenu(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuItem(), DropdownMenuLabel(), DropdownMenuRadioItem(), DropdownMenuSeparator(), DropdownMenuShortcut() (+12 more)
+Nodes (20): DialogFooter(), DialogOverlay(), DropdownMenuCheckboxItem(), DropdownMenuContent(), DropdownMenuItem(), DropdownMenuLabel(), DropdownMenuRadioItem(), DropdownMenuSeparator() (+12 more)
 
 ### Community 12 - "package.json"
 Cohesion: 0.11
@@ -142,7 +160,7 @@ Nodes (17): DOM, DOM.Iterable, ES2022, compilerOptions, baseUrl, isolatedModules
 
 ### Community 14 - "LocationService"
 Cohesion: 0.15
-Nodes (12): CheckedContinuation, CLAuthorizationStatus, CLLocation, CLLocationManager, CLLocationManagerDelegate, LocationService, Bool, Error (+4 more)
+Nodes (13): CheckedContinuation, CLAuthorizationStatus, CLLocation, CLLocationManager, CLLocationManagerDelegate, LocationService, Bool, CLLocationCoordinate2D (+5 more)
 
 ### Community 15 - "Nav"
 Cohesion: 0.26
@@ -150,15 +168,15 @@ Nodes (7): Element, Array, Nav, Snapped, Double, Int, RouteStep
 
 ### Community 16 - "dependencies"
 Cohesion: 0.15
-Nodes (13): class-variance-authority, lucide-react, radix-ui, react-dom, shadcn, tailwind-merge, dependencies, class-variance-authority (+5 more)
+Nodes (13): class-variance-authority, @fontsource-variable/geist, radix-ui, react-dom, shadcn, tailwind-merge, dependencies, class-variance-authority (+5 more)
 
 ### Community 17 - "compilerOptions"
 Cohesion: 0.17
 Nodes (11): bun-types, test, compilerOptions, module, moduleResolution, noEmit, strict, target (+3 more)
 
 ### Community 18 - "SheetView"
-Cohesion: 0.06
-Nodes (35): ASAuthorization, AuthenticationServices, CoreLocation, AppConfig, AuthSheet, Mode, login, register (+27 more)
+Cohesion: 0.18
+Nodes (11): ASAuthorization, AuthenticationServices, CaseIterable, AppConfig, AuthSheet, Mode, login, register (+3 more)
 
 ### Community 19 - "devDependencies"
 Cohesion: 0.18
@@ -168,6 +186,10 @@ Nodes (11): @types/react, @types/react-dom, typescript, vite, @vitejs/plugin-rea
 Cohesion: 0.36
 Nodes (4): Badge(), badgeVariants, Separator(), Skeleton()
 
+### Community 22 - "View"
+Cohesion: 0.27
+Nodes (8): Color, SheetView, Bool, Int, PresentationDetent, String, Void, View
+
 ### Community 23 - "maps — web + native map with swappable texture packs"
 Cohesion: 0.22
 Nodes (8): Add rich POIs (Overture + Foursquare), iOS, Layout, Make it *your* map (self-hosted tiles), maps — web + native map with swappable texture packs, Notes / gotchas, Roadmap, Run the web client
@@ -176,25 +198,89 @@ Nodes (8): Add rich POIs (Overture + Foursquare), iOS, Layout, Make it *your* ma
 Cohesion: 0.22
 Nodes (8): name, private, scripts, build, dev, preview, type, version
 
+### Community 25 - "route-packs.test.ts"
+Cohesion: 0.17
+Nodes (11): COSTINGS, decodePolyline6(), normalize(), now(), registerRouteRoutes(), RouteResult, RouteStep, App (+3 more)
+
+### Community 26 - "CustomMapScreen"
+Cohesion: 0.20
+Nodes (9): CustomMapScreen, CGFloat, CLLocationCoordinate2D, Double, Place, String, URL, Void (+1 more)
+
+### Community 27 - "SwiftUI"
+Cohesion: 0.17
+Nodes (8): CoreLocation, PackPickerSheet, MapKit, MapLibre, MapLibreSwiftDSL, MapLibreSwiftUI, SwiftUI, UIKit
+
+### Community 34 - "@fontsource-variable/geist"
+Cohesion: 0.33
+Nodes (11): AccessSigner, AuthOpts, makeAuthGuard(), makeSessionIssuer(), newRefreshToken(), now(), registerAuthRoutes(), sha256() (+3 more)
+
+### Community 35 - "NavigationPanel.tsx"
+Cohesion: 0.33
+Nodes (11): fmtDist(), fmtEta(), NavigationPanel(), bearing(), currentStep(), distanceM(), LngLat, metresToNextManeuver() (+3 more)
+
+### Community 46 - "AppleMapsClient"
+Cohesion: 0.23
+Nodes (5): AppleMapsClient, AppleMapsConfig, AppleSearchResult, port, makeAppleWebOAuth()
+
+### Community 47 - "createApp"
+Cohesion: 0.20
+Nodes (9): makeAccessSigner(), createApp(), App, makeApp(), PACKS_DIR, makeApp(), PACKS_DIR, stub (+1 more)
+
+### Community 48 - "RoutePanel.tsx"
+Cohesion: 0.33
+Nodes (8): fmtDist(), fmtDur(), RoutePanel(), Tabs(), TabsContent(), TabsList(), tabsListVariants, TabsTrigger()
+
+### Community 49 - "Apple Web Login Design"
+Cohesion: 0.22
+Nodes (8): Apple Configuration, Apple Web Login Design, Authentication Flow, Failure Handling, Goal, Security, Verification, Web UI
+
+### Community 50 - "MapScreen"
+Cohesion: 0.33
+Nodes (7): MapScreen, CGFloat, CLLocationCoordinate2D, Double, MapCameraPosition, MapStyle, MKCoordinateRegion
+
+### Community 51 - "server.ts"
+Cohesion: 0.33
+Nodes (5): createDb(), registerDemRoutes(), listPacks(), PackInfo, registerPackRoutes()
+
+### Community 52 - "RootView"
+Cohesion: 0.29
+Nodes (6): App, MapsApp, RootView, CGFloat, PresentationDetent, Scene
+
+### Community 53 - "MapTokens"
+Cohesion: 0.33
+Nodes (5): Float, MapTokens, Double, UInt32, UIColor
+
+### Community 54 - "InstallPackSheet"
+Cohesion: 0.38
+Nodes (6): InstallPackSheet, Source, json, url, Bool, String
+
+### Community 55 - "Global Constraints"
+Cohesion: 0.33
+Nodes (5): Apple Web Login Implementation Plan, Global Constraints, Task 1: Backend OAuth flow, Task 2: Web login integration, Task 3: Apple portal and deployment
+
+### Community 56 - "userpacks.ts"
+Cohesion: 0.70
+Nodes (4): ensureUserPacksTable(), now(), registerUserPackRoutes(), validateStyle()
+
 ## Knowledge Gaps
-- **149 isolated node(s):** `build-poi-db.sh script`, `build-pois.sh script`, `build-tiles.sh script`, `deploy.sh script`, `loading` (+144 more)
+- **174 isolated node(s):** `build-poi-db.sh script`, `build-pois.sh script`, `build-tiles.sh script`, `deploy.sh script`, `loading` (+169 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AppModel` connect `AppModel` to `SheetView`, `APIClient`, `LocationService`?**
-  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Why does `AppModel` connect `AppModel` to `APIClient`, `LocationService`, `SheetView`, `MapScreen`, `RootView`, `InstallPackSheet`, `View`, `CustomMapScreen`, `SwiftUI`?**
+  _High betweenness centrality (0.073) - this node is a cross-community bridge._
 - **Why does `Foundation` connect `make_pack_textures.swift` to `AppModel`, `APIClient`, `Nav`, `Models.swift`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Why does `cn()` connect `cn` to `PlaceCard.tsx`, `SwiftUI`, `App.tsx`, `PackSwitcher.tsx`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `LocationService` connect `LocationService` to `AppModel`, `CustomMapScreen`, `SwiftUI`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **What connects `build-poi-db.sh script`, `build-pois.sh script`, `build-tiles.sh script` to the rest of the system?**
-  _149 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `server.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.0532724505327245 - nodes in this community are weakly interconnected._
+  _174 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `AppModel` be split into smaller, more focused modules?**
-  _Cohesion score 0.06103286384976526 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06330988522769344 - nodes in this community are weakly interconnected._
 - **Should `state.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.07676767676767676 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.061367621274108705 - nodes in this community are weakly interconnected._
+- **Should `APIClient` be split into smaller, more focused modules?**
+  _Cohesion score 0.10374149659863946 - nodes in this community are weakly interconnected._

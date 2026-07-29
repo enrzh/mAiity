@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "light",
-  "name": "Apple-inspired Light",
+  "name": "Apple Maps",
   "version": "1.0.0",
   "author": "aiity",
-  "description": "Helle, ruhige Standardkarte im Apple-inspirierten Stil.",
+  "description": "Apples native Karte mit weltweiten Orten und Kartendaten.",
   "styleFile": "style.json",
   "capability": "offline",
   "preview": { "colors": ["#f5f5f2", "#b7d9ee", "#ffffff"] }

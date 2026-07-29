@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "deploy/deploy.sh": {
-    "mtime": 1785004931.5271246,
-    "ast_hash": "fe1aa35f4c2edcfbea7977a304d1808d",
+    "mtime": 1785330655.561823,
+    "ast_hash": "cc510307e8f631615e17538368846b41",
     "semantic_hash": ""
   },
   "ios/MapsApp/APIClient.swift": {
@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/AppModel.swift": {
-    "mtime": 1784985103.6256247,
-    "ast_hash": "de5980b193edd64ee62deaeddfb68134",
+    "mtime": 1785320458.6755593,
+    "ast_hash": "495d4f13bb019668b70d4a013be774a7",
     "semantic_hash": ""
   },
   "ios/MapsApp/Assets.xcassets/AppIcon.appiconset/Contents.json": {
@@ -45,13 +45,13 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/AuthSheet.swift": {
-    "mtime": 1784902429.2224607,
-    "ast_hash": "5250cf6ac239b75aba979291bda5c11b",
+    "mtime": 1785315031.8064227,
+    "ast_hash": "d62f6a5984e66f85dffd8a2891cf7f34",
     "semantic_hash": ""
   },
   "ios/MapsApp/InstallPackSheet.swift": {
-    "mtime": 1784904994.7661228,
-    "ast_hash": "6382d249b17028d079e7f2d94f229ef0",
+    "mtime": 1785078483.7613502,
+    "ast_hash": "a2d9e3f99a21771b68a589b8e5e46f11",
     "semantic_hash": ""
   },
   "ios/MapsApp/Keychain.swift": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/MapScreen.swift": {
-    "mtime": 1784986779.721921,
-    "ast_hash": "cc9de9d1e8024e2a782c37e6257d7248",
+    "mtime": 1785330575.888955,
+    "ast_hash": "777a28f5b0db780aecd42151508fa6ec",
     "semantic_hash": ""
   },
   "ios/MapsApp/MapsApp.swift": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/Models.swift": {
-    "mtime": 1785004947.4515283,
-    "ast_hash": "f4720041458e13e9a56dd743f88a4ab7",
+    "mtime": 1785078313.4878018,
+    "ast_hash": "048bb3a3f45754354b64cd0c5abb3a29",
     "semantic_hash": ""
   },
   "ios/MapsApp/Navigation.swift": {
@@ -85,13 +85,13 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/PackPickerSheet.swift": {
-    "mtime": 1784975008.9084947,
-    "ast_hash": "84a17f19abf5b96c1be91ca05cc23e45",
+    "mtime": 1785078491.9364269,
+    "ast_hash": "64da15343917f031a771e451e8cf7e47",
     "semantic_hash": ""
   },
   "ios/MapsApp/SheetView.swift": {
-    "mtime": 1785004956.1420035,
-    "ast_hash": "2fcfc4c6a597e69ef65e01a1798a7f12",
+    "mtime": 1785078415.0414946,
+    "ast_hash": "d8e484c4d39bdc323cc2390675f4e0eb",
     "semantic_hash": ""
   },
   "packs/dark/pack.json": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "packs/dark/style.json": {
-    "mtime": 1785068142.3217604,
-    "ast_hash": "611971010f25a898155e82bb5fee6c34",
+    "mtime": 1785075683.7583504,
+    "ast_hash": "4ffd1a7e3a417cf31ed1f1de9ad7f67b",
     "semantic_hash": ""
   },
   "packs/gta/pack.json": {
@@ -120,18 +120,18 @@
     "semantic_hash": ""
   },
   "packs/gta/style.json": {
-    "mtime": 1785068142.3246067,
-    "ast_hash": "cb4559187c59cac54cf9039bd1b2e5e9",
+    "mtime": 1785075683.7612212,
+    "ast_hash": "1de36ffd13da848a2064e4a6792d7362",
     "semantic_hash": ""
   },
   "packs/light/pack.json": {
-    "mtime": 1784900016.454379,
-    "ast_hash": "7e87bd61c559abcac4cf88854d7b58c7",
+    "mtime": 1785333720.3007684,
+    "ast_hash": "6eed02d1cc3d092c80eaf7f3c567ce92",
     "semantic_hash": ""
   },
   "packs/light/style.json": {
-    "mtime": 1785068142.3206227,
-    "ast_hash": "39a094feb60ef8eeddecdf36e974f72b",
+    "mtime": 1785319727.2080886,
+    "ast_hash": "c87c0aa5e924cc9e0b281c6cbc36c23a",
     "semantic_hash": ""
   },
   "packs/minecraft/pack.json": {
@@ -140,18 +140,18 @@
     "semantic_hash": ""
   },
   "packs/minecraft/sprite.json": {
-    "mtime": 1785004242.9212484,
-    "ast_hash": "b00df5c596fad5fde3c0b6116a237402",
+    "mtime": 1785074677.8655555,
+    "ast_hash": "40ec89b259c66146919f98dc93142fa5",
     "semantic_hash": ""
   },
   "packs/minecraft/sprite@2x.json": {
-    "mtime": 1785004242.9233174,
-    "ast_hash": "6327c8a85157d65d7b0ba2cc2e70cf32",
+    "mtime": 1785074677.8683743,
+    "ast_hash": "15b671ae18bb9e9f7d2b24a70cf8a0a5",
     "semantic_hash": ""
   },
   "packs/minecraft/style.json": {
-    "mtime": 1785068142.3236957,
-    "ast_hash": "c108e7fc86d2e720348fbc232936cbb5",
+    "mtime": 1785075683.7603934,
+    "ast_hash": "aaf6ce3346acdf924c4c659d32f489bc",
     "semantic_hash": ""
   },
   "packs/paper/pack.json": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "packs/paper/style.json": {
-    "mtime": 1785068142.322845,
-    "ast_hash": "e6613fc063395d405003d53bb044083d",
+    "mtime": 1785075683.7595453,
+    "ast_hash": "57dd4c7c107d76dcbe0dccbedaa5daeb",
     "semantic_hash": ""
   },
   "scripts/build-poi-db.sh": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "scripts/make_pack_textures.swift": {
-    "mtime": 1785004224.2094698,
-    "ast_hash": "b98d28bf6507522a2a586caf8a8e3465",
+    "mtime": 1785074677.1287718,
+    "ast_hash": "92b2693b274c52d737da9d187fa21f44",
     "semantic_hash": ""
   },
   "scripts/make_sprites.swift": {
@@ -225,13 +225,13 @@
     "semantic_hash": ""
   },
   "server/src/geocode.ts": {
-    "mtime": 1785066194.9974012,
-    "ast_hash": "c148199ad3a60157bb5ca11d3e6bf655",
+    "mtime": 1785319444.4272242,
+    "ast_hash": "58458eaf4a15a33c26027d40f65e99a4",
     "semantic_hash": ""
   },
   "server/src/index.ts": {
-    "mtime": 1785002547.7008443,
-    "ast_hash": "c23df8abe669b1dddea393f24d61ce85",
+    "mtime": 1785333134.3720527,
+    "ast_hash": "53aa8560e4654a007e5e491f51a27ddf",
     "semantic_hash": ""
   },
   "server/src/packs.ts": {
@@ -250,13 +250,13 @@
     "semantic_hash": ""
   },
   "server/src/server.ts": {
-    "mtime": 1785004913.436493,
-    "ast_hash": "b0c42718a8d72d5ad6f873015849de32",
+    "mtime": 1785333134.3712819,
+    "ast_hash": "1b7fb54b2603c35255b3881fbbdf2ffd",
     "semantic_hash": ""
   },
   "server/src/social.ts": {
-    "mtime": 1784914451.3697295,
-    "ast_hash": "8271eed1d928460508cf63e2e2f8af52",
+    "mtime": 1785333134.370487,
+    "ast_hash": "365e77c2a41d08d370f5dce794539bea",
     "semantic_hash": ""
   },
   "server/src/userpacks.ts": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "server/test/api.test.ts": {
-    "mtime": 1785065909.1028357,
-    "ast_hash": "fdbc9ef62c3b5bf40deefb5183ee1975",
+    "mtime": 1785333079.383375,
+    "ast_hash": "e253fbd57569cbfea3ab51c83a968c4e",
     "semantic_hash": ""
   },
   "server/test/geocode-chain.test.ts": {
@@ -300,68 +300,68 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785068238.3647957,
-    "ast_hash": "fb3cf49c0962c713872967ee78067f7a",
+    "mtime": 1785078196.7737153,
+    "ast_hash": "1da9fbf54eaf97bb26617fff384f4dd4",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
-    "mtime": 1784903757.9530206,
-    "ast_hash": "b3ebd09ab774ec08b544420e2d1b7d12",
+    "mtime": 1785333230.0108235,
+    "ast_hash": "611f849bad4c298dddedac7098fd94d2",
     "semantic_hash": ""
   },
   "web/src/components/CategoryChips.tsx": {
-    "mtime": 1784983720.426072,
-    "ast_hash": "d5170fc647bc57e1ad555dee2562152a",
+    "mtime": 1785078223.289771,
+    "ast_hash": "ea43e55f45c2422794d2caa30dad02fa",
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
-    "mtime": 1785068213.0700638,
-    "ast_hash": "0eaf3b0dd7497151895752a5f39de0f3",
+    "mtime": 1785330575.887222,
+    "ast_hash": "3cc24c8173dc43263834051e696082a5",
     "semantic_hash": ""
   },
   "web/src/components/NavigationPanel.tsx": {
-    "mtime": 1784984924.4285796,
-    "ast_hash": "bad4dedad55838f8b3a26ed028a10756",
+    "mtime": 1785068541.6008801,
+    "ast_hash": "8c5c81e6414bdf38e095dadbf9c55edc",
     "semantic_hash": ""
   },
   "web/src/components/PackEditor.tsx": {
-    "mtime": 1785056146.7734845,
-    "ast_hash": "c9a3801a5f16fba7363761ea752fae36",
+    "mtime": 1785068561.7004962,
+    "ast_hash": "038431d5cbc221d6ff1b0c4d3802c7b0",
     "semantic_hash": ""
   },
   "web/src/components/PackSwitcher.tsx": {
-    "mtime": 1784980654.9567459,
-    "ast_hash": "7d7d0810f1394a61155e2091b548c5ab",
+    "mtime": 1785068605.2232623,
+    "ast_hash": "560b7880d1606d1b60ebbd427ee7b508",
     "semantic_hash": ""
   },
   "web/src/components/PlaceCard.tsx": {
-    "mtime": 1784983266.6899002,
-    "ast_hash": "9e99d2af42ca01eb895184818d950885",
+    "mtime": 1785068633.8571389,
+    "ast_hash": "484104f26fcdcc0faf398756685616eb",
     "semantic_hash": ""
   },
   "web/src/components/PoiResults.tsx": {
-    "mtime": 1784984744.3597925,
-    "ast_hash": "07f43840293291a35bf80ff50499baef",
+    "mtime": 1785069332.716586,
+    "ast_hash": "cb248c4baa19ace0fca950b3abdeb378",
     "semantic_hash": ""
   },
   "web/src/components/RoutePanel.tsx": {
-    "mtime": 1784984941.8189876,
-    "ast_hash": "c46f2acd676ede177af97c738212ea1f",
+    "mtime": 1785069215.8052728,
+    "ast_hash": "3df001a018bdf821fd9065c99cdfbfac",
     "semantic_hash": ""
   },
   "web/src/components/SavedPanel.tsx": {
-    "mtime": 1784980636.5168872,
-    "ast_hash": "ef0993b4bc0e8367c309d3fa460e47e5",
+    "mtime": 1785068677.0585458,
+    "ast_hash": "a6e45a6d22529c88a83ea184a6cbf063",
     "semantic_hash": ""
   },
   "web/src/components/SearchAreaButton.tsx": {
-    "mtime": 1785001414.1057503,
-    "ast_hash": "708ee2a3a8615a982ad3acdb913a091f",
+    "mtime": 1785068681.8377352,
+    "ast_hash": "8579be6878960c03024bc17f5d2efc3b",
     "semantic_hash": ""
   },
   "web/src/components/SearchBar.tsx": {
-    "mtime": 1785065956.9678595,
-    "ast_hash": "2982022358e0bcbd8d6b22f486a97979",
+    "mtime": 1785078107.0119374,
+    "ast_hash": "38d863b76ee7934ee00b1d88511a85e0",
     "semantic_hash": ""
   },
   "web/src/components/ui/badge.tsx": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "web/src/lib/api.ts": {
-    "mtime": 1785065956.9670246,
-    "ast_hash": "8160d1b75efd62979192c51ef1a7c4cc",
+    "mtime": 1785327847.7875571,
+    "ast_hash": "0d70d2e2067591cf2e1a8fb2dc1de461",
     "semantic_hash": ""
   },
   "web/src/lib/navigation.ts": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785068213.0693781,
-    "ast_hash": "b809ef5a3e36302c69a824481149f027",
+    "mtime": 1785333230.0120013,
+    "ast_hash": "dfc4950b52e00859fefa2090423b8034",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -475,13 +475,13 @@
     "semantic_hash": ""
   },
   "deploy/nas/docker-compose.yaml": {
-    "mtime": 1785064264.0613358,
-    "ast_hash": "57ae033b488611b976d73df0fcb2e3b8",
+    "mtime": 1785333280.3597114,
+    "ast_hash": "ed35d26fd16115e828214f5bf255af2a",
     "semantic_hash": ""
   },
   "ios/project.yml": {
-    "mtime": 1785002535.2588947,
-    "ast_hash": "c0dfbe4227844d2706d72b4b08fddcf5",
+    "mtime": 1785330607.4649506,
+    "ast_hash": "6ecfd3a3955ec02a1a5d1975c5944c3b",
     "semantic_hash": ""
   },
   "web/index.html": {
@@ -505,13 +505,13 @@
     "semantic_hash": ""
   },
   "packs/minecraft/sprite.png": {
-    "mtime": 1785004242.920841,
-    "ast_hash": "476b0e348940b568120815e9e17adabf",
+    "mtime": 1785074677.8649216,
+    "ast_hash": "dd1f75e6619694574180fce79743f23b",
     "semantic_hash": ""
   },
   "packs/minecraft/sprite@2x.png": {
-    "mtime": 1785004242.9231446,
-    "ast_hash": "d6697eb2337e6493f0e411b2bd6b6d9c",
+    "mtime": 1785074677.867969,
+    "ast_hash": "00468e7a776175928f9c534fc6bcb645",
     "semantic_hash": ""
   },
   "packs/paper/sprite.png": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "packs/gtav/style.json": {
-    "mtime": 1785068142.3255806,
-    "ast_hash": "6cfbbbd6f84aade000b0bdca90b9b832",
+    "mtime": 1785075683.7621763,
+    "ast_hash": "4e2b99490bbba097e7a4a19dfd1096f9",
     "semantic_hash": ""
   },
   "packs/sanandreas/pack.json": {
@@ -545,13 +545,68 @@
     "semantic_hash": ""
   },
   "packs/sanandreas/style.json": {
-    "mtime": 1785068142.3263297,
-    "ast_hash": "c6a557ac01b1cbce2937297493e52fe7",
+    "mtime": 1785075683.7628984,
+    "ast_hash": "3d9d267b8a0572e9aad54609a3f5a434",
     "semantic_hash": ""
   },
   "server/test/pois.test.ts": {
     "mtime": 1785064654.1681426,
     "ast_hash": "eeee00f60781fc48e26e12dd3fe233ab",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/CustomMapScreen.swift": {
+    "mtime": 1785330575.8900788,
+    "ast_hash": "2256c6ae133f46d7afc56c3b29045dd9",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/Localization.swift": {
+    "mtime": 1785078285.9914646,
+    "ast_hash": "dd2bcb82fa57be8b86ca208324bd8b61",
+    "semantic_hash": ""
+  },
+  "ios/MapsApp/MapTokens.swift": {
+    "mtime": 1785078545.4990673,
+    "ast_hash": "c4ac83eb3825b28c80012b9c20bec992",
+    "semantic_hash": ""
+  },
+  "server/src/applemaps.ts": {
+    "mtime": 1785321096.6462574,
+    "ast_hash": "943d501fc64efd776891c208c8f02704",
+    "semantic_hash": ""
+  },
+  "web/src/components/AppleMapView.tsx": {
+    "mtime": 1785327847.7879186,
+    "ast_hash": "7ca4a0997a318fd2d572f4ae1f811b3b",
+    "semantic_hash": ""
+  },
+  "web/src/lib/i18n.ts": {
+    "mtime": 1785333230.013704,
+    "ast_hash": "a0533c78cb6bb060ceac87eb4f4afc3f",
+    "semantic_hash": ""
+  },
+  "web/src/lib/markerTokens.ts": {
+    "mtime": 1785078030.8747783,
+    "ast_hash": "f379d5b4ac6674b68e343bece6345b34",
+    "semantic_hash": ""
+  },
+  "web/src/lib/useT.ts": {
+    "mtime": 1785068451.3165076,
+    "ast_hash": "a8200d3691f72da3e3f9dca7b1cf2603",
+    "semantic_hash": ""
+  },
+  "web/test/auth.test.ts": {
+    "mtime": 1785333193.2799501,
+    "ast_hash": "cbaacf51f9b78173c452fdf83ee39ab9",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-29-apple-web-login.md": {
+    "mtime": 1785332777.9516325,
+    "ast_hash": "1b570fbfa9da200febcc3c38b130a899",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-29-apple-web-login-design.md": {
+    "mtime": 1785332478.4052672,
+    "ast_hash": "fa5f1a68873b7e3487fd0f40e63cdb7d",
     "semantic_hash": ""
   }
 }
