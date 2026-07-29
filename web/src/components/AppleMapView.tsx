@@ -11,6 +11,22 @@ import { cn } from '../lib/utils'
 
 const INITIAL_REGION = { lat: 51.16, lon: 10.45, latDelta: 8, lonDelta: 11 }
 
+/** Module-level MapKit init — Apple documents a single init() per page. */
+let mapkitBootstrapped = false
+let mapkitAuthToken = ''
+
+function ensureMapkitInit(mk: any, language: string, token: string) {
+  mapkitAuthToken = token
+  if (mapkitBootstrapped) return
+  mk.init({
+    language,
+    authorizationCallback: (done: (t: string) => void) => {
+      done(mapkitAuthToken)
+    },
+  })
+  mapkitBootstrapped = true
+}
+
 function regionForPlace(mk: any, place: Place) {
   // Clamp spans — MapKit can hard-crash the page on NaN/insane spans from
   // geocode extents (observed as a blank #root after picking a search result).
@@ -80,37 +96,110 @@ function addSelectionListener(annotation: any, select: () => void) {
   annotation.addEventListener?.('select', select)
 }
 
+/** True only while the MapKit map is still mounted and sizeable. */
+function mapIsLive(map: any, host: HTMLElement | null | undefined): boolean {
+  if (!map || !host || !host.isConnected) return false
+  if (host.offsetWidth < 2 || host.offsetHeight < 2) return false
+  return true
+}
+
+/** Strip annotations/overlays before destroy so MapKit can't flush dead nodes. */
+function purgeMapkitInstance(map: any) {
+  if (!map) return
+  try {
+    const anns = map.annotations
+    if (anns?.length) map.removeAnnotations([...anns])
+  } catch { /* ignore */ }
+  try {
+    const ovs = map.overlays
+    if (ovs?.length) map.removeOverlays([...ovs])
+  } catch { /* ignore */ }
+  try {
+    map.showsUserLocation = false
+  } catch { /* ignore */ }
+  try {
+    map.destroy()
+  } catch { /* MapKit destroy can throw if half-init */ }
+}
+
+function safeAddAnnotation(map: any, host: HTMLElement | null | undefined, annotation: any): boolean {
+  if (!mapIsLive(map, host) || !annotation) return false
+  try {
+    map.addAnnotation(annotation)
+    return true
+  } catch (e) {
+    console.error('[mapkit] addAnnotation failed', e)
+    return false
+  }
+}
+
+function safeRemoveAnnotation(map: any, annotation: any) {
+  if (!map || !annotation) return
+  try { map.removeAnnotation(annotation) } catch { /* already gone */ }
+}
+
+function safeRemoveAnnotations(map: any, annotations: any[]) {
+  if (!map || !annotations.length) return
+  try { map.removeAnnotations(annotations) } catch {
+    for (const a of annotations) safeRemoveAnnotation(map, a)
+  }
+}
+
 // Apple owns the MapKit renderer and map data. Application state owns
 // selection, routes and bookmarks so provider switching preserves context.
 export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   const el = useRef<HTMLDivElement>(null)
   const app = useApp()
   const appRef = useRef(app)
+  const onFailureRef = useRef(onFailure)
   const [map, setMap] = useState<any>(null)
+  /** Generation token — async MapKit work from a destroyed mount must no-op. */
+  const genRef = useRef(0)
+  const aliveRef = useRef(false)
   const selectedAnnotation = useRef<any>(null)
   const userAnnotation = useRef<any>(null)
   const poiAnnotations = useRef<any[]>([])
   const bookmarkAnnotations = useRef<any[]>([])
   const routeOverlay = useRef<any>(null)
   const drivingAnnotation = useRef<any>(null)
+  const failCount = useRef(0)
   appRef.current = app
+  onFailureRef.current = onFailure
 
+  const noteMapkitFault = (reason: string) => {
+    failCount.current += 1
+    console.error('[mapkit] fault', reason, failCount.current)
+    // Only fall back after repeated hard failures — a single annotation glitch
+    // must not destroy the map while tiles are still flushing (isRooted spam).
+    if (failCount.current >= 3) onFailureRef.current?.()
+  }
+
+  // Mount once. Never re-run on onFailure identity changes (that was destroying
+  // MapKit mid-tile-load and causing isRooted / supportsLabelRegions crashes).
   useEffect(() => {
     let cancelled = false
     let instance: any
     let unregister = () => {}
+    const gen = ++genRef.current
+    aliveRef.current = true
+    failCount.current = 0
+
+    const stillHere = () =>
+      !cancelled && gen === genRef.current && aliveRef.current && !!el.current?.isConnected
 
     const loadScript = async () => {
       if ((window as any).mapkit) return
       await new Promise<void>((resolve, reject) => {
         const existing = document.querySelector<HTMLScriptElement>('script[data-mapkit-js]')
         if (existing) {
+          if ((window as any).mapkit) { resolve(); return }
           existing.addEventListener('load', () => resolve(), { once: true })
           existing.addEventListener('error', () => reject(new Error('MapKit JS failed to load')), { once: true })
           return
         }
         const script = document.createElement('script')
         script.dataset.mapkitJs = 'true'
+        // Pin major line; 6.x is current MapKit JS. Avoid re-init churn across remounts.
         script.src = 'https://cdn.apple-mapkit.com/mk/6.x.x/mapkit.js'
         script.onload = () => resolve()
         script.onerror = () => reject(new Error('MapKit JS failed to load'))
@@ -120,31 +209,32 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
 
     const load = async () => {
       if (!el.current) return
-      // Resolve a real JWT before touching Map() — creating a Map without
-      // calling done(token) leaves MapKit half-alive and later annotation
-      // ops throw (supportsLabelRegions on null) which can blank the shell.
       const tokenResult = await api.mapkitToken()
-      if (cancelled || !el.current) return
+      if (!stillHere()) return
       if (tokenResult.fallback || !tokenResult.token) {
-        onFailure?.()
+        onFailureRef.current?.()
         return
       }
       await loadScript()
-      if (cancelled || !el.current) return
+      if (!stillHere()) return
       const mk = (window as any).mapkit
       try {
-        mk.init({
-          language: appRef.current.lang,
-          authorizationCallback: (done: (token: string) => void) => {
-            done(tokenResult.token)
-          },
-        })
+        ensureMapkitInit(mk, appRef.current.lang, tokenResult.token)
+        mapkitAuthToken = tokenResult.token
       } catch (e) {
         console.error('[mapkit] init failed', e)
-        onFailure?.()
+        onFailureRef.current?.()
         return
       }
-      if (cancelled || !el.current) return
+      if (!stillHere()) return
+
+      // Wait a frame so the host has layout — MapKit needs a rooted, sized node.
+      await new Promise<void>((r) => requestAnimationFrame(() => r()))
+      if (!stillHere() || !el.current) return
+      if (el.current.offsetWidth < 2 || el.current.offsetHeight < 2) {
+        await new Promise((r) => setTimeout(r, 50))
+      }
+      if (!stillHere() || !el.current) return
 
       try {
         instance = new mk.Map(el.current, {
@@ -155,11 +245,19 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           showsScale: mk.FeatureVisibility?.Adaptive ?? true,
           showsMapTypeControl: true,
           showsZoomControl: false,
+          // Built-in blue dot — avoid custom MarkerAnnotation for "me" (fewer
+          // pending-annotation races with tile load).
+          showsUserLocation: false,
           showsUserLocationControl: false,
         })
       } catch (e) {
         console.error('[mapkit] Map() failed', e)
-        onFailure?.()
+        onFailureRef.current?.()
+        return
+      }
+      if (!stillHere()) {
+        purgeMapkitInstance(instance)
+        instance = null
         return
       }
       ;(window as unknown as { __appleMap?: unknown }).__appleMap = instance
@@ -172,27 +270,34 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       } catch {
         /* region restore is best-effort */
       }
+
+      // Defer React setMap until MapKit has had a chance to root into the DOM.
+      // Adding annotations in the same tick as Map() is a known source of
+      // supportsLabelRegions / isRooted null crashes.
+      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+      if (!stillHere()) {
+        purgeMapkitInstance(instance)
+        instance = null
+        return
+      }
       setMap(instance)
 
       const locate = () => {
+        if (!stillHere() || !mapIsLive(instance, el.current)) return
         try {
           instance.showsUserLocation = true
           if (!navigator.geolocation) return
           navigator.geolocation.getCurrentPosition((position) => {
+            if (!stillHere() || !mapIsLive(instance, el.current)) return
             try {
               const coordinate = new mk.Coordinate(position.coords.latitude, position.coords.longitude)
-              if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
-              userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
-                title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
-                color: '#1677ff',
-              })
-              instance.addAnnotation(userAnnotation.current)
+              // Prefer built-in user location; only use a pin as a center target.
               instance.setRegionAnimated(new mk.CoordinateRegion(
                 coordinate,
                 new mk.CoordinateSpan(0.025, 0.025),
               ), true)
             } catch (e) {
-              console.error('[mapkit] locate annotation failed', e)
+              console.error('[mapkit] locate failed', e)
             }
           }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 })
         } catch (e) {
@@ -211,6 +316,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           nativeControls: false,
         },
         zoomBy: (delta) => {
+          if (!stillHere() || !mapIsLive(instance, el.current)) return
           try {
             const region = instance.region
             if (!region) return
@@ -229,15 +335,18 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         locate,
         set3D: () => {},
         focusPlace: (place) => {
+          if (!stillHere() || !mapIsLive(instance, el.current)) return
           try { instance.setRegionAnimated(regionForPlace(mk, place), true) }
           catch (e) { console.error('[mapkit] focusPlace failed', e) }
         },
         showPlaces: (places) => {
+          if (!stillHere() || !mapIsLive(instance, el.current)) return
           try { fitPlaces(instance, mk, places) }
           catch (e) { console.error('[mapkit] showPlaces failed', e) }
         },
         getViewport: () => {
           try {
+            if (!mapIsLive(instance, el.current)) return null
             const region = instance.region
             if (!region) return null
             return {
@@ -250,14 +359,9 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           }
         },
         followNavigation: ({ lat, lon, heading }) => {
+          if (!stillHere() || !mapIsLive(instance, el.current)) return
           try {
             const coordinate = new mk.Coordinate(lat, lon)
-            if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
-            userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
-              title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
-              color: '#1677ff',
-            })
-            instance.addAnnotation(userAnnotation.current)
             instance.showsUserLocation = true
             if (mk.Camera && typeof instance.setCameraAnimated === 'function') {
               instance.setCameraAnimated(new mk.Camera(coordinate, {
@@ -280,16 +384,18 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       })
 
       instance.addEventListener?.('single-tap', (event: any) => {
-        if (!event.coordinate) return
+        if (!stillHere() || !event.coordinate) return
         const lat = event.coordinate.latitude
         const lon = event.coordinate.longitude
         void api.reverse(lat, lon).then((result) => {
+          if (!stillHere()) return
           appRef.current.select(result
             ? { name: result.name, label: result.label, lat: result.lat, lon: result.lon }
             : { name: `${lat.toFixed(5)}, ${lon.toFixed(5)}`, label: '', lat, lon })
         })
       })
       instance.addEventListener?.('region-change-end', () => {
+        if (!stillHere()) return
         try {
           const region = instance.region
           if (!region) return
@@ -305,25 +411,39 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       if (!saved && !new URLSearchParams(window.location.search).has('p')) locate()
 
       window.setTimeout(() => {
-        if (!cancelled && el.current && !el.current.querySelector('canvas, iframe, img')) onFailure?.()
-      }, 6000)
+        if (!stillHere()) return
+        if (el.current && !el.current.querySelector('canvas, iframe, img, .mk-map-view')) {
+          onFailureRef.current?.()
+        }
+      }, 8000)
     }
 
     void load().catch((error) => {
       console.error('[mapkit]', error)
-      onFailure?.()
+      if (!cancelled && gen === genRef.current) onFailureRef.current?.()
     })
+
     return () => {
       cancelled = true
+      aliveRef.current = false
+      genRef.current += 1
       try { unregister() } catch { /* ignore */ }
       delete (window as unknown as { __appleMap?: unknown }).__appleMap
-      try { instance?.destroy() } catch { /* MapKit destroy can throw if half-init */ }
+      // Clear React-held annotation refs so effects don't re-touch a dead map.
+      selectedAnnotation.current = null
+      userAnnotation.current = null
+      poiAnnotations.current = []
+      bookmarkAnnotations.current = []
+      routeOverlay.current = null
+      drivingAnnotation.current = null
+      purgeMapkitInstance(instance)
+      instance = null
       setMap(null)
     }
-  }, [onFailure])
+  }, [])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !mapIsLive(map, el.current)) return
     try {
       const mk = (window as any).mapkit
       const mapType = resolveAppleMapType(mk, app.mapPreferences.appleMapType)
@@ -336,97 +456,126 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   }, [map, app.mapPreferences.appleMapType, app.mapPreferences.appleColorScheme])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
+    const host = el.current
+    safeRemoveAnnotation(map, selectedAnnotation.current)
+    selectedAnnotation.current = null
+    if (!app.selected) return
+    if (!Number.isFinite(app.selected.lat) || !Number.isFinite(app.selected.lon)) return
+
+    // Always pan first (safe). Annotation is best-effort and must never kill the map.
     try {
-      if (selectedAnnotation.current) map.removeAnnotation(selectedAnnotation.current)
-      selectedAnnotation.current = null
-      if (!app.selected) return
-      if (!Number.isFinite(app.selected.lat) || !Number.isFinite(app.selected.lon)) return
-      selectedAnnotation.current = new mk.MarkerAnnotation(
-        new mk.Coordinate(app.selected.lat, app.selected.lon),
-        { title: app.selected.name, subtitle: app.selected.label || '', color: '#111111' },
-      )
-      map.addAnnotation(selectedAnnotation.current)
+      map.setRegionAnimated(regionForPlace(mk, app.selected), true)
+    } catch {
       try {
-        map.setRegionAnimated(regionForPlace(mk, app.selected), true)
-      } catch {
         map.setCenterAnimated?.(new mk.Coordinate(app.selected.lat, app.selected.lon), true)
+      } catch { /* ignore */ }
+    }
+
+    try {
+      const ann = new mk.MarkerAnnotation(
+        new mk.Coordinate(app.selected.lat, app.selected.lon),
+        { title: app.selected.name || ' ', subtitle: app.selected.label || '', color: '#111111' },
+      )
+      if (safeAddAnnotation(map, host, ann)) {
+        selectedAnnotation.current = ann
+        failCount.current = Math.max(0, failCount.current - 1)
+      } else {
+        noteMapkitFault('select-annotation')
       }
     } catch (e) {
       console.error('[mapkit] select place failed', e)
-      // Broken MapKit instance (common after auth/layout glitches) — fall back.
-      onFailure?.()
+      noteMapkitFault('select-exception')
     }
-  }, [map, app.selected, onFailure])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, app.selected])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
+    const host = el.current
+    safeRemoveAnnotations(map, poiAnnotations.current)
+    poiAnnotations.current = []
+    const places = app.pois.filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lon))
+    if (places.length === 0) return
     try {
-      if (poiAnnotations.current.length) map.removeAnnotations(poiAnnotations.current)
-      poiAnnotations.current = app.pois
-        .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lon))
-        .map((place) => {
-          const annotation = new mk.MarkerAnnotation(
-            new mk.Coordinate(place.lat, place.lon),
-            { title: place.name, subtitle: place.label, color: '#147d78' },
-          )
-          addSelectionListener(annotation, () => appRef.current.selectResult(place))
-          return annotation
+      const anns = places.map((place) => {
+        const annotation = new mk.MarkerAnnotation(
+          new mk.Coordinate(place.lat, place.lon),
+          { title: place.name || ' ', subtitle: place.label || '', color: '#147d78' },
+        )
+        addSelectionListener(annotation, () => {
+          if (aliveRef.current) appRef.current.selectResult(place)
         })
-      if (poiAnnotations.current.length) {
-        map.addAnnotations(poiAnnotations.current)
-        fitPlaces(map, mk, app.pois)
+        return annotation
+      })
+      // Add one-by-one so a single failure doesn't leave half-pending queues.
+      const added: any[] = []
+      for (const ann of anns) {
+        if (safeAddAnnotation(map, host, ann)) added.push(ann)
       }
+      poiAnnotations.current = added
+      if (added.length) fitPlaces(map, mk, places)
     } catch (e) {
       console.error('[mapkit] poi annotations failed', e)
     }
   }, [map, app.pois])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
+    const host = el.current
+    safeRemoveAnnotations(map, bookmarkAnnotations.current)
+    bookmarkAnnotations.current = []
     try {
-      if (bookmarkAnnotations.current.length) map.removeAnnotations(bookmarkAnnotations.current)
-      bookmarkAnnotations.current = app.bookmarks
-        .filter((bookmark) => Number.isFinite(bookmark.lat) && Number.isFinite(bookmark.lon))
-        .map((bookmark) => {
-          const annotation = new mk.MarkerAnnotation(
-            new mk.Coordinate(bookmark.lat, bookmark.lon),
-            { title: bookmark.name, subtitle: bookmark.note || bookmark.name, color: '#c28b00' },
-          )
-          addSelectionListener(annotation, () => appRef.current.select({
+      const added: any[] = []
+      for (const bookmark of app.bookmarks) {
+        if (!Number.isFinite(bookmark.lat) || !Number.isFinite(bookmark.lon)) continue
+        const annotation = new mk.MarkerAnnotation(
+          new mk.Coordinate(bookmark.lat, bookmark.lon),
+          { title: bookmark.name || ' ', subtitle: bookmark.note || bookmark.name || '', color: '#c28b00' },
+        )
+        addSelectionListener(annotation, () => {
+          if (!aliveRef.current) return
+          appRef.current.select({
             name: bookmark.name,
             label: bookmark.note || bookmark.name,
             lat: bookmark.lat,
             lon: bookmark.lon,
-          }))
-          return annotation
+          })
         })
-      if (bookmarkAnnotations.current.length) map.addAnnotations(bookmarkAnnotations.current)
+        if (safeAddAnnotation(map, host, annotation)) added.push(annotation)
+      }
+      bookmarkAnnotations.current = added
     } catch (e) {
       console.error('[mapkit] bookmark annotations failed', e)
     }
   }, [map, app.bookmarks])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
     try {
-      if (routeOverlay.current) map.removeOverlay(routeOverlay.current)
-      routeOverlay.current = null
+      if (routeOverlay.current) {
+        try { map.removeOverlay(routeOverlay.current) } catch { /* ignore */ }
+        routeOverlay.current = null
+      }
       const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
       if (!geometry || geometry.length < 2 || !mk.PolylineOverlay) return
-      // Filter non-finite coords — bad geometry can crash MapKit hard.
       const pts = geometry.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]))
       if (pts.length < 2) return
       const coordinates = pts.map(([lon, lat]) => new mk.Coordinate(lat, lon))
       routeOverlay.current = new mk.PolylineOverlay(coordinates, {
         style: new mk.Style({ lineWidth: 6, strokeColor: '#1677ff', lineJoin: 'round', lineCap: 'round' }),
       })
-      map.addOverlay(routeOverlay.current)
-      // Fit using endpoints only (cheap + safe for long polylines).
+      try {
+        map.addOverlay(routeOverlay.current)
+      } catch (e) {
+        console.error('[mapkit] addOverlay failed', e)
+        routeOverlay.current = null
+        return
+      }
       const a = pts[0]
       const b = pts[pts.length - 1]
       fitPlaces(map, mk, [
@@ -439,15 +588,15 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   }, [map, app.route])
 
   useEffect(() => {
-    if (!map) return
+    if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
+    const host = el.current
+    safeRemoveAnnotation(map, drivingAnnotation.current)
+    drivingAnnotation.current = null
     try {
-      if (drivingAnnotation.current) map.removeAnnotation(drivingAnnotation.current)
-      drivingAnnotation.current = null
       const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
       const pts = geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null
       if (!pts || pts.length < 2 || app.driving.status === 'idle') {
-        // Flatten camera when leaving an active race.
         if (app.driving.status === 'idle' && typeof map.setCameraAnimated === 'function') {
           try {
             const center = map.center
@@ -463,17 +612,11 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
       if (!Number.isFinite(carPt[0]) || !Number.isFinite(carPt[1])) return
       const look = offsetAlongBearing(carPt, bearing, app.driving.status === 'ready' ? 16 : 36)
-      drivingAnnotation.current = new mk.MarkerAnnotation(new mk.Coordinate(carPt[1], carPt[0]), {
-        title: 'Driving position',
-        color: '#0b5fff',
-        glyphText: '🚗',
-      })
-      map.addAnnotation(drivingAnnotation.current)
+      // Prefer camera follow over glyph annotation — fewer MapKit annotation races.
       if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
         const coord = new mk.Coordinate(look[1], look[0])
         try {
           if (mk.Camera && typeof map.setCameraAnimated === 'function') {
-            // Street-level chase cam (MapKit JS Camera API).
             map.setCameraAnimated(new mk.Camera(coord, {
               heading: bearing,
               pitch: RACE_PITCH,
@@ -484,8 +627,16 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
             if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
           }
         } catch {
-          map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
+          try { map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false) } catch { /* ignore */ }
         }
+      }
+      // Lightweight pin only when ready (start line); skip during running ticks.
+      if (app.driving.status === 'ready' || app.driving.status === 'paused' || app.driving.status === 'finished') {
+        const ann = new mk.MarkerAnnotation(new mk.Coordinate(carPt[1], carPt[0]), {
+          title: ' ',
+          color: '#0b5fff',
+        })
+        if (safeAddAnnotation(map, host, ann)) drivingAnnotation.current = ann
       }
     } catch (e) {
       console.error('[mapkit] driving annotation failed', e)

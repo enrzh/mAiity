@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
 import { useApp } from '../state'
 import {
   locateActiveMap,
@@ -80,33 +80,34 @@ export function MapView({
   const [appleFailed, setAppleFailed] = useState(false)
   const [mapEpoch, setMapEpoch] = useState(0)
 
-  const handleAppleFailure = useCallback(() => {
-    setAppleFailed(true)
-    onAppleFailed?.()
-    // Persist fallback so a reload doesn't immediately re-enter a broken
-    // MapKit session (token / origin / layout glitches).
-    try {
-      const prefs = readMapPreferences()
-      if (prefs.provider === 'apple') {
-        writeMapPreferences({ ...prefs, provider: 'custom' })
-        app.setMapProvider('custom')
-      }
-    } catch {
-      app.setMapProvider('custom')
-    }
-  }, [onAppleFailed, app])
+  // Keep latest app/onAppleFailed without changing callback identity — otherwise
+  // AppleMapView's mount effect re-runs every render, destroy()s MapKit while
+  // annotations are still pending, and MapKit throws isRooted / supportsLabelRegions.
+  const appRef = useRef(app)
+  appRef.current = app
+  const onAppleFailedRef = useRef(onAppleFailed)
+  onAppleFailedRef.current = onAppleFailed
 
-  const handleRendererCrash = useCallback(() => {
-    // Prefer custom packs after any hard renderer crash.
+  const fallBackToCustom = useCallback(() => {
     setAppleFailed(true)
-    onAppleFailed?.()
+    onAppleFailedRef.current?.()
     try {
       const prefs = readMapPreferences()
       writeMapPreferences({ ...prefs, provider: 'custom' })
     } catch { /* best effort */ }
-    app.setMapProvider('custom')
+    try {
+      appRef.current.setMapProvider('custom')
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleAppleFailure = useCallback(() => {
+    fallBackToCustom()
+  }, [fallBackToCustom])
+
+  const handleRendererCrash = useCallback(() => {
+    fallBackToCustom()
     setMapEpoch((n) => n + 1)
-  }, [onAppleFailed, app])
+  }, [fallBackToCustom])
 
   useEffect(() => {
     if (app.mapProvider !== 'apple') setAppleFailed(false)
