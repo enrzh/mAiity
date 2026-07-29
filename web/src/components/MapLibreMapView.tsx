@@ -494,16 +494,25 @@ export function MapLibreMapView() {
   const routeGeometry = app.route?.status === 'ready' ? app.route.result?.geometry ?? null : null
   useEffect(() => {
     if (!map) return
-    routeGeoRef.current = routeGeometry
-    // If the style isn't ready, the persistent style.load handler syncs later.
-    if (styleReadyRef.current) syncRouteLayers(map)
-    if (routeGeometry && routeGeometry.length > 1) {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-      for (const [x, y] of routeGeometry) {
-        minX = Math.min(minX, x); maxX = Math.max(maxX, x)
-        minY = Math.min(minY, y); maxY = Math.max(maxY, y)
+    // Drop non-finite coords so GeoJSON/fitBounds never poison the map.
+    const clean = routeGeometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null
+    const geo = clean && clean.length >= 2 ? clean : null
+    routeGeoRef.current = geo
+    try {
+      // If the style isn't ready, the persistent style.load handler syncs later.
+      if (styleReadyRef.current) syncRouteLayers(map)
+      if (geo) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+        for (const [x, y] of geo) {
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x)
+          minY = Math.min(minY, y); maxY = Math.max(maxY, y)
+        }
+        if (Number.isFinite(minX) && Number.isFinite(minY) && Number.isFinite(maxX) && Number.isFinite(maxY)) {
+          map.fitBounds([[minX, minY], [maxX, maxY]], { padding: framePad(80), duration: 900 })
+        }
       }
-      map.fitBounds([[minX, minY], [maxX, maxY]], { padding: framePad(80), duration: 900 })
+    } catch (e) {
+      console.error('[maplibre] route layers failed', e)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
@@ -527,40 +536,49 @@ export function MapLibreMapView() {
       return
     }
     racePrevStatus.current = app.driving.status
-    // Show the car from ready through finished so the start line is visible.
-    if (!drivingMarker.current) {
-      const el = document.createElement('div')
-      el.className = 'maps-driving-car maps-driving-car--race'
-      el.innerHTML = '<span class="maps-driving-car-body" aria-hidden="true"><i></i><i></i></span>'
-      el.setAttribute('aria-label', 'Driving position')
-      drivingMarker.current = new Marker({ element: el, anchor: 'center' }).addTo(map)
-    }
+    // Compute position BEFORE creating the marker — MapLibre Marker.addTo
+    // reads _lngLat.lng and throws if setLngLat was never called (blank #root).
     const progress = app.driving.progress
     const point = pointAtProgress(routeGeometry, progress)
     const bearing = bearingAtProgress(routeGeometry, progress)
     const carLngLat = carPositionAt(point, bearing, app.driving.lateral ?? 0)
-    drivingMarker.current.setLngLat(carLngLat)
-    const car = drivingMarker.current.getElement().querySelector('.maps-driving-car-body') as HTMLElement | null
-    if (car) car.style.transform = `rotate(${bearing}deg)`
-    // Street-level chase cam while racing (and hold while paused / finished).
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
-      try { ensure3DScenery(map) } catch { /* optional sky */ }
-      const cam = raceCameraAt(carLngLat, bearing)
-      // Slight look-ahead so the road opens ahead of the car.
-      const center = offsetAlongBearing(carLngLat, bearing, app.driving.status === 'ready' ? 12 : 28)
-      const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const opts = {
-        center,
-        bearing: cam.bearing,
-        pitch: cam.pitch,
-        zoom: Math.max(map.getZoom(), cam.zoom),
-        duration: app.driving.status === 'running' && !reduced ? 90 : (app.driving.status === 'ready' ? 500 : 0),
-        essential: true as const,
-        // Leave room for the race HUD (bottom) and map controls (right).
-        padding: { top: 24, bottom: 160, left: 16, right: 72 },
+    if (!Number.isFinite(carLngLat[0]) || !Number.isFinite(carLngLat[1])) return
+    try {
+      if (!drivingMarker.current) {
+        const el = document.createElement('div')
+        el.className = 'maps-driving-car maps-driving-car--race'
+        el.innerHTML = '<span class="maps-driving-car-body" aria-hidden="true"><i></i><i></i></span>'
+        el.setAttribute('aria-label', 'Driving position')
+        drivingMarker.current = new Marker({ element: el, anchor: 'center' })
+          .setLngLat(carLngLat)
+          .addTo(map)
+      } else {
+        drivingMarker.current.setLngLat(carLngLat)
       }
-      if (opts.duration > 0) map.easeTo(opts)
-      else map.jumpTo(opts)
+      const car = drivingMarker.current.getElement().querySelector('.maps-driving-car-body') as HTMLElement | null
+      if (car) car.style.transform = `rotate(${bearing}deg)`
+      // Street-level chase cam while racing (and hold while paused / finished).
+      if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
+        try { ensure3DScenery(map) } catch { /* optional sky */ }
+        const cam = raceCameraAt(carLngLat, bearing)
+        // Slight look-ahead so the road opens ahead of the car.
+        const center = offsetAlongBearing(carLngLat, bearing, app.driving.status === 'ready' ? 12 : 28)
+        const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        const opts = {
+          center,
+          bearing: cam.bearing,
+          pitch: cam.pitch,
+          zoom: Math.max(map.getZoom(), cam.zoom),
+          duration: app.driving.status === 'running' && !reduced ? 90 : (app.driving.status === 'ready' ? 500 : 0),
+          essential: true as const,
+          // Leave room for the race HUD (bottom) and map controls (right).
+          padding: { top: 24, bottom: 160, left: 16, right: 72 },
+        }
+        if (opts.duration > 0) map.easeTo(opts)
+        else map.jumpTo(opts)
+      }
+    } catch (e) {
+      console.error('[maplibre] race marker failed', e)
     }
   }, [map, routeGeometry, app.driving])
 
