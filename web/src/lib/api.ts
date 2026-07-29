@@ -153,9 +153,9 @@ async function authed(path: string, init: RequestInit = {}, retried = false): Pr
 // ---- Data ------------------------------------------------------------------
 
 export const api = {
-  async mapkitToken(): Promise<{ token: string; expiresInSeconds: number }> {
+  async mapkitToken(): Promise<{ token: string; expiresInSeconds: number; fallback?: boolean }> {
     const res = await fetch(`${API}/mapkit-token`)
-    if (!res.ok) return { token: MAPKIT_JS_FALLBACK_TOKEN, expiresInSeconds: 86400 }
+    if (!res.ok) return { token: MAPKIT_JS_FALLBACK_TOKEN, expiresInSeconds: 86400, fallback: true }
     return res.json()
   },
   async bookmarks(): Promise<Bookmark[]> {

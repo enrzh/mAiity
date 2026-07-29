@@ -27,10 +27,17 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       }
       if (cancelled) return
       const mk = (window as any).mapkit
-      mk.init({
-        language: appRef.current.lang,
-        authorizationCallback: async (done: (token: string) => void) => {
-          try { done((await api.mapkitToken()).token) } catch { onFailure?.() }
+        mk.init({
+          language: appRef.current.lang,
+          authorizationCallback: async (done: (token: string) => void) => {
+          try {
+            const result = await api.mapkitToken()
+            // Do not initialize MapKit with a known fallback/invalid token.
+            // MapKit still creates a canvas in that state, but renders only a
+            // blank surface and never emits a useful failure to the component.
+            if (result.fallback) { onFailure?.(); return }
+            done(result.token)
+          } catch { onFailure?.() }
         },
       })
       if (cancelled || !el.current) return
