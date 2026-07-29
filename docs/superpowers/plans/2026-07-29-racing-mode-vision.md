@@ -42,6 +42,7 @@ Applies to:
 | **C — Car presentation** | ✅ Improved 3D-ish CSS car on MapLibre; Apple/iOS car annotations upgraded |
 | **D — Pack + Apple parity** | ✅ Shared race session + chase cam on both web renderers + native |
 | **E — Polish** | ⬜ Minimap, countdown, true 3D mesh cars, haptics, multiplayer |
+| **F — Web↔iOS parity** | ⬜ See `2026-07-29-web-ios-improvement-plan.md` (iOS game physics, overlay HUD, web Apple TBT, history UI) |
 
 ## Bugfix pass (post ship)
 
