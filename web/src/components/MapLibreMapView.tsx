@@ -152,6 +152,33 @@ export function applyMapLanguage(m: MLMap, lang: string) {
   } catch { /* style mid-swap — the style.load hook re-applies */ }
 }
 
+/**
+ * MapLibre pauses tile managers while a source is reloaded (e.g. after
+ * setLayoutProperty on a protomaps layer). If resume runs before the manager
+ * has a transform, tiles never cover the viewport — permanent blank basemap
+ * (background only). Force every manager awake with the live transform.
+ */
+function kickTiles(m: MLMap) {
+  try {
+    const tm = (m as unknown as { style?: { tileManagers?: Map<string, any> | Record<string, any> } }).style?.tileManagers
+    if (!tm) return
+    const managers = typeof (tm as Map<string, any>).values === 'function'
+      ? [...(tm as Map<string, any>).values()]
+      : Object.values(tm as Record<string, any>)
+    const terrain = (m as unknown as { terrain?: unknown }).terrain ?? null
+    for (const manager of managers) {
+      if (!manager) continue
+      try {
+        if (manager._paused && typeof manager.resume === 'function') manager.resume()
+        if (typeof manager.update === 'function' && m.transform) {
+          manager.update(m.transform, terrain)
+        }
+      } catch { /* manager mid-dispose */ }
+    }
+    m.triggerRepaint()
+  } catch { /* style not ready */ }
+}
+
 /// Persistent "you are here" dot — the built-in GeolocateControl only shows
 /// one after an explicit click, and it collides with our control stack.
 let userDot: Marker | null = null
@@ -277,16 +304,35 @@ export function MapLibreMapView() {
 
     // Route layers are user layers on TOP of pack styles — re-added after
     // every setStyle (pack switch) from the current routeRef.
+    // IMPORTANT: never mutate basemap layers synchronously in style.load —
+    // setLayoutProperty pauses the protomaps tile manager; if resume runs
+    // before transform is attached, the map stays blank forever (bg only).
     m.on('style.load', () => {
       styleReadyRef.current = true
-      applyMapLanguage(m, appRef.current.lang)
-      syncRouteLayers(m)
-      // A style swap drops sources/terrain — restore the 3D scenery if it
-      // was engaged, so pack switching doesn't silently flatten the map.
-      if (wants3DRef.current) {
-        ensure3DScenery(m)
-        if (TERRAIN_ENABLED) m.setTerrain({ source: DEM_SOURCE, exaggeration: 1.2 })
+      const finish = () => {
+        try {
+          applyMapLanguage(m, appRef.current.lang)
+          syncRouteLayers(m)
+          if (wants3DRef.current) {
+            ensure3DScenery(m)
+            if (TERRAIN_ENABLED) m.setTerrain({ source: DEM_SOURCE, exaggeration: 1.2 })
+          }
+        } catch (e) {
+          console.error('[maplibre] style setup failed', e)
+        } finally {
+          kickTiles(m)
+          // One more kick after the next frame — language/route mutations
+          // pause managers again; transform is stable by then.
+          requestAnimationFrame(() => kickTiles(m))
+        }
       }
+      // Prefer first idle (tiles attempted); fall back if idle is delayed.
+      const onIdle = () => { m.off('idle', onIdle); finish() }
+      m.once('idle', onIdle)
+      window.setTimeout(() => {
+        m.off('idle', onIdle)
+        finish()
+      }, 400)
     })
 
     // Startup location: open the map where the user IS.
@@ -445,6 +491,8 @@ export function MapLibreMapView() {
   useEffect(() => {
     if (!map || !styleReadyRef.current) return
     applyMapLanguage(map, app.lang)
+    // setLayoutProperty pauses the basemap source — wake tiles again.
+    requestAnimationFrame(() => kickTiles(map))
   }, [map, app.lang])
 
   // Pack switching — camera survives setStyle; DOM markers survive too.

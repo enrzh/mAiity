@@ -10,8 +10,8 @@
   "sources": {
     "protomaps": {
       "type": "vector",
-      "url": "pmtiles://https://maps.aiity.de/maps/region-z15.pmtiles?v=1",
-      "attribution": "<a href=\"https://openstreetmap.org/copyright\">© OpenStreetMap</a> · <a href=\"https://protomaps.com\">Protomaps</a>"
+      "url": "pmtiles://https://maps.aiity.de/maps/region-z15.pmtiles",
+      "attribution": "<a href=\"https://openstreetmap.org/copyright\">\u00a9 OpenStreetMap</a> \u00b7 <a href=\"https://protomaps.com\">Protomaps</a>"
     }
   },
   "light": {
@@ -1134,7 +1134,7 @@
       "layout": {
         "text-field": [
           "concat",
-          "✦ ",
+          "\u2726 ",
           [
             "get",
             "name"
