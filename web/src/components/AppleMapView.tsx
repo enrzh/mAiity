@@ -45,6 +45,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       })
       if (cancelled || !el.current) return
       map = new mk.Map(el.current)
+      ;(window as unknown as { __appleMap?: unknown }).__appleMap = map
       setMap(map)
       map.region = new mk.CoordinateRegion(
         new mk.Coordinate(51.16, 10.45),
@@ -105,6 +106,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     return () => {
       cancelled = true
       unregisterController()
+      delete (window as unknown as { __appleMap?: unknown }).__appleMap
       map?.destroy()
       setMap(null)
     }
