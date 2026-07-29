@@ -174,6 +174,23 @@ body { overscroll-behavior: none; }
   border-radius: 4px;
   background: rgb(255 255 255 / 80%);
 }
+
+.maps-driving-game { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: 1fr auto auto; background: #15202b; color: white; }
+.maps-driving-horizon { position: relative; overflow: hidden; min-height: 0; perspective: 500px; background: #9bc8e2; }
+.maps-driving-sky { position: absolute; inset: 0 0 45%; background: linear-gradient(#76b7d8 0%, #dbe7dc 85%); }
+.maps-driving-road { position: absolute; inset: 38% -25% -25%; transform: rotateX(58deg); transform-origin: 50% 100%; background: #3d4249; border-top: 2px solid #c7ccd1; box-shadow: 0 -25px 50px #71826f; }
+.maps-driving-road::before, .maps-driving-road::after { content: ''; position: absolute; top: 0; bottom: 0; width: 4px; background: repeating-linear-gradient(to bottom, transparent 0 42px, #f4f4f4 42px 70px); opacity: .8; }
+.maps-driving-road::before { left: 50%; } .maps-driving-road::after { left: 25%; }
+.maps-driving-road i { position: absolute; top: 0; bottom: 0; width: 2px; background: #f7f7f7; opacity: .7; } .maps-driving-road i:nth-child(1) { left: 12%; } .maps-driving-road i:nth-child(2) { left: 75%; } .maps-driving-road i:nth-child(3) { left: 88%; }
+.maps-driving-car-view { position: absolute; left: calc(50% - 38px); bottom: 34px; display: grid; place-items: center; width: 76px; height: 76px; border: 3px solid #fff; border-radius: 50%; background: #1976d2; box-shadow: 0 0 22px rgb(0 0 0 / 35%); }
+.maps-driving-car-view svg { width: 40px; height: 40px; }
+.maps-driving-hud { position: absolute; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: min(92vw, 560px); padding: 10px 14px; border: 1px solid rgb(255 255 255 / 25%); border-radius: 14px; background: rgb(0 0 0 / 42%); backdrop-filter: blur(10px); }
+.maps-driving-stat { display: inline-flex; align-items: center; gap: 5px; font: 700 14px/1.2 ui-monospace, monospace; white-space: nowrap; }
+.maps-driving-progress { flex: 1 0 100%; height: 5px; overflow: hidden; border-radius: 5px; background: rgb(255 255 255 / 25%); } .maps-driving-progress span { display: block; height: 100%; background: #69b5ff; transition: width 80ms linear; }
+.maps-driving-actions { display: flex; justify-content: center; gap: 10px; padding: 12px 16px; background: #121820; }
+.maps-driving-touch { display: flex; justify-content: center; gap: 8px; padding: 0 16px max(16px, env(safe-area-inset-bottom)); background: #121820; }
+.maps-driving-finished { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 14px; background: #121820; font-weight: 700; }
+@media (min-width: 700px) { .maps-driving-touch { padding-bottom: 18px; } }
 @media (prefers-reduced-motion: reduce) {
   .maps-driving-car span { transition: none; }
 }

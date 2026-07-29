@@ -14,6 +14,7 @@ import {
   createDrivingSession, finishDriving, loadDrivingRuns, pauseDriving, resumeDriving,
   saveDrivingRun, startDriving, tickDriving, toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
+import { stepDrivingGame, type DrivingInput } from './lib/drivingGame'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -91,6 +92,7 @@ interface AppState {
   pauseDrivingMode: () => void
   resumeDrivingMode: () => void
   tickDrivingMode: (now?: number) => void
+  driveDrivingMode: (input: DrivingInput, now?: number) => void
   finishDrivingMode: () => void
   showCategory: (
     cat: NearbyCategory,
@@ -474,6 +476,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [])
+  const driveDrivingMode = useCallback((input: DrivingInput, now = Date.now()) => {
+    setDriving((s) => {
+      if (s.status !== 'running') return s
+      const nextPhysics = stepDrivingGame(
+        { progress: s.progress, speedMps: s.speedMps, lateral: s.lateral },
+        input,
+        Math.min(0.1, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000)),
+        s.distanceM,
+      )
+      const next = { ...s, ...nextPhysics, elapsedMs: Math.min(s.durationMs, s.elapsedMs + Math.min(100, Math.max(0, now - (s.lastInputAt ?? now)))), lastInputAt: now }
+      if (next.progress >= 1) {
+        const finished = finishDriving(next, now)
+        const run = toDrivingRun(finished, now)
+        setDrivingRuns((runs) => [run, ...runs].slice(0, 20))
+        return finished
+      }
+      return next
+    })
+  }, [])
   const finishDrivingMode = useCallback(() => {
     setDriving((s) => {
       const finished = finishDriving(s)
@@ -546,7 +567,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
     driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
-    tickDrivingMode, finishDrivingMode,
+    tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

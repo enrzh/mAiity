@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "web/src/state.tsx": {
-    "mtime": 1785340566.467068,
-    "ast_hash": "639b92c59c6e48a1ffabbc12933ecb83",
+    "mtime": 1785352102.5257757,
+    "ast_hash": "7c483fcb9e837a86f51d022b5a4b9240",
     "semantic_hash": ""
   },
   "web/src/vite-env.d.ts": {
@@ -695,8 +695,8 @@
     "semantic_hash": ""
   },
   "web/src/components/DrivingModePanel.tsx": {
-    "mtime": 1785341359.5801432,
-    "ast_hash": "149edd1214c968bee168a614ef404ba7",
+    "mtime": 1785352173.0713747,
+    "ast_hash": "88ed905ccf1ab958977d9e9432a54dc9",
     "semantic_hash": ""
   },
   "web/src/lib/driving.test.ts": {
@@ -715,13 +715,23 @@
     "semantic_hash": ""
   },
   "web/src/lib/drivingSession.ts": {
-    "mtime": 1785340525.4688127,
-    "ast_hash": "06dc024b8620796b42a9226bec21c6fa",
+    "mtime": 1785352231.778995,
+    "ast_hash": "2d4bb7c7819fbb672cac4258f3c1e4b2",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-29-driving-game-mode.md": {
     "mtime": 1785340320.4867754,
     "ast_hash": "c89101250238d3a52bec082edacb893d",
+    "semantic_hash": ""
+  },
+  "web/src/lib/drivingGame.test.ts": {
+    "mtime": 1785352069.9952724,
+    "ast_hash": "82cc68bc42670d47e850e6d3b2d16775",
+    "semantic_hash": ""
+  },
+  "web/src/lib/drivingGame.ts": {
+    "mtime": 1785352069.9951553,
+    "ast_hash": "1a01812f4393cd7e1139054b6b93401d",
     "semantic_hash": ""
   }
 }

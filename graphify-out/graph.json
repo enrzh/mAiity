@@ -716,8 +716,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_double",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "double"
     },
     {
@@ -760,8 +760,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_routeui",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": "routeui"
     },
     {
@@ -782,8 +782,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_routemode",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": "routemode"
     },
     {
@@ -793,8 +793,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_routeresult",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": "routeresult"
     },
     {
@@ -859,8 +859,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_sheetpanel",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 59,
+      "community_name": "sidebarState.ts",
       "norm_label": "sheetpanel"
     },
     {
@@ -870,8 +870,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_sheetpanel_none",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 59,
+      "community_name": "sidebarState.ts",
       "norm_label": "none"
     },
     {
@@ -881,8 +881,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_sheetpanel_saved",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 59,
+      "community_name": "sidebarState.ts",
       "norm_label": "saved"
     },
     {
@@ -892,8 +892,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_sheetpanel_packs",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 59,
+      "community_name": "sidebarState.ts",
       "norm_label": "packs"
     },
     {
@@ -903,8 +903,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": "appmodel"
     },
     {
@@ -936,8 +936,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_pack",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": "pack"
     },
     {
@@ -947,8 +947,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_georesult",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": "georesult"
     },
     {
@@ -958,8 +958,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_setlang",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": ".setlang()"
     },
     {
@@ -969,8 +969,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_navstate",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "navstate"
     },
     {
@@ -980,8 +980,8 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "drivingstate"
     },
     {
@@ -991,8 +991,8 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate_idle",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "idle"
     },
     {
@@ -1002,8 +1002,8 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate_ready",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "ready"
     },
     {
@@ -1013,8 +1013,8 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate_running",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "running"
     },
     {
@@ -1024,8 +1024,8 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate_paused",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "paused"
     },
     {
@@ -1035,8 +1035,8 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_drivingstate_finished",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "finished"
     },
     {
@@ -1046,8 +1046,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_bookmark",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": "bookmark"
     },
     {
@@ -1057,8 +1057,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_cameraevent",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": "cameraevent"
     },
     {
@@ -1079,8 +1079,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_void",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": "void"
     },
     {
@@ -1090,8 +1090,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_never",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": "never"
     },
     {
@@ -1101,8 +1101,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_setqueryquietly",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": ".setqueryquietly()"
     },
     {
@@ -1112,8 +1112,8 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_init",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".init()"
     },
     {
@@ -1123,8 +1123,8 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_recordrecent",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": ".recordrecent()"
     },
     {
@@ -1134,8 +1134,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_url",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": "url"
     },
     {
@@ -1266,8 +1266,8 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_select",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": ".select()"
     },
     {
@@ -1332,8 +1332,8 @@
       "source_location": "L338",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_togglebookmark",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".togglebookmark()"
     },
     {
@@ -1365,8 +1365,8 @@
       "source_location": "L366",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_setpack",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".setpack()"
     },
     {
@@ -1376,8 +1376,8 @@
       "source_location": "L373",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_setappleprovider",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".setappleprovider()"
     },
     {
@@ -1398,8 +1398,8 @@
       "source_location": "L383",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_removepack",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".removepack()"
     },
     {
@@ -1409,8 +1409,8 @@
       "source_location": "L397",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_startnavigation",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": ".startnavigation()"
     },
     {
@@ -1431,8 +1431,8 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_advance",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 15,
+      "community_name": "Nav",
       "norm_label": ".advance()"
     },
     {
@@ -1442,8 +1442,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_swift_cllocationcoordinate2d",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 15,
+      "community_name": "Nav",
       "norm_label": "cllocationcoordinate2d"
     },
     {
@@ -1453,8 +1453,8 @@
       "source_location": "L453",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_navcamera",
-      "community": 68,
-      "community_name": ".advance",
+      "community": 62,
+      "community_name": "AppModel.swift",
       "norm_label": "navcamera"
     },
     {
@@ -1475,8 +1475,8 @@
       "source_location": "L474",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_setroutemode",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": ".setroutemode()"
     },
     {
@@ -1497,8 +1497,8 @@
       "source_location": "L484",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_swaproute",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": ".swaproute()"
     },
     {
@@ -1508,8 +1508,8 @@
       "source_location": "L489",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_beginpickstart",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".beginpickstart()"
     },
     {
@@ -1530,8 +1530,8 @@
       "source_location": "L505",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_preparedriving",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": ".preparedriving()"
     },
     {
@@ -1541,8 +1541,8 @@
       "source_location": "L511",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_startdriving",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".startdriving()"
     },
     {
@@ -1552,8 +1552,8 @@
       "source_location": "L516",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_pausedriving",
-      "community": 1,
-      "community_name": "AppModel",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".pausedriving()"
     },
     {
@@ -1563,8 +1563,8 @@
       "source_location": "L522",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_resumedriving",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".resumedriving()"
     },
     {
@@ -1574,8 +1574,8 @@
       "source_location": "L527",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_finishdriving",
-      "community": 62,
-      "community_name": "AppModel.swift",
+      "community": 63,
+      "community_name": "String",
       "norm_label": ".finishdriving()"
     },
     {
@@ -1618,8 +1618,8 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "ios_mapsapp_appmodel_appmodel_requestroute",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 71,
+      "community_name": "Status",
       "norm_label": ".requestroute()"
     },
     {
@@ -1985,8 +1985,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "installpacksheet.swift"
     },
     {
@@ -1996,8 +1996,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_installpacksheet",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "installpacksheet"
     },
     {
@@ -2007,8 +2007,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_swift_string",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "string"
     },
     {
@@ -2018,8 +2018,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_source",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "source"
     },
     {
@@ -2029,8 +2029,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_source_url",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "url"
     },
     {
@@ -2040,8 +2040,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_source_json",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "json"
     },
     {
@@ -2051,8 +2051,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_installpacksheet_swift_bool",
-      "community": 54,
-      "community_name": "InstallPackSheet",
+      "community": 18,
+      "community_name": "SheetView",
       "norm_label": "bool"
     },
     {
@@ -2151,8 +2151,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ios_mapsapp_localization",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "localization.swift"
     },
     {
@@ -2162,8 +2162,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "ios_mapsapp_localization_l",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "l"
     },
     {
@@ -2173,8 +2173,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "ios_mapsapp_localization_language",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "language"
     },
     {
@@ -2184,8 +2184,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_localization_swift_string",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": "string"
     },
     {
@@ -2195,8 +2195,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "ios_mapsapp_localization_l_t",
-      "community": 63,
-      "community_name": "String",
+      "community": 51,
+      "community_name": "RoutePanel.tsx",
       "norm_label": ".t()"
     },
     {
@@ -2218,8 +2218,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "uikit",
-      "community": 53,
-      "community_name": "MapTokens",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "uikit"
     },
     {
@@ -2317,8 +2317,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "ios_mapsapp_locationservice_locationservice_currentlocation",
-      "community": 65,
-      "community_name": ".requestRoute",
+      "community": 14,
+      "community_name": "LocationService",
       "norm_label": ".currentlocation()"
     },
     {
@@ -2593,8 +2593,8 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "ios_mapsapp_mapscreen_mapscreen_locate",
-      "community": 50,
-      "community_name": "MapScreen",
+      "community": 14,
+      "community_name": "LocationService",
       "norm_label": ".locate()"
     },
     {
@@ -3220,8 +3220,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "ios_mapsapp_sheetview",
-      "community": 22,
-      "community_name": "View",
+      "community": 27,
+      "community_name": "SwiftUI",
       "norm_label": "sheetview.swift"
     },
     {
@@ -3407,8 +3407,8 @@
       "source_location": "L669",
       "_origin": "ast",
       "id": "ios_mapsapp_sheetview_sheetview_pick",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": ".pick()"
     },
     {
@@ -3418,8 +3418,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "ios_mapsapp_sheetview_swift_georesult",
-      "community": 70,
-      "community_name": ".select",
+      "community": 65,
+      "community_name": ".requestRoute",
       "norm_label": "georesult"
     },
     {
@@ -5960,8 +5960,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_package_dependencies_fontsource_variable_geist",
-      "community": 16,
-      "community_name": "dependencies",
+      "community": 64,
+      "community_name": "rendererController.ts",
       "norm_label": "@fontsource-variable/geist"
     },
     {
@@ -5971,8 +5971,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "fontsource_variable_geist",
-      "community": 16,
-      "community_name": "dependencies",
+      "community": 64,
+      "community_name": "rendererController.ts",
       "norm_label": "@fontsource-variable/geist"
     },
     {
@@ -5982,8 +5982,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_package_dependencies_tailwindcss_vite",
-      "community": 42,
-      "community_name": "@tailwindcss/vite",
+      "community": 16,
+      "community_name": "dependencies",
       "norm_label": "@tailwindcss/vite"
     },
     {
@@ -5993,8 +5993,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "tailwindcss_vite",
-      "community": 42,
-      "community_name": "@tailwindcss/vite",
+      "community": 16,
+      "community_name": "dependencies",
       "norm_label": "@tailwindcss/vite"
     },
     {
@@ -6565,8 +6565,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_applemapview",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "applemapview.tsx"
     },
     {
@@ -6576,8 +6576,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_components_applemapview_initial_region",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "initial_region"
     },
     {
@@ -6587,8 +6587,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_applemapview_regionforplace",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "regionforplace()"
     },
     {
@@ -6598,8 +6598,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_components_applemapview_fitplaces",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "fitplaces()"
     },
     {
@@ -6609,8 +6609,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_components_applemapview_addselectionlistener",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "addselectionlistener()"
     },
     {
@@ -6620,8 +6620,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "web_src_components_applemapview_applemapview",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "applemapview()"
     },
     {
@@ -6675,8 +6675,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_categorychips",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "categorychips.tsx"
     },
     {
@@ -6686,8 +6686,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "web_src_components_categorychips_icons",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "icons"
     },
     {
@@ -6708,8 +6708,8 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "web_src_components_categorychips_centerof",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "centerof()"
     },
     {
@@ -6727,7 +6727,7 @@
       "label": "fmtTime()",
       "file_type": "code",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L10",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_drivingmodepanel_fmttime",
       "community": 67,
@@ -6735,21 +6735,10 @@
       "norm_label": "fmttime()"
     },
     {
-      "label": "fmtDist()",
-      "file_type": "code",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L14",
-      "_origin": "ast",
-      "id": "web_src_components_drivingmodepanel_fmtdist",
-      "community": 67,
-      "community_name": "RoutePanel.tsx",
-      "norm_label": "fmtdist()"
-    },
-    {
       "label": "DrivingModePanel()",
       "file_type": "code",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L16",
+      "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_drivingmodepanel_drivingmodepanel",
       "community": 67,
@@ -6785,8 +6774,8 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_components_mapview_livemap",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "livemap"
     },
     {
@@ -6873,8 +6862,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "web_src_components_mapview_showuserdot",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "showuserdot()"
     },
     {
@@ -6972,8 +6961,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "navigationpanel.tsx"
     },
     {
@@ -6983,8 +6972,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_fmtdist",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "fmtdist()"
     },
     {
@@ -6994,8 +6983,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_fmteta",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "fmteta()"
     },
     {
@@ -7005,8 +6994,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_components_navigationpanel_navigationpanel",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "navigationpanel()"
     },
     {
@@ -7093,8 +7082,8 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "web_src_components_packeditor_packeditor",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "packeditor()"
     },
     {
@@ -7159,8 +7148,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_components_placecard_placecard",
-      "community": 6,
-      "community_name": "PackSwitcher.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "placecard()"
     },
     {
@@ -7181,8 +7170,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_poiresults",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "poiresults.tsx"
     },
     {
@@ -7192,8 +7181,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_components_poiresults_fmtdistance",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "fmtdistance()"
     },
     {
@@ -7203,8 +7192,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_components_poiresults_poiresults",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "poiresults()"
     },
     {
@@ -7302,8 +7291,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_searchbar",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "searchbar.tsx"
     },
     {
@@ -7313,8 +7302,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_searchbar_resulticon",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "resulticon()"
     },
     {
@@ -7863,8 +7852,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_ui_separator",
-      "community": 67,
-      "community_name": "RoutePanel.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "separator.tsx"
     },
     {
@@ -7874,8 +7863,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_components_ui_separator_separator",
-      "community": 67,
-      "community_name": "RoutePanel.tsx",
+      "community": 6,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "separator()"
     },
     {
@@ -8105,8 +8094,8 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_src_components_ui_tabs_tabscontent",
-      "community": 20,
-      "community_name": "PackSwitcher.tsx",
+      "community": 11,
+      "community_name": "cn",
       "norm_label": "tabscontent()"
     },
     {
@@ -8116,8 +8105,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_api",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "api.ts"
     },
     {
@@ -8127,8 +8116,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_lib_api_user",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "user"
     },
     {
@@ -8138,8 +8127,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_api_bookmark",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "bookmark"
     },
     {
@@ -8149,8 +8138,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_api_pack",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "pack"
     },
     {
@@ -8160,8 +8149,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_lib_api_georesult",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "georesult"
     },
     {
@@ -8171,8 +8160,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_lib_api_placedetails",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "placedetails"
     },
     {
@@ -8182,8 +8171,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_lib_api_routestep",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "routestep"
     },
     {
@@ -8193,8 +8182,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "web_src_lib_api_routeresult",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "routeresult"
     },
     {
@@ -8204,8 +8193,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "web_src_lib_api_routemode",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "routemode"
     },
     {
@@ -8215,8 +8204,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "web_src_lib_api_nearby_categories",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "nearby_categories"
     },
     {
@@ -8226,8 +8215,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "web_src_lib_api_nearbycategory",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "nearbycategory"
     },
     {
@@ -8259,8 +8248,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "web_src_lib_api_parseerror",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "parseerror()"
     },
     {
@@ -8270,8 +8259,8 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "web_src_lib_api_sessionresponse",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "sessionresponse"
     },
     {
@@ -8281,8 +8270,8 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "web_src_lib_api_sessioncall",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "sessioncall()"
     },
     {
@@ -8292,8 +8281,8 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "web_src_lib_api_refreshsession",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "refreshsession()"
     },
     {
@@ -8303,8 +8292,8 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_lib_api_session",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "session"
     },
     {
@@ -8314,8 +8303,8 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "web_src_lib_api_authed",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "authed()"
     },
     {
@@ -8325,8 +8314,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_lib_api_api",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "api"
     },
     {
@@ -8336,8 +8325,8 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "web_src_lib_api_styleurlfor",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "styleurlfor()"
     },
     {
@@ -8347,8 +8336,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_driving_test",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "driving.test.ts"
     },
     {
@@ -8358,8 +8347,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_driving",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "driving.ts"
     },
     {
@@ -8369,8 +8358,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_lib_driving_distancealonggeometry",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "distancealonggeometry()"
     },
     {
@@ -8380,8 +8369,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_lib_driving_pointatprogress",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "pointatprogress()"
     },
     {
@@ -8391,8 +8380,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_lib_driving_bearingatprogress",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "bearingatprogress()"
     },
     {
@@ -8405,6 +8394,61 @@
       "community": 8,
       "community_name": "PlaceCard.tsx",
       "norm_label": "progressforelapsed()"
+    },
+    {
+      "label": "drivingGame.test.ts",
+      "file_type": "code",
+      "source_file": "web/src/lib/drivingGame.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_lib_drivinggame_test",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
+      "norm_label": "drivinggame.test.ts"
+    },
+    {
+      "label": "drivingGame.ts",
+      "file_type": "code",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_lib_drivinggame",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
+      "norm_label": "drivinggame.ts"
+    },
+    {
+      "label": "DrivingGameState",
+      "file_type": "code",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_lib_drivinggame_drivinggamestate",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
+      "norm_label": "drivinggamestate"
+    },
+    {
+      "label": "DrivingInput",
+      "file_type": "code",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "web_src_lib_drivinggame_drivinginput",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
+      "norm_label": "drivinginput"
+    },
+    {
+      "label": "stepDrivingGame()",
+      "file_type": "code",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "web_src_lib_drivinggame_stepdrivinggame",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
+      "norm_label": "stepdrivinggame()"
     },
     {
       "label": "drivingSession.test.ts",
@@ -8446,26 +8490,26 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_drivingsession",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "drivingsession"
     },
     {
       "label": "DrivingRun",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L15",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_drivingrun",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "drivingrun"
     },
     {
       "label": "createDrivingSession()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L26",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_createdrivingsession",
       "community": 8,
@@ -8476,7 +8520,7 @@
       "label": "startDriving()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L37",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_startdriving",
       "community": 8,
@@ -8487,7 +8531,7 @@
       "label": "pauseDriving()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L42",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_pausedriving",
       "community": 8,
@@ -8498,7 +8542,7 @@
       "label": "resumeDriving()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L48",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_resumedriving",
       "community": 8,
@@ -8509,7 +8553,7 @@
       "label": "tickDriving()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L53",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_tickdriving",
       "community": 8,
@@ -8520,7 +8564,7 @@
       "label": "finishDriving()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L60",
+      "source_location": "L63",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_finishdriving",
       "community": 8,
@@ -8531,7 +8575,7 @@
       "label": "toDrivingRun()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L66",
+      "source_location": "L69",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_todrivingrun",
       "community": 8,
@@ -8542,7 +8586,7 @@
       "label": "loadDrivingRuns()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L78",
+      "source_location": "L81",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_loaddrivingruns",
       "community": 8,
@@ -8553,7 +8597,7 @@
       "label": "saveDrivingRun()",
       "file_type": "code",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L85",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "web_src_lib_drivingsession_savedrivingrun",
       "community": 8,
@@ -8567,8 +8611,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_i18n",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "i18n.ts"
     },
     {
@@ -8578,8 +8622,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_i18n_de",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "de"
     },
     {
@@ -8600,8 +8644,8 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "web_src_lib_i18n_en",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "en"
     },
     {
@@ -8611,8 +8655,8 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "web_src_lib_i18n_fr",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "fr"
     },
     {
@@ -8622,8 +8666,8 @@
       "source_location": "L454",
       "_origin": "ast",
       "id": "web_src_lib_i18n_es",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "es"
     },
     {
@@ -8633,8 +8677,8 @@
       "source_location": "L599",
       "_origin": "ast",
       "id": "web_src_lib_i18n_it",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "it"
     },
     {
@@ -8644,8 +8688,8 @@
       "source_location": "L744",
       "_origin": "ast",
       "id": "web_src_lib_i18n_nl",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "nl"
     },
     {
@@ -8655,8 +8699,8 @@
       "source_location": "L889",
       "_origin": "ast",
       "id": "web_src_lib_i18n_pl",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "pl"
     },
     {
@@ -8666,8 +8710,8 @@
       "source_location": "L1034",
       "_origin": "ast",
       "id": "web_src_lib_i18n_tr",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "tr"
     },
     {
@@ -8677,8 +8721,8 @@
       "source_location": "L1179",
       "_origin": "ast",
       "id": "web_src_lib_i18n_dicts",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "dicts"
     },
     {
@@ -8688,8 +8732,8 @@
       "source_location": "L1182",
       "_origin": "ast",
       "id": "web_src_lib_i18n_maket",
-      "community": 51,
-      "community_name": "RoutePanel.tsx",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "maket()"
     },
     {
@@ -8754,8 +8798,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_navigation",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "navigation.ts"
     },
     {
@@ -8765,8 +8809,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_navigation_lnglat",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "lnglat"
     },
     {
@@ -8776,8 +8820,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_lib_navigation_distancem",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "distancem()"
     },
     {
@@ -8787,8 +8831,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_lib_navigation_bearing",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "bearing()"
     },
     {
@@ -8798,8 +8842,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_lib_navigation_pointtosegment",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "pointtosegment()"
     },
     {
@@ -8809,8 +8853,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_lib_navigation_snapped",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "snapped"
     },
     {
@@ -8820,8 +8864,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_lib_navigation_snaptoroute",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "snaptoroute()"
     },
     {
@@ -8831,8 +8875,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "web_src_lib_navigation_currentstep",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 5,
+      "community_name": "App.tsx",
       "norm_label": "currentstep()"
     },
     {
@@ -8842,8 +8886,8 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "web_src_lib_navigation_metrestonextmaneuver",
-      "community": 59,
-      "community_name": "sidebarState.ts",
+      "community": 8,
+      "community_name": "PlaceCard.tsx",
       "norm_label": "metrestonextmaneuver()"
     },
     {
@@ -8853,8 +8897,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_sidebarstate_test",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "sidebarstate.test.ts"
     },
     {
@@ -8864,8 +8908,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_sidebarstate",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "sidebarstate.ts"
     },
     {
@@ -8875,8 +8919,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "web_src_lib_sidebarstate_storagelike",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "storagelike"
     },
     {
@@ -8886,8 +8930,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_sidebarstate_readsidebarcollapsed",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "readsidebarcollapsed()"
     },
     {
@@ -8897,8 +8941,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_lib_sidebarstate_writesidebarcollapsed",
-      "community": 5,
-      "community_name": "App.tsx",
+      "community": 54,
+      "community_name": "InstallPackSheet",
       "norm_label": "writesidebarcollapsed()"
     },
     {
@@ -8930,8 +8974,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_utils",
-      "community": 11,
-      "community_name": "cn",
+      "community": 20,
+      "community_name": "PackSwitcher.tsx",
       "norm_label": "utils.ts"
     },
     {
@@ -8963,8 +9007,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_appleappearance_test",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "appleappearance.test.ts"
     },
     {
@@ -8974,8 +9018,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_appleappearance",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "appleappearance.ts"
     },
     {
@@ -8985,8 +9029,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_maps_appleappearance_resolveapplemaptype",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "resolveapplemaptype()"
     },
     {
@@ -8996,8 +9040,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_maps_appleappearance_resolveapplecolorscheme",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "resolveapplecolorscheme()"
     },
     {
@@ -9007,8 +9051,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "web_src_maps_appleappearance_appleoverlayclass",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "appleoverlayclass()"
     },
     {
@@ -9139,8 +9183,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_test",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "renderercontroller.test.ts"
     },
     {
@@ -9150,8 +9194,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "renderercontroller.ts"
     },
     {
@@ -9161,8 +9205,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_registermaprenderer",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "registermaprenderer()"
     },
     {
@@ -9172,8 +9216,8 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_activemapcapabilities",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "activemapcapabilities()"
     },
     {
@@ -9194,8 +9238,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_zoomactivemap",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "zoomactivemap()"
     },
     {
@@ -9205,8 +9249,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_locateactivemap",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "locateactivemap()"
     },
     {
@@ -9216,8 +9260,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_setactivemap3d",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "setactivemap3d()"
     },
     {
@@ -9227,8 +9271,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_focusactivemapplace",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "focusactivemapplace()"
     },
     {
@@ -9238,8 +9282,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_maps_renderercontroller_showactivemapplaces",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "showactivemapplaces()"
     },
     {
@@ -9249,8 +9293,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_types",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "types.ts"
     },
     {
@@ -9260,8 +9304,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_maps_types_mapprovider",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "mapprovider"
     },
     {
@@ -9271,8 +9315,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_maps_types_applemaptype",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "applemaptype"
     },
     {
@@ -9282,8 +9326,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_maps_types_applecolorscheme",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "applecolorscheme"
     },
     {
@@ -9293,8 +9337,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_maps_types_appleoverlaytone",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "appleoverlaytone"
     },
     {
@@ -9315,8 +9359,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_maps_types_mapviewport",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "mapviewport"
     },
     {
@@ -9326,8 +9370,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercapabilities",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "maprenderercapabilities"
     },
     {
@@ -9337,8 +9381,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "maprenderercontroller"
     },
     {
@@ -9348,8 +9392,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_zoomby",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".zoomby()"
     },
     {
@@ -9359,8 +9403,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_locate",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".locate()"
     },
     {
@@ -9370,8 +9414,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_set3d",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".set3d()"
     },
     {
@@ -9381,8 +9425,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_focusplace",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".focusplace()"
     },
     {
@@ -9392,8 +9436,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_showplaces",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".showplaces()"
     },
     {
@@ -9403,8 +9447,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "web_src_maps_types_maprenderercontroller_getviewport",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".getviewport()"
     },
     {
@@ -9414,8 +9458,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_test",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "viewportstorage.test.ts"
     },
     {
@@ -9425,8 +9469,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_test_memorystorage",
-      "community": 72,
-      "community_name": "MemoryStorage",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "memorystorage"
     },
     {
@@ -9436,8 +9480,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_test_memorystorage_getitem",
-      "community": 72,
-      "community_name": "MemoryStorage",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".getitem()"
     },
     {
@@ -9447,8 +9491,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_test_memorystorage_setitem",
-      "community": 72,
-      "community_name": "MemoryStorage",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": ".setitem()"
     },
     {
@@ -9458,8 +9502,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "viewportstorage.ts"
     },
     {
@@ -9469,8 +9513,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_key",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "key()"
     },
     {
@@ -9480,8 +9524,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_readviewport",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "readviewport()"
     },
     {
@@ -9491,8 +9535,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_maps_viewportstorage_writeviewport",
-      "community": 66,
-      "community_name": "AppleMapView.tsx",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "writeviewport()"
     },
     {
@@ -9502,70 +9546,70 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "state.tsx"
     },
     {
       "label": "Place",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L18",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_state_place",
-      "community": 64,
-      "community_name": "rendererController.ts",
+      "community": 2,
+      "community_name": "state.tsx",
       "norm_label": "place"
     },
     {
       "label": "LoadStatus",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L24",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_state_loadstatus",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "loadstatus"
     },
     {
       "label": "RouteState",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L26",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_state_routestate",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "routestate"
     },
     {
       "label": "AppState",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L37",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_state_appstate",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "appstate"
     },
     {
       "label": "Ctx",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L105",
+      "source_location": "L107",
       "_origin": "ast",
       "id": "web_src_state_ctx",
-      "community": 8,
-      "community_name": "PlaceCard.tsx",
+      "community": 42,
+      "community_name": "@tailwindcss/vite",
       "norm_label": "ctx"
     },
     {
       "label": "useApp()",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L106",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "web_src_state_useapp",
       "community": 5,
@@ -9576,7 +9620,7 @@
       "label": "AppProvider()",
       "file_type": "code",
       "source_file": "web/src/state.tsx",
-      "source_location": "L112",
+      "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_state_appprovider",
       "community": 8,
@@ -25030,7 +25074,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L16",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
@@ -25041,18 +25085,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_drivingmodepanel_fmtdist",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L10",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
@@ -25092,66 +25125,6 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_ui_card",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_ui_card_card",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_ui_card_cardcontent",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_ui_separator",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_components_ui_separator_separator",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
       "target": "web_src_lib_driving",
       "confidence_score": 1.0
     },
@@ -25160,7 +25133,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L5",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
@@ -25172,31 +25145,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_lib_uset",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel",
-      "target": "web_src_lib_uset_uset",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L7",
+      "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
@@ -25208,7 +25157,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L7",
+      "source_location": "L4",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel",
@@ -25232,7 +25181,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L46",
+      "source_location": "L72",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel_drivingmodepanel",
@@ -25243,21 +25192,9 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L44",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel_drivingmodepanel",
-      "target": "web_src_components_drivingmodepanel_fmtdist",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L34",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel_drivingmodepanel",
@@ -25269,19 +25206,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "web_src_components_drivingmodepanel_drivingmodepanel",
-      "target": "web_src_lib_uset_uset"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "web/src/components/DrivingModePanel.tsx",
-      "source_location": "L17",
+      "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_components_drivingmodepanel_drivingmodepanel",
@@ -30357,7 +30282,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30381,7 +30306,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L39",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30405,7 +30330,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L42",
+      "source_location": "L43",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30441,7 +30366,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30465,7 +30390,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L34",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_routestate",
@@ -30489,7 +30414,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L83",
+      "source_location": "L84",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30501,7 +30426,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L30",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_routestate",
@@ -30525,7 +30450,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L95",
+      "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -30621,7 +30546,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L532",
+      "source_location": "L553",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -30869,7 +30794,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L45",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession_pausedriving",
@@ -30881,11 +30806,128 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L56",
+      "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession_tickdriving",
       "target": "web_src_lib_driving_progressforelapsed"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/lib/drivingGame.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_lib_drivinggame_test",
+      "target": "web_src_lib_drivinggame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/lib/drivingGame.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_lib_drivinggame_test",
+      "target": "web_src_lib_drivinggame_stepdrivinggame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_lib_drivinggame",
+      "target": "web_src_lib_drivinggame_drivinggamestate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_lib_drivinggame",
+      "target": "web_src_lib_drivinggame_drivinginput",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/lib/drivingGame.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_lib_drivinggame",
+      "target": "web_src_lib_drivinggame_stepdrivinggame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/state.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_state",
+      "target": "web_src_lib_drivinggame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/state.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_state",
+      "target": "web_src_lib_drivinggame_drivinginput",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/state.tsx",
+      "source_location": "L95",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_state_appstate",
+      "target": "web_src_lib_drivinggame_drivinginput",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/state.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_state",
+      "target": "web_src_lib_drivinggame_stepdrivinggame",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/state.tsx",
+      "source_location": "L482",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "web_src_state_appprovider",
+      "target": "web_src_lib_drivinggame_stepdrivinggame"
     },
     {
       "relation": "imports_from",
@@ -30963,7 +31005,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L26",
+      "source_location": "L29",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -30974,7 +31016,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L15",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31007,7 +31049,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L60",
+      "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31018,7 +31060,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L78",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31029,7 +31071,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L42",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31040,7 +31082,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L48",
+      "source_location": "L51",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31051,7 +31093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L85",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31062,7 +31104,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L37",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31073,7 +31115,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L53",
+      "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31084,7 +31126,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L66",
+      "source_location": "L69",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession",
@@ -31120,7 +31162,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L88",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -31144,7 +31186,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -31169,7 +31211,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31193,7 +31235,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L458",
+      "source_location": "L460",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31217,7 +31259,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L459",
+      "source_location": "L461",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31241,7 +31283,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L460",
+      "source_location": "L462",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31252,7 +31294,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L62",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession_finishdriving",
@@ -31277,7 +31319,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L463",
+      "source_location": "L465",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31301,7 +31343,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L465",
+      "source_location": "L467",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31325,7 +31367,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L466",
+      "source_location": "L468",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31336,7 +31378,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/drivingSession.ts",
-      "source_location": "L86",
+      "source_location": "L89",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_lib_drivingsession_savedrivingrun",
@@ -31361,7 +31403,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L144",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31385,7 +31427,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L482",
+      "source_location": "L503",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31553,7 +31595,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L33",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_routestate",
@@ -31566,7 +31608,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L201",
+      "source_location": "L203",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -31614,7 +31656,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L155",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -32305,7 +32347,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L119",
+      "source_location": "L121",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -32329,7 +32371,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state.tsx",
-      "source_location": "L161",
+      "source_location": "L163",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appprovider",
@@ -32744,7 +32786,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L45",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -32768,7 +32810,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L70",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -32792,7 +32834,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L70",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -32816,7 +32858,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L70",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -32840,7 +32882,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L44",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state_appstate",
@@ -33079,7 +33121,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L112",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33090,7 +33132,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33101,7 +33143,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L105",
+      "source_location": "L107",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33112,7 +33154,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L24",
+      "source_location": "L25",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33123,7 +33165,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L18",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33134,7 +33176,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L26",
+      "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -33145,7 +33187,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state.tsx",
-      "source_location": "L106",
+      "source_location": "L108",
       "weight": 1.0,
       "_origin": "ast",
       "source": "web_src_state",
@@ -34083,5 +34125,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "bab5d2dfcc0556f3946f0375b6f7bc4875e20ac1"
+  "built_at_commit": "272677c76b552407c4eca3614aebd5c06aca6e17"
 }
