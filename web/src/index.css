@@ -129,8 +129,28 @@
     }
 }
 /* ---- App-specific (outside the design system) ---- */
-.map { position: absolute; inset: 0; }
-.apple-map-shell { position: absolute; inset: 0; overflow: hidden; background: var(--background); }
+/*
+ * MapLibre's stylesheet sets `.maplibregl-map { position: relative }` with NO
+ * height. That overrides our absolute fill and collapses the map to 0px tall
+ * (blank white canvas). Force a real fill on every engine host.
+ */
+.map,
+.maplibregl-map,
+.apple-map-shell,
+.apple-map {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+}
+/* MapLibre canvas must track the filled host. */
+.maplibregl-canvas-container,
+.maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.apple-map-shell { overflow: hidden; background: var(--background); }
 .apple-map-tone { position: absolute; inset: 0; z-index: 2; pointer-events: none; mix-blend-mode: color; }
 .apple-map-tone--cool { background: rgb(55 112 145 / 8%); }
 .apple-map-tone--warm { background: rgb(184 126 52 / 8%); }

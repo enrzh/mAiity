@@ -227,12 +227,20 @@ export function MapLibreMapView() {
   const ready = !!app.activeStyleUrl
   useEffect(() => {
     if (!el.current || !ready) return
+    const host = el.current
+    // If flex layout hasn't resolved yet, wait one frame so MapLibre doesn't
+    // bake a 0-height canvas (looks like a permanently blank map).
+    const boot = () => {
     const m = new maplibregl.Map({
-      container: el.current,
+      container: host,
       style: appRef.current.activeStyleUrl!,
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
+      // Hash can re-open a previous world-scale zoom that leaves regional
+      // packs looking empty — still enabled, but clamped on restore below.
       hash: true,
+      minZoom: 3,
+      maxZoom: 18,
       attributionControl: { compact: true },
       maxPitch: 85, // near-horizon 3D views
       // Low-zoom water polygons in this archive are heavily generalized (a
@@ -319,7 +327,7 @@ export function MapLibreMapView() {
       if (raf) return
       raf = requestAnimationFrame(() => { raf = 0; m.resize() })
     })
-    ro.observe(el.current)
+    ro.observe(host)
 
     setMap(m)
     liveMap.current = m
@@ -338,16 +346,25 @@ export function MapLibreMapView() {
       for (const listener of moveListeners) listener()
     }
     m.on('moveend', onMoveEnd)
-    // Restore last custom viewport if we have one.
+    // Restore last custom viewport if we have one. Regional PMTiles look blank
+    // at world-scale zooms, so clamp to a useful street/city range.
     const savedCustom = readViewport('custom')
     if (savedCustom) {
       try {
+        const zFromDelta = Math.log2(360 / Math.max(0.01, savedCustom.longitudeDelta)) - 1
+        const zoom = Math.max(10, Math.min(16, zFromDelta))
         m.jumpTo({
           center: [savedCustom.center.lon, savedCustom.center.lat],
-          zoom: Math.max(2, Math.min(18, Math.log2(360 / Math.max(0.01, savedCustom.longitudeDelta)) - 1)),
+          zoom,
         })
       } catch { /* ignore bad saved state */ }
     }
+    // Layout can settle after first paint (flex + lazy engine). Force a resize
+    // so we never stay stuck at 0×0 / stale canvas size.
+    requestAnimationFrame(() => {
+      try { m.resize() } catch { /* disposed */ }
+      requestAnimationFrame(() => { try { m.resize() } catch { /* disposed */ } })
+    })
     const unregisterController = registerMapRenderer({
       provider: 'custom',
       capabilities: {
@@ -396,6 +413,31 @@ export function MapLibreMapView() {
       liveMap.current = null
       unregisterController()
       setMap(null)
+    }
+    } // end boot()
+
+    let cancelled = false
+    let cleanup: (() => void) | undefined
+    let tries = 0
+    const start = () => {
+      if (cancelled || !el.current) return
+      const node = el.current
+      // Force fill while waiting for flex/rail layout to settle.
+      node.style.position = 'absolute'
+      node.style.inset = '0'
+      node.style.width = '100%'
+      node.style.height = '100%'
+      tries++
+      if ((node.clientHeight < 2 || node.clientWidth < 2) && tries < 45) {
+        requestAnimationFrame(start)
+        return
+      }
+      cleanup = boot()
+    }
+    start()
+    return () => {
+      cancelled = true
+      cleanup?.()
     }
   }, [ready])
 

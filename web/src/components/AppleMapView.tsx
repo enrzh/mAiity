@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
-import { carPositionAt, offsetAlongBearing, RACE_PITCH } from '../lib/drivingCamera'
+import {
+  carPositionAt, offsetAlongBearing,
+  RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_PITCH,
+} from '../lib/drivingCamera'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
@@ -494,45 +497,87 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     }
   }, [map, app.route])
 
-  // Race / drive → camera follow only (no car annotation).
+  // Race / drive → street-level chase camera (pitch + low altitude).
+  // MapKit has no MapLibre-style 3D extrusions everywhere, but Camera pitch +
+  // buildings + hybrid still gives a street-level race feel.
   useEffect(() => {
     if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
     try {
       const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
       const pts = geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null
+      const racing =
+        app.driving.status === 'running'
+        || app.driving.status === 'paused'
+        || app.driving.status === 'ready'
+        || app.driving.status === 'finished'
+
+      // Prefer buildings + standard (or hybrid) while racing for street context.
+      try {
+        if (typeof map.showsBuildings !== 'undefined') map.showsBuildings = racing
+        if (typeof map.showsCompass !== 'undefined' && mk.FeatureVisibility) {
+          map.showsCompass = racing ? mk.FeatureVisibility.Hidden : mk.FeatureVisibility.Adaptive
+        }
+      } catch { /* older MapKit */ }
+
       if (!pts || pts.length < 2 || app.driving.status === 'idle') {
-        if (app.driving.status === 'idle' && typeof map.setCameraAnimated === 'function') {
+        if (app.driving.status === 'idle') {
           try {
             const center = map.center
             if (mk.Camera && center) {
-              map.setCameraAnimated(new mk.Camera(center, { pitch: 0, altitude: 2500 }), false)
+              const cam = new mk.Camera(center, { pitch: 0, altitude: 2500, heading: 0 })
+              if (typeof map.setCameraAnimated === 'function') map.setCameraAnimated(cam, false)
+              else if ('camera' in map) map.camera = cam
             }
           } catch { /* no Camera API */ }
         }
         return
       }
+
       const point = pointAtProgress(pts, app.driving.progress)
       const bearing = bearingAtProgress(pts, app.driving.progress)
       const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
       if (!Number.isFinite(carPt[0]) || !Number.isFinite(carPt[1])) return
-      const look = offsetAlongBearing(carPt, bearing, app.driving.status === 'ready' ? 16 : 36)
-      if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
-        const coord = new mk.Coordinate(look[1], look[0])
-        try {
-          if (mk.Camera && typeof map.setCameraAnimated === 'function') {
-            map.setCameraAnimated(new mk.Camera(coord, {
-              heading: bearing,
-              pitch: RACE_PITCH,
-              altitude: 220,
-            }), app.driving.status === 'running')
+      const lookAhead = app.driving.status === 'ready' ? 18 : 32
+      const look = offsetAlongBearing(carPt, bearing, lookAhead)
+      if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
+
+      const coord = new mk.Coordinate(look[1], look[0])
+      const altitude = app.driving.status === 'ready' ? RACE_ALTITUDE_READY_M : RACE_ALTITUDE_M
+      const animated = app.driving.status === 'running'
+      try {
+        if (mk.Camera) {
+          const cam = new mk.Camera(coord, {
+            heading: bearing,
+            // MapKit pitch is degrees from nadir-ish; clamp to what the API allows.
+            pitch: Math.min(RACE_PITCH, 80),
+            altitude,
+          })
+          if (typeof map.setCameraAnimated === 'function') {
+            map.setCameraAnimated(cam, animated)
+          } else if ('camera' in map) {
+            map.camera = cam
           } else {
-            map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
-            if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
+            throw new Error('no camera setter')
           }
-        } catch {
-          try { map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false) } catch { /* ignore */ }
+        } else {
+          throw new Error('no Camera class')
         }
+      } catch {
+        // Fallback stack: rotation + region zoom for a pseudo street view.
+        try {
+          map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), animated)
+          if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
+          if (typeof map.setCameraDistanceAnimated === 'function') {
+            map.setCameraDistanceAnimated(altitude, animated)
+          } else if (map.region) {
+            const span = 0.0025
+            map.setRegionAnimated(new mk.CoordinateRegion(
+              new mk.Coordinate(carPt[1], carPt[0]),
+              new mk.CoordinateSpan(span, span),
+            ), animated)
+          }
+        } catch { /* last resort already failed */ }
       }
     } catch (e) {
       console.error('[mapkit] drive camera failed', e)

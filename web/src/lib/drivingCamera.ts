@@ -3,6 +3,9 @@ import type { LngLat } from './navigation'
 /** Street-level race camera: high pitch + zoom so buildings fill the view. */
 export const RACE_PITCH = 72
 export const RACE_ZOOM = 17.6
+/** MapKit altitude (meters above ground) for street-level chase cam. */
+export const RACE_ALTITUDE_M = 140
+export const RACE_ALTITUDE_READY_M = 220
 /** Look slightly ahead of the car so the street opens in front of the player. */
 export const RACE_LOOKAHEAD = 0.012
 

@@ -381,7 +381,7 @@ function Shell() {
 
   return (
     <div
-      className={cn('relative flex h-full overflow-hidden bg-muted/30', racing && 'maps-shell--racing')}
+      className={cn('relative flex h-full min-h-0 overflow-hidden bg-muted/30', racing && 'maps-shell--racing')}
       style={{
         '--sheet-h': `${racing ? 0 : sheetH}px`,
         '--left-chrome': `${leftChrome}px`,
@@ -445,7 +445,9 @@ function Shell() {
       </aside>
 
       {/* ---- Map ------------------------------------------------------- */}
-      <main className="relative min-w-0 flex-1">
+      {/* min-h-0 + h-full: flex child must form a real containing block so
+          absolute/100% map engines get non-zero height (blank map bug). */}
+      <main className="relative min-h-0 min-w-0 h-full flex-1">
         <MapView
           key={mapKey}
           onAppleFailed={() => setAppleFailed(true)}
