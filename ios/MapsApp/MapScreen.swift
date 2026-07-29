@@ -20,6 +20,7 @@ struct MapScreen: View {
         center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
         span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
     )
+    @State private var is3D = false
 
     var body: some View {
         if model.activePackId == "light" {
@@ -93,23 +94,14 @@ struct MapScreen: View {
         }
         .overlay(alignment: .bottomTrailing) {
             VStack(spacing: 10) {
-                Button {
-                    model.showPackPicker = true
-                } label: {
-                    Image(systemName: "paintpalette")
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(width: 44, height: 44)
-                        .background(.regularMaterial, in: Circle())
-                }
+                mapButton("paintpalette") { model.showPackPicker = true }
                 .accessibilityLabel(L.t("map-style"))
 
-                MapPitchToggle(scope: mapScope)
-                    .frame(width: 44, height: 44)
-                    .background(.regularMaterial, in: Circle())
+                mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
+                    .accessibilityLabel(L.t("view-3d"))
 
-                MapUserLocationButton(scope: mapScope)
-                    .frame(width: 44, height: 44)
-                    .background(.regularMaterial, in: Circle())
+                mapButton("location.fill") { locate() }
+                    .accessibilityLabel(L.t("my-location"))
 
                 VStack(spacing: 0) {
                     Button { zoom(by: 0.55) } label: {
@@ -120,7 +112,10 @@ struct MapScreen: View {
                         Image(systemName: "minus").frame(width: 44, height: 44)
                     }
                 }
-                .background(.regularMaterial, in: Capsule())
+                .buttonStyle(.plain)
+                .frame(width: 44, height: 89)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
+                .fixedSize()
             }
             .padding(.trailing, 14)
             .padding(.bottom, sheetHeight + 16)
@@ -150,5 +145,44 @@ struct MapScreen: View {
         )
         visibleRegion = region
         position = .region(region)
+    }
+
+    private func toggle3D() {
+        is3D.toggle()
+        if is3D {
+            position = .camera(MapCamera(
+                centerCoordinate: visibleRegion.center,
+                distance: max(650, visibleRegion.span.latitudeDelta * 90_000),
+                heading: -18,
+                pitch: 58
+            ))
+        } else {
+            position = .region(visibleRegion)
+        }
+    }
+
+    private func locate() {
+        Task {
+            guard let coordinate = await location.currentLocation() else { return }
+            let region = MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
+            )
+            visibleRegion = region
+            position = .region(region)
+        }
+    }
+
+    private func mapButton(_ systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 17, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .frame(width: 44, height: 44)
+        .background(.regularMaterial, in: Circle())
+        .fixedSize()
     }
 }
