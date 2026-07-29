@@ -113,20 +113,25 @@ export function DrivingModePanel() {
     if (type === 'right') keys.current.steer = value ? 1 : keys.current.steer === 1 ? 0 : keys.current.steer
   }
 
+  const active = session.status === 'running' || session.status === 'paused'
+  // Compact while driving: map stays the hero; history/minimap only at rest.
   return (
-    <section className="maps-race-hud" aria-label={t('race-mode')}>
+    <section
+      className={`maps-race-hud${active || countingDown ? ' maps-race-hud--compact' : ''}`}
+      aria-label={t('race-mode')}
+    >
       <div className="maps-race-hud__top">
         <div className="maps-race-hud__stat">
-          <Car className="size-4 shrink-0" aria-hidden />
+          <Car className="size-3.5 shrink-0" aria-hidden />
           <span>{t('race-mode')}</span>
         </div>
         <div className="maps-race-hud__stat">
-          <Gauge className="size-4 shrink-0" aria-hidden />
-          <span>{speed} km/h</span>
+          <Gauge className="size-3.5 shrink-0" aria-hidden />
+          <span>{speed}</span>
         </div>
         <div className="maps-race-hud__stat">
           <span>{fmtTime(session.elapsedMs)}</span>
-          <span className="opacity-70">· {Math.round(session.progress * 100)}%</span>
+          <span className="opacity-70">{Math.round(session.progress * 100)}%</span>
         </div>
         <div className="maps-race-hud__progress" aria-hidden>
           <span style={{ width: `${session.progress * 100}%` }} />
@@ -136,53 +141,53 @@ export function DrivingModePanel() {
       {countingDown && (
         <div className="maps-race-hud__countdown" aria-live="assertive">
           <span>{countdown === 0 ? 'GO' : countdown}</span>
-          <small>{t('race-countdown')}</small>
         </div>
       )}
 
-      {minimap && (session.status === 'running' || session.status === 'paused' || session.status === 'ready') && (
-        <svg className="maps-race-minimap" viewBox="0 0 100 56" aria-hidden>
-          <rect x="0" y="0" width="100" height="56" rx="8" className="maps-race-minimap__bg" />
+      {/* Minimap only when not fighting touch pads for vertical space. */}
+      {minimap && (session.status === 'ready' || session.status === 'paused') && !countingDown && (
+        <svg className="maps-race-minimap" viewBox="0 0 100 40" aria-hidden>
+          <rect x="0" y="0" width="100" height="40" rx="6" className="maps-race-minimap__bg" />
           <path d={minimap.path} className="maps-race-minimap__route" />
           {minimap.car && (
-            <circle cx={minimap.car[0]} cy={minimap.car[1]} r="2.8" className="maps-race-minimap__car" />
+            <circle cx={minimap.car[0]} cy={minimap.car[1]} r="2.4" className="maps-race-minimap__car" />
           )}
         </svg>
       )}
 
       <div className="maps-race-hud__actions">
         {session.status === 'ready' && !countingDown && (
-          <Button size="lg" className="min-h-12 flex-1" onClick={() => setCountdown(3)}>
-            <Play className="mr-2 size-4" />
+          <Button size="sm" className="min-h-10 flex-1" onClick={() => setCountdown(3)}>
+            <Play className="mr-1.5 size-4" />
             {t('race-start')}
           </Button>
         )}
         {session.status === 'ready' && countingDown && (
-          <Button size="lg" variant="outline" className="min-h-12 flex-1" onClick={() => setCountdown(null)}>
+          <Button size="sm" variant="outline" className="min-h-10 flex-1" onClick={() => setCountdown(null)}>
             {t('close')}
           </Button>
         )}
         {session.status === 'running' && (
-          <Button size="lg" variant="secondary" className="min-h-12 flex-1" onClick={app.pauseDrivingMode}>
-            <Pause className="mr-2 size-4" />
+          <Button size="sm" variant="secondary" className="min-h-10 flex-1" onClick={app.pauseDrivingMode}>
+            <Pause className="mr-1.5 size-4" />
             {t('race-pause')}
           </Button>
         )}
         {session.status === 'paused' && (
-          <Button size="lg" className="min-h-12 flex-1" onClick={app.resumeDrivingMode}>
-            <Play className="mr-2 size-4" />
+          <Button size="sm" className="min-h-10 flex-1" onClick={app.resumeDrivingMode}>
+            <Play className="mr-1.5 size-4" />
             {t('race-resume')}
           </Button>
         )}
         {(session.status === 'running' || session.status === 'paused') && (
-          <Button size="lg" variant="outline" className="min-h-12" onClick={app.finishDrivingMode}>
-            <Flag className="mr-2 size-4" />
+          <Button size="sm" variant="outline" className="min-h-10" onClick={app.finishDrivingMode}>
+            <Flag className="mr-1.5 size-4" />
             {t('race-finish')}
           </Button>
         )}
         {session.status === 'finished' && (
-          <Button size="lg" className="min-h-12 flex-1" onClick={app.resetDrivingMode}>
-            <RotateCcw className="mr-2 size-4" />
+          <Button size="sm" className="min-h-10 flex-1" onClick={app.resetDrivingMode}>
+            <RotateCcw className="mr-1.5 size-4" />
             {t('race-again')}
           </Button>
         )}
@@ -191,10 +196,10 @@ export function DrivingModePanel() {
       {session.status === 'running' && (
         <div className="maps-race-hud__touch" aria-label={t('race-mode')}>
           <Button
-            size="lg"
+            size="sm"
             variant="secondary"
             className="maps-race-pad"
-            aria-label={t('race-mode') + ' ←'}
+            aria-label="←"
             onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('left', true) }}
             onPointerUp={() => hold('left', false)}
             onPointerCancel={() => hold('left', false)}
@@ -202,7 +207,7 @@ export function DrivingModePanel() {
             ←
           </Button>
           <Button
-            size="lg"
+            size="sm"
             variant="secondary"
             className="maps-race-pad"
             onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('brake', true) }}
@@ -212,7 +217,7 @@ export function DrivingModePanel() {
             {t('race-brake')}
           </Button>
           <Button
-            size="lg"
+            size="sm"
             className="maps-race-pad maps-race-pad--go"
             onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('throttle', true) }}
             onPointerUp={() => hold('throttle', false)}
@@ -221,10 +226,10 @@ export function DrivingModePanel() {
             {t('race-go')}
           </Button>
           <Button
-            size="lg"
+            size="sm"
             variant="secondary"
             className="maps-race-pad"
-            aria-label={t('race-mode') + ' →'}
+            aria-label="→"
             onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('right', true) }}
             onPointerUp={() => hold('right', false)}
             onPointerCancel={() => hold('right', false)}
@@ -236,37 +241,28 @@ export function DrivingModePanel() {
 
       {session.status === 'finished' && (
         <div className="maps-race-hud__finished">
-          <Flag className="size-4" />
+          <Flag className="size-3.5" />
           {t('race-complete')} · {fmtTime(session.elapsedMs)}
-          {session.distanceM > 0 && session.elapsedMs > 0 && (
-            <span className="opacity-70">
-              · {Math.round((session.distanceM / 1000) / (session.elapsedMs / 3_600_000))} km/h
-            </span>
-          )}
         </div>
       )}
 
-      {session.status === 'ready' && (
+      {session.status === 'ready' && !countingDown && (
         <p className="maps-race-hud__hint">{t('race-hint')}</p>
       )}
 
-      {(session.status === 'ready' || session.status === 'finished') && (
+      {/* History only at rest — never under the touch pads. */}
+      {(session.status === 'ready' || session.status === 'finished') && !countingDown && recent.length > 0 && (
         <div className="maps-race-hud__history" aria-label={t('race-recent')}>
           <div className="maps-race-hud__history-title">{t('race-recent')}</div>
-          {recent.length === 0 ? (
-            <p className="maps-race-hud__hint" style={{ margin: 0 }}>{t('race-empty-runs')}</p>
-          ) : (
-            <ul className="maps-race-hud__history-list">
-              {recent.map((run) => (
-                <li key={run.id}>
-                  <span>{new Date(run.createdAt).toLocaleDateString()}</span>
-                  <span className="tabular-nums">{fmtTime(run.durationMs)}</span>
-                  <span className="tabular-nums">{fmtDist(run.distanceM)}</span>
-                  <span className="tabular-nums opacity-70">{Math.round(run.averageSpeedKmh)} km/h</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="maps-race-hud__history-list">
+            {recent.slice(0, 3).map((run) => (
+              <li key={run.id}>
+                <span>{new Date(run.createdAt).toLocaleDateString()}</span>
+                <span className="tabular-nums">{fmtTime(run.durationMs)}</span>
+                <span className="tabular-nums">{fmtDist(run.distanceM)}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

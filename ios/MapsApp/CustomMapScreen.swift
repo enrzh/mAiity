@@ -122,8 +122,8 @@ struct CustomMapScreen: View {
                 .fixedSize()
                 .accessibilityElement(children: .contain)
             }
-            .padding(.trailing, 14)
-            .padding(.bottom, sheetHeight + 16)
+            .padding(.trailing, 12)
+            .padding(.bottom, max(sheetHeight, 12) + 12)
         }
         .onChange(of: model.cameraTarget) { _, target in
             guard let target else { return }

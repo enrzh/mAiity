@@ -555,7 +555,8 @@ export function MapLibreMapView() {
         zoom: Math.max(map.getZoom(), cam.zoom),
         duration: app.driving.status === 'running' && !reduced ? 90 : (app.driving.status === 'ready' ? 500 : 0),
         essential: true as const,
-        padding: { top: 40, bottom: 200, left: 20, right: 20 },
+        // Leave room for the race HUD (bottom) and map controls (right).
+        padding: { top: 24, bottom: 160, left: 16, right: 72 },
       }
       if (opts.duration > 0) map.easeTo(opts)
       else map.jumpTo(opts)

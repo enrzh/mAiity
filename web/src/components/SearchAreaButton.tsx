@@ -25,12 +25,12 @@ export function SearchAreaButton() {
   if (!app.activeCategory || !moved) return null
 
   return (
-    <div // Centred on the VISIBLE map, not the window: the rail (and, when
-    // collapsed, the floating search overlay) covers the left edge, so a
-    // window-centred pill slides under it below ~1050px.
-    className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-20 -translate-x-1/2">
+    // Top-centre of the visible map (accounts for left rail chrome).
+    // Never sit near the bottom — that zone is owned by sheet / race HUD.
+    <div className="pointer-events-none absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-3 z-20 -translate-x-1/2 md:top-4">
       <Button
-        className="pointer-events-auto gap-2 rounded-full px-4 shadow-lg"
+        size="sm"
+        className="pointer-events-auto h-9 gap-1.5 rounded-full px-3.5 text-[13px] shadow-lg"
         onClick={() => {
           const viewport = activeMapViewport()
           if (!viewport) return
@@ -45,7 +45,7 @@ export function SearchAreaButton() {
             })
         }}
       >
-        <RotateCw className="size-4" /> {t('search-this-area')}
+        <RotateCw className="size-3.5" /> {t('search-this-area')}
       </Button>
     </div>
   )

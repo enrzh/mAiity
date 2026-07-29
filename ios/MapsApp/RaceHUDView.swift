@@ -13,21 +13,20 @@ struct RaceHUDView: View {
         if case .idle = state {
             EmptyView()
         } else {
-            VStack(spacing: 10) {
+            VStack(spacing: 8) {
                 statsRow
                 if let c = countdown {
-                    VStack(spacing: 2) {
-                        Text(c == 0 ? "GO" : "\(c)")
-                            .font(.system(size: 40, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.mint)
-                        Text(L.t("race-countdown"))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    .accessibilityElement(children: .combine)
+                    Text(c == 0 ? "GO" : "\(c)")
+                        .font(.system(size: 32, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.mint)
+                        .accessibilityLabel("\(L.t("race-countdown")) \(c)")
                 }
+                // Minimap only at rest — not under touch pads.
                 if minimapPath != nil {
-                    minimapView
+                    switch state {
+                    case .ready, .paused: minimapView
+                    default: EmptyView()
+                    }
                 }
                 actionsRow
                 if case .running = state {
@@ -41,19 +40,19 @@ struct RaceHUDView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                        .lineLimit(2)
                 }
-                if case .ready = state { history }
+                if case .ready = state, countdown == nil { history }
                 if case .finished = state { history }
             }
-            .padding(14)
-            .frame(maxWidth: 420)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .padding(12)
+            .frame(maxWidth: 400)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.28), radius: 18, y: 8)
-            .padding(.horizontal, 12)
+            .shadow(color: .black.opacity(0.22), radius: 14, y: 6)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(L.t("race-mode"))
             .onChange(of: model.raceCountdown) { _, new in
@@ -258,25 +257,21 @@ struct RaceHUDView: View {
     }
 
     private var history: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(L.t("race-recent"))
-                .font(.caption2.bold())
-                .foregroundStyle(.secondary)
-            if model.drivingRuns.isEmpty {
-                Text(L.t("race-empty-runs"))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.drivingRuns.prefix(5)) { run in
-                    HStack {
-                        Text(run.createdAt, style: .date)
-                        Spacer()
-                        Text(Self.fmtTime(run.duration)).monospacedDigit()
-                        Text(Self.fmtDist(run.distanceM)).foregroundStyle(.secondary)
-                        Text("\(Int(run.averageSpeedKmh)) km/h")
-                            .foregroundStyle(.secondary)
+        Group {
+            if !model.drivingRuns.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(L.t("race-recent"))
+                        .font(.caption2.bold())
+                        .foregroundStyle(.secondary)
+                    ForEach(model.drivingRuns.prefix(3)) { run in
+                        HStack {
+                            Text(run.createdAt, style: .date)
+                            Spacer()
+                            Text(Self.fmtTime(run.duration)).monospacedDigit()
+                            Text(Self.fmtDist(run.distanceM)).foregroundStyle(.secondary)
+                        }
+                        .font(.caption2)
                     }
-                    .font(.caption2)
                 }
             }
         }

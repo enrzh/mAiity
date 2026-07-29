@@ -44,40 +44,61 @@ function detentPx(d: Detent): number {
   return d === 'peek' ? 130 : Math.round(window.innerHeight * (d === 'half' ? 0.45 : 0.85))
 }
 
-/// One control stack, bottom-right. The MapLibre built-ins are disabled so
-/// nothing stacks on top of these (they shared the same corner).
-function MapControls() {
+/// One control stack, bottom-right. Sits above the mobile sheet and above the
+/// race HUD via CSS vars so nothing stacks on top of each other.
+function MapControls({ racing }: { racing: boolean }) {
   const app = useApp()
   const t = useT()
+  // During race on phone the touch pads own the bottom — hide the stack.
+  if (racing) {
+    return (
+      <div className="absolute bottom-[calc(var(--race-hud-h,12rem)+0.75rem)] right-3 z-30 hidden flex-col items-end gap-2 md:flex">
+        <Button
+          variant="ghost"
+          className="size-10 rounded-xl border border-border/60 bg-background/90 shadow-md backdrop-blur-xl"
+          onClick={locateUser}
+          aria-label={t('my-location')}
+          title={t('my-location')}
+        >
+          <Crosshair className="size-4" />
+        </Button>
+        <div className="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-md backdrop-blur-xl">
+          <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(1)} aria-label={t('zoom-in')}>
+            <Plus className="size-4" />
+          </Button>
+          <Separator />
+          <Button variant="ghost" className="size-10 rounded-none" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')}>
+            <Minus className="size-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
   const btn =
-    'size-11 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
+    'size-11 rounded-2xl bg-background/90 backdrop-blur-xl border border-border/60 shadow-lg hover:bg-background'
   return (
-    // On mobile the rail is a bottom sheet that would cover this stack — the
-    // zoom buttons sat BEHIND it. Ride above it using the measured sheet
-    // height (it changes with content), same as the iOS build. On desktop the
-    // rail is a left panel, so md: puts the stack back on the bottom edge.
-    <div className="absolute bottom-[calc(var(--sheet-h,0px)+1.5rem)] right-4 z-20 flex flex-col items-end gap-2.5 transition-[bottom] duration-200 md:bottom-6">
-      {app.mapProvider === 'custom' && <Button
-        variant={app.is3D ? 'default' : 'ghost'}
-        className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
-        onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
-        aria-label={t('view-3d')} aria-pressed={app.is3D} title={t('view-3d')}
-      >
-        <Box className="size-5" />
-      </Button>}
-      <Button variant="ghost" className={btn} onClick={locateUser}
-        aria-label={t('my-location')} title={t('my-location')}>
+    <div className="absolute bottom-[calc(var(--sheet-h,0px)+1rem)] right-3 z-20 flex flex-col items-end gap-2 transition-[bottom] duration-200 md:bottom-5 md:right-4">
+      {app.mapProvider === 'custom' && (
+        <Button
+          variant={app.is3D ? 'default' : 'ghost'}
+          className={cn(btn, app.is3D && 'bg-primary text-primary-foreground hover:bg-primary/90')}
+          onClick={() => { app.toggle3D(); set3D(!app.is3D) }}
+          aria-label={t('view-3d')}
+          aria-pressed={app.is3D}
+          title={t('view-3d')}
+        >
+          <Box className="size-5" />
+        </Button>
+      )}
+      <Button variant="ghost" className={btn} onClick={locateUser} aria-label={t('my-location')} title={t('my-location')}>
         <Crosshair className="size-5" />
       </Button>
-      {/* Zoom pair, joined like a segmented control. */}
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/80 shadow-lg backdrop-blur-xl">
-        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
-          onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
+      <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-lg backdrop-blur-xl">
+        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent" onClick={() => zoomBy(1)} aria-label={t('zoom-in')} title={t('zoom-in')}>
           <Plus className="size-5" />
         </Button>
         <Separator />
-        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent"
-          onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
+        <Button variant="ghost" className="size-11 rounded-none hover:bg-accent" onClick={() => zoomBy(-1)} aria-label={t('zoom-out')} title={t('zoom-out')}>
           <Minus className="size-5" />
         </Button>
       </div>
@@ -113,8 +134,8 @@ function LanguageMenu({ size }: { size: string }) {
   )
 }
 
-/// The rail's controls, reused verbatim in the collapsed floating overlay so
-/// hiding the rail never removes a capability.
+/// Compact rail actions — only packs + account (language lives under account).
+/// Keeps the search field wide; four icons next to search was crushing UX.
 function RailControls({
   panel, toggle, compact = false,
 }: { panel: Panel; toggle: (p: Panel) => void; compact?: boolean }) {
@@ -139,7 +160,6 @@ function RailControls({
       >
         <Star className="size-5" />
       </Button>
-      <LanguageMenu size={size} />
       {app.user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -150,18 +170,29 @@ function RailControls({
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="truncate">{app.user.displayName ?? app.user.email}</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{t('language')}</DropdownMenuLabel>
+            {LANGS.map(([code, label]) => (
+              <DropdownMenuItem key={code} onClick={() => app.setLang(code)}>
+                <span className="flex-1">{label}</span>
+                {app.lang === code && <Check className="size-4" />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => app.logout()}>
               <LogOut className="size-4" /> {t('sign-out')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <Button
-          variant="ghost" size="icon" className={cn(size, 'shrink-0 rounded-xl')}
-          onClick={() => app.setAuthOpen(true)} aria-label={t('sign-in')} title={t('sign-in')}
-        >
-          <User className="size-5" />
-        </Button>
+        <>
+          <LanguageMenu size={size} />
+          <Button
+            variant="ghost" size="icon" className={cn(size, 'shrink-0 rounded-xl')}
+            onClick={() => app.setAuthOpen(true)} aria-label={t('sign-in')} title={t('sign-in')}
+          >
+            <User className="size-5" />
+          </Button>
+        </>
       )}
     </>
   )
@@ -175,11 +206,17 @@ function Shell() {
   const [appleFailed, setAppleFailed] = useState(false)
   const [mapKey, setMapKey] = useState(0)
   const railRef = useRef<HTMLElement>(null)
+  const raceHudRef = useRef<HTMLDivElement>(null)
   const [sheetH, setSheetH] = useState(0)
+  const [raceHudH, setRaceHudH] = useState(0)
   // Mobile sheet detent + live height while the grabber is being dragged.
   const [detent, setDetent] = useState<Detent>('peek')
   const [dragH, setDragH] = useState<number | null>(null)
   const dragFrom = useRef<{ y: number; h: number } | null>(null)
+  const racing = app.driving.status === 'running'
+    || app.driving.status === 'paused'
+    || app.driving.status === 'finished'
+    || app.driving.status === 'ready'
   useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
   useEffect(() => {
     if (app.mapProvider !== 'apple') setAppleFailed(false)
@@ -254,20 +291,18 @@ function Shell() {
     if (app.selected && !app.route) setPanel('none')
   }, [app.selected, app.route])
   // Selecting something while collapsed should reveal it, like Maps does.
-  // Exception: active driving is immersive — keep the rail collapsed.
+  // Exception: race mode is immersive — keep the rail collapsed.
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') return
+    if (racing) return
     if (app.selected || app.route) setCollapsed(false)
-  }, [app.selected, app.route, app.driving.status])
+  }, [app.selected, app.route, racing])
   // Category results must take over the rail: with the packs/saved panel
   // open they loaded into a slot BELOW it in the precedence chain, so the
   // chips looked broken. One thing at a time, like Maps.
   useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
-  // Driving mode: one surface — close packs/saved and free the map (desktop
-  // collapse + mobile peek). Controls live in a map overlay, not the rail.
-  // Keep immersive until the run is reset (finished still shows map HUD).
+  // Driving mode: one surface — free the map completely (hide mobile sheet).
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') {
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished' || app.driving.status === 'ready') {
       setPanel('none')
       setCollapsed(true)
       setDetent('peek')
@@ -276,10 +311,10 @@ function Shell() {
   // New contextual content while the mobile sheet is at peek would be
   // invisible — lift to half so a tap on the map/chips visibly answers.
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') return
+    if (racing) return
     if (app.selected || app.route || app.pois.length > 0)
       setDetent((d) => (d === 'peek' ? 'half' : d))
-  }, [app.selected, app.route, app.pois, app.driving.status])
+  }, [app.selected, app.route, app.pois, racing])
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on
   // desktop — on mobile the rail is a bottom sheet, not a left panel.
@@ -292,58 +327,66 @@ function Shell() {
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
     const apply = () => {
-      const w = !mq.matches ? 0 : collapsed ? 412 : 392
+      const w = !mq.matches ? 0 : collapsed ? 0 : 360
       setLeftChrome(w)
-      railInset.current = collapsed || !mq.matches ? 0 : 392
+      railInset.current = collapsed || !mq.matches || racing ? 0 : 360
     }
     apply()
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
-  }, [collapsed])
+  }, [collapsed, racing])
 
-  // Measure the mobile sheet so the map controls can sit above it. The sheet
-  // grows and shrinks with its content, so a fixed offset would be wrong.
+  // Measure the mobile sheet so the map controls can sit above it.
   useEffect(() => {
     const el = railRef.current
     if (!el) return
     const mq = window.matchMedia('(min-width: 768px)')
-    // Measure NOW, not only from the observer: ResizeObserver delivers on the
-    // frame lifecycle, which does not run while the page is hidden, so relying
-    // on it alone left the controls at offset 0 until the first repaint.
-    const measure = () => setSheetH(mq.matches ? 0 : el.offsetHeight)
+    const measure = () => {
+      // Race mode owns the bottom of the screen — treat sheet as gone.
+      if (racing && !mq.matches) { setSheetH(0); return }
+      setSheetH(mq.matches ? 0 : el.offsetHeight)
+    }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
-    mq.addEventListener('change', measure) // crossing the breakpoint flips it
+    mq.addEventListener('change', measure)
     return () => { ro.disconnect(); mq.removeEventListener('change', measure) }
-  }, [])
+  }, [racing])
+
+  // Measure race HUD height so map controls clear it on desktop.
+  useEffect(() => {
+    const el = raceHudRef.current
+    if (!el || app.driving.status === 'idle') { setRaceHudH(0); return }
+    const measure = () => setRaceHudH(el.offsetHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [app.driving.status, app.driving.progress])
 
   return (
     <div
-      className="relative flex h-full overflow-hidden bg-muted/30"
-      style={{ '--sheet-h': `${sheetH}px`, '--left-chrome': `${leftChrome}px` } as React.CSSProperties}
+      className={cn('relative flex h-full overflow-hidden bg-muted/30', racing && 'maps-shell--racing')}
+      style={{
+        '--sheet-h': `${racing ? 0 : sheetH}px`,
+        '--left-chrome': `${leftChrome}px`,
+        '--race-hud-h': `${raceHudH}px`,
+      } as React.CSSProperties}
     >
-      {/* ---- Rail ------------------------------------------------------ */}
+      {/* ---- Rail / mobile sheet ---------------------------------------- */}
       <aside
         ref={railRef}
-        // Height is detent-driven on mobile only; md:h-full wins on desktop
-        // (its @media rule comes later in the sheet than the base class).
         style={{ '--detent-h': `${dragH ?? detentPx(detent)}px` } as React.CSSProperties}
         className={cn(
-          'absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-3 rounded-t-3xl border-t border-border/60 bg-background p-3 shadow-xl',
-          // Snapping animates; while the finger drives, height tracks it raw.
-          dragH === null && 'transition-[height] duration-300 ease-out',
-          // The rail OVERLAYS the map on desktop instead of taking width from
-          // it (this is what Google does). Collapsing then changes no layout,
-          // so the GL canvas is never resized — animating the width made the
-          // canvas resize on all ~18 frames of the transition, and every WebGL
-          // buffer resize clears and repaints, which is the flicker.
-          // Sliding on transform keeps it on the compositor: no layout, no
-          // ResizeObserver, no tile refetch.
-          'md:absolute md:inset-y-0 md:left-0 md:right-auto md:h-full md:w-[392px] md:rounded-none md:border-r md:border-t-0 md:p-4',
+          'absolute inset-x-0 bottom-0 z-30 flex h-[var(--detent-h)] flex-col gap-2.5 rounded-t-3xl border-t border-border/60 bg-background p-3 shadow-xl',
+          dragH === null && 'transition-[height,transform,opacity] duration-300 ease-out',
+          'md:absolute md:inset-y-0 md:left-0 md:right-auto md:h-full md:w-[360px] md:gap-3 md:rounded-none md:border-r md:border-t-0 md:p-4',
           'md:transition-transform md:duration-300 md:ease-out md:will-change-transform',
           collapsed ? 'md:-translate-x-full' : 'md:translate-x-0',
+          // Race: hide the mobile sheet completely so the map + HUD are clean.
+          racing && 'max-md:pointer-events-none max-md:translate-y-full max-md:opacity-0',
         )}
+        aria-hidden={racing ? true : undefined}
       >
         {/* Grabber — the visible drag affordance for the mobile detents. */}
         <div
@@ -400,29 +443,22 @@ function Shell() {
           }}
         />
 
-        {/* Driving HUD sits on the map so collapsing the rail (immersive race)
-            does not bury Start/Pause/touch controls under the sidebar. */}
+        {/* Race HUD — exclusive bottom strip; map controls clear it via --race-hud-h. */}
         {app.driving.status !== 'idle' && (
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 md:bottom-4 md:px-4"
-            style={{ paddingBottom: 'max(0.75rem, calc(var(--sheet-h, 0px) * 0.15 + 0.5rem))' }}
+            ref={raceHudRef}
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:justify-start md:p-4 md:pl-4 md:pr-24"
           >
-            <div className="pointer-events-auto w-full max-w-lg">
+            <div className="pointer-events-auto w-full max-w-md md:max-w-sm">
               <DrivingModePanel />
             </div>
           </div>
         )}
 
-        {/* Collapsing hides the rail, never its functions: search, chips and
-            the rail controls float over the map instead. */}
-        {collapsed && (
-          <div className="pointer-events-none absolute left-8 right-8 top-4 z-20 hidden flex-col gap-2 md:flex">
-            {/* relative z-20 is load-bearing: backdrop-blur creates a STACKING
-                CONTEXT, so the search dropdown's own z-30 is trapped inside
-                this row and cannot paint over the chips below — the chips are
-                a later sibling and would cover the results. Raising the row
-                itself (not the dropdown) is the only thing that works. */}
-            <div className="pointer-events-auto relative z-20 flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background p-1.5 shadow-lg">
+        {/* Collapsed desktop toolbar — hidden during race (map is immersive). */}
+        {collapsed && !racing && (
+          <div className="pointer-events-none absolute left-3 right-3 top-3 z-20 hidden flex-col gap-2 md:flex">
+            <div className="pointer-events-auto relative z-20 flex items-center gap-1 rounded-2xl border border-border/50 bg-background/95 p-1.5 shadow-lg backdrop-blur-md">
               <div className="min-w-0 flex-1"><SearchBar /></div>
               <RailControls panel={panel} toggle={toggle} compact />
             </div>
@@ -432,34 +468,23 @@ function Shell() {
           </div>
         )}
 
-        {/* Google-style collapse handle riding the rail's edge (desktop).
-            Slides with the rail on the same transform/duration so the two move
-            as one piece; the rail now overlays the map, so the handle can no
-            longer sit at the map's left edge. */}
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
-          title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
-          className={cn(
-            // Solid like the rail it rides — it moves as one piece with it.
-            'absolute top-1/2 z-40 hidden h-14 w-[22px] -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border/60 bg-background text-muted-foreground shadow-lg transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
-            collapsed ? 'md:left-0' : 'md:left-[392px]',
-          )}
-        >
-          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-        </button>
-
-        <SearchAreaButton />
-        <MapControls />
-        {app.packsError && app.packs.length === 0 && (
-          <div
-            className="absolute left-[calc(50%+var(--left-chrome,0px)/2)] top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-destructive/30 bg-background px-4 py-2.5 text-sm text-destructive shadow-lg"
-            role="alert"
+        {/* Collapse handle — hide during race so it doesn't float mid-map. */}
+        {!racing && (
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? t('sidebar-show') : t('sidebar-hide')}
+            title={collapsed ? t('sidebar-show') : t('sidebar-hide')}
+            className={cn(
+              'absolute top-1/2 z-40 hidden h-12 w-5 -translate-y-1/2 items-center justify-center rounded-r-md border border-l-0 border-border/50 bg-background/95 text-muted-foreground shadow-md transition-[left,background-color,color] duration-300 ease-out hover:bg-accent hover:text-foreground md:flex',
+              collapsed ? 'md:left-0' : 'md:left-[360px]',
+            )}
           >
-            {t('map-load-failed')}
-            <Button size="sm" variant="destructive" onClick={() => app.loadPacks()}>{t('retry')}</Button>
-          </div>
+            {collapsed ? <ChevronRight className="size-3.5" /> : <ChevronLeft className="size-3.5" />}
+          </button>
         )}
+
+        {!racing && <SearchAreaButton />}
+        <MapControls racing={racing && app.driving.status !== 'ready'} />
       </main>
 
       <AuthModal />

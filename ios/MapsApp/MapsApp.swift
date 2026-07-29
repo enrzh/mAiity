@@ -13,14 +13,14 @@ struct MapsApp: App {
 }
 
 /// Full-screen map with the always-presented bottom sheet (Apple-Maps layout).
+/// Race mode hides the sheet so HUD + map controls don't fight for the bottom.
 struct RootView: View {
     @EnvironmentObject private var model: AppModel
     @State private var detent: PresentationDetent = .height(96)
     @State private var sheetShown = true
 
-    /// Height of the sheet for the current detent, so the floating map
-    /// controls can sit directly above it and travel with it.
     private var sheetHeight: CGFloat {
+        if raceImmersive { return 0 }
         let screen = UIScreen.main.bounds.height
         switch detent {
         case .height(96): return 96
@@ -31,44 +31,54 @@ struct RootView: View {
         }
     }
 
-    private var raceImmersive: Bool { model.driving.isImmersive }
+    private var raceImmersive: Bool {
+        switch model.driving {
+        case .idle: return false
+        default: return true
+        }
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            MapScreen(sheetHeight: raceImmersive ? 180 : sheetHeight)
+            MapScreen(sheetHeight: raceImmersive ? 168 : sheetHeight)
                 .ignoresSafeArea()
 
+            // Search-this-area: TOP centre — never bottom (HUD / sheet zone).
             if model.mapMovedForCategory, model.activeCategory != nil, !raceImmersive {
-                Button {
-                    model.searchThisArea()
-                } label: {
-                    Label(L.t("search-this-area"), systemImage: "arrow.clockwise")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        .background(.regularMaterial, in: Capsule())
-                        .shadow(color: .black.opacity(0.2), radius: 10, y: 4)
+                VStack {
+                    Button {
+                        model.searchThisArea()
+                    } label: {
+                        Label(L.t("search-this-area"), systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(.regularMaterial, in: Capsule())
+                            .shadow(color: .black.opacity(0.18), radius: 8, y: 3)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 12)
+                    Spacer()
                 }
-                .buttonStyle(.plain)
-                .padding(.bottom, max(sheetHeight + 12, 120))
+                .frame(maxWidth: .infinity)
                 .transition(.opacity)
             }
 
-            if !isIdle(model.driving) {
+            if raceImmersive {
                 RaceHUDView()
-                    .padding(.bottom, raceImmersive ? 28 : max(12, sheetHeight * 0.15))
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 10)
+                    .safeAreaPadding(.bottom, 4)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(isPresented: $sheetShown) {
+        .sheet(isPresented: Binding(
+            get: { sheetShown && !raceImmersive },
+            set: { sheetShown = $0 || raceImmersive }
+        )) {
             SheetView(detent: $detent)
-                .presentationDetents(
-                    raceImmersive
-                        ? [.height(96)]
-                        : [.height(96), .height(220), .medium, .large],
-                    selection: $detent
-                )
-                .presentationBackgroundInteraction(.enabled(upThrough: raceImmersive ? .height(96) : .medium))
+                .presentationDetents([.height(96), .height(220), .medium, .large], selection: $detent)
+                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
                 .presentationBackground(.regularMaterial)
@@ -81,16 +91,14 @@ struct RootView: View {
             }
         }
         .onChange(of: model.driving) { _, new in
-            if new.isImmersive {
+            switch new {
+            case .idle:
+                sheetShown = true
                 detent = .height(96)
+            default:
                 model.showPackPicker = false
             }
         }
-        .animation(.easeOut(duration: 0.25), value: raceImmersive)
-    }
-
-    private func isIdle(_ state: AppModel.DrivingState) -> Bool {
-        if case .idle = state { return true }
-        return false
+        .animation(.easeOut(duration: 0.22), value: raceImmersive)
     }
 }

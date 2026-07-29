@@ -149,12 +149,21 @@ struct MapScreen: View {
             ))
         }
         .overlay(alignment: .bottomTrailing) {
-            VStack(spacing: 10) {
-                mapButton("paintpalette") { model.showPackPicker = true }
-                .accessibilityLabel(L.t("map-style"))
+            // Slim stack during race so it clears the HUD; hide style picker mid-race.
+            let racing: Bool = {
+                switch model.driving {
+                case .idle: return false
+                default: return true
+                }
+            }()
+            VStack(spacing: racing ? 8 : 10) {
+                if !racing {
+                    mapButton("paintpalette") { model.showPackPicker = true }
+                        .accessibilityLabel(L.t("map-style"))
 
-                mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
-                    .accessibilityLabel(L.t("view-3d"))
+                    mapButton(is3D ? "view.2d" : "view.3d") { toggle3D() }
+                        .accessibilityLabel(L.t("view-3d"))
+                }
 
                 mapButton("location.fill") { locate() }
                     .accessibilityLabel(L.t("my-location"))
@@ -173,8 +182,8 @@ struct MapScreen: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
                 .fixedSize()
             }
-            .padding(.trailing, 14)
-            .padding(.bottom, sheetHeight + 16)
+            .padding(.trailing, 12)
+            .padding(.bottom, max(sheetHeight, racing ? 168 : 0) + 12)
         }
     }
 
