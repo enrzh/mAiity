@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "server/src/index.ts": {
-    "mtime": 1785333134.3720527,
-    "ast_hash": "53aa8560e4654a007e5e491f51a27ddf",
+    "mtime": 1785334361.604093,
+    "ast_hash": "c927193b87da2576f4cbf74024e3c4b9",
     "semantic_hash": ""
   },
   "server/src/packs.ts": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "deploy/nas/docker-compose.yaml": {
-    "mtime": 1785333280.3597114,
-    "ast_hash": "ed35d26fd16115e828214f5bf255af2a",
+    "mtime": 1785334361.605253,
+    "ast_hash": "2fa08f483be7587f657e7695ac7fa257",
     "semantic_hash": ""
   },
   "ios/project.yml": {
@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "server/src/applemaps.ts": {
-    "mtime": 1785321096.6462574,
-    "ast_hash": "943d501fc64efd776891c208c8f02704",
+    "mtime": 1785334361.6030023,
+    "ast_hash": "b8e589baac08ab08c377b4d62a9f0d02",
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
@@ -607,6 +607,11 @@
   "docs/superpowers/specs/2026-07-29-apple-web-login-design.md": {
     "mtime": 1785332478.4052672,
     "ast_hash": "fa5f1a68873b7e3487fd0f40e63cdb7d",
+    "semantic_hash": ""
+  },
+  "server/test/applemaps.test.ts": {
+    "mtime": 1785334361.605749,
+    "ast_hash": "be186a0683295fcba783b8d8c6bfc06d",
     "semantic_hash": ""
   }
 }
