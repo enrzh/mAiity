@@ -21,7 +21,9 @@ import { carPositionAt, offsetAlongBearing, raceCameraAt } from '../lib/drivingC
 import { useApp } from '../state'
 import { cn } from '../lib/utils'
 
-maplibregl.addProtocol('pmtiles', new Protocol().tile)
+// Bind protocol instance so MapLibre's free-function call keeps `this`.
+const pmtilesProtocol = new Protocol()
+maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile.bind(pmtilesProtocol))
 
 /**
  * The bundled PMTiles archive is regional. Starting at a Germany-wide camera
@@ -304,13 +306,25 @@ export function MapLibreMapView() {
 
     // Route layers are user layers on TOP of pack styles — re-added after
     // every setStyle (pack switch) from the current routeRef.
-    // IMPORTANT: never mutate basemap layers synchronously in style.load —
-    // setLayoutProperty pauses the protomaps tile manager; if resume runs
-    // before transform is attached, the map stays blank forever (bg only).
+    //
+    // CRITICAL: setLayoutProperty / addLayer pauses the basemap tile manager.
+    // Doing that in style.load before the first cover of tiles is computed
+    // leaves managers paused with no transform → permanent blank basemap
+    // (dark/light background only, no roads). Let tiles spin up first.
     m.on('style.load', () => {
       styleReadyRef.current = true
-      const finish = () => {
+      // Immediate kick so the basemap starts covering the viewport.
+      requestAnimationFrame(() => {
+        try { m.resize() } catch { /* ok */ }
+        kickTiles(m)
+      })
+
+      let overlaysDone = false
+      const applyOverlays = () => {
+        if (overlaysDone) return
+        overlaysDone = true
         try {
+          // Language + optional route/3D only after basemap is alive.
           applyMapLanguage(m, appRef.current.lang)
           syncRouteLayers(m)
           if (wants3DRef.current) {
@@ -318,21 +332,17 @@ export function MapLibreMapView() {
             if (TERRAIN_ENABLED) m.setTerrain({ source: DEM_SOURCE, exaggeration: 1.2 })
           }
         } catch (e) {
-          console.error('[maplibre] style setup failed', e)
+          console.error('[maplibre] style overlays failed', e)
         } finally {
           kickTiles(m)
-          // One more kick after the next frame — language/route mutations
-          // pause managers again; transform is stable by then.
           requestAnimationFrame(() => kickTiles(m))
         }
       }
-      // Prefer first idle (tiles attempted); fall back if idle is delayed.
-      const onIdle = () => { m.off('idle', onIdle); finish() }
-      m.once('idle', onIdle)
-      window.setTimeout(() => {
-        m.off('idle', onIdle)
-        finish()
-      }, 400)
+
+      // First idle = style + at least one render pass. Prefer that.
+      m.once('idle', applyOverlays)
+      // Fallback: don't block overlays forever if idle is flaky.
+      window.setTimeout(applyOverlays, 1200)
     })
 
     // Startup location: open the map where the user IS.
