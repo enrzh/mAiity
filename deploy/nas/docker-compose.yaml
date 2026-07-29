@@ -86,6 +86,7 @@ services:
       APPLE_MAPS_TEAM_ID: ${APPLE_MAPS_TEAM_ID:-}
       APPLE_MAPS_KEY_ID: ${APPLE_MAPS_KEY_ID:-}
       APPLE_MAPS_ID: ${APPLE_MAPS_ID:-}
+      APPLE_MAPKIT_JS_TOKEN: ${APPLE_MAPKIT_JS_TOKEN:-}
       APPLE_MAPS_PRIVATE_KEY_FILE: /run/secrets/apple-maps.p8
     volumes:
       - ./data-api:/data

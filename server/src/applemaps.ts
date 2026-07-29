@@ -5,6 +5,7 @@ export interface AppleMapsConfig {
   keyId: string;
   mapsId: string;
   privateKey: string;
+  mapKitJsToken?: string;
 }
 
 export interface AppleSearchResult {
@@ -43,6 +44,9 @@ export class AppleMapsClient {
 
   /** Short-lived browser token for MapKit JS. Never expose the signing key. */
   async mapKitToken(origin: string): Promise<{ token: string; expiresInSeconds: number }> {
+    if (this.config.mapKitJsToken) {
+      return { token: this.config.mapKitJsToken, expiresInSeconds: 86400 };
+    }
     const developerToken = await this.developerToken("mapkit_js", origin);
     const response = await fetch("https://maps-api.apple.com/v1/token", {
       headers: { Authorization: `Bearer ${developerToken}` },

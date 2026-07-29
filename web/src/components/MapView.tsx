@@ -6,6 +6,7 @@ import { api } from '../lib/api'
 import { makeT } from '../lib/i18n'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { useApp } from '../state'
+import { AppleMapView } from './AppleMapView'
 
 maplibregl.addProtocol('pmtiles', new Protocol().tile)
 
@@ -162,7 +163,7 @@ export function zoomBy(delta: number) {
 
 /// The one imperative component: owns the MapLibre map, keeps it in sync with
 /// app state (active pack style, selected place, bookmark markers).
-export function MapView() {
+function MapLibreMapView() {
   const el = useRef<HTMLDivElement>(null)
   // Map readiness is STATE (not just a ref) so dependent effects re-run once
   // the map exists — a ref write alone would leave them dead forever.
@@ -454,4 +455,10 @@ export function MapView() {
   }, [map, app.bookmarks])
 
   return <div ref={el} className="map" />
+}
+
+/** Apple Maps is the default renderer; custom packs continue to use MapLibre. */
+export function MapView() {
+  const app = useApp()
+  return app.activePack === 'light' ? <AppleMapView /> : <MapLibreMapView />
 }

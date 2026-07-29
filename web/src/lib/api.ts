@@ -148,6 +148,11 @@ async function authed(path: string, init: RequestInit = {}, retried = false): Pr
 // ---- Data ------------------------------------------------------------------
 
 export const api = {
+  async mapkitToken(): Promise<{ token: string; expiresInSeconds: number }> {
+    const res = await fetch(`${API}/mapkit-token`)
+    if (!res.ok) return parseError(res)
+    return res.json()
+  },
   async bookmarks(): Promise<Bookmark[]> {
     const res = await authed('/bookmarks')
     if (!res.ok) return parseError(res)
