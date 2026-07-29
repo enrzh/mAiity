@@ -115,7 +115,7 @@ struct CustomMapScreen: View {
             lastCenter = target.center
             let racing: Bool = {
                 switch model.driving {
-                case .running, .paused: return true
+                case .ready, .running, .paused, .finished: return true
                 default: return false
                 }
             }()
@@ -180,9 +180,16 @@ struct CustomMapScreen: View {
 
     private var drivingSource: ShapeSource {
         ShapeSource(identifier: "driving-source") {
-            if let geometry = model.route?.result?.geometry, geometry.count > 1,
-               model.driving.progress > 0, model.driving.progress < 1 {
-                let position = model.driving.progress * Double(geometry.count - 1)
+            // Show car from ready (start line) through finished — not only mid-run.
+            let active: Bool = {
+                switch model.driving {
+                case .idle: return false
+                default: return true
+                }
+            }()
+            if active, let geometry = model.route?.result?.geometry, geometry.count > 1 {
+                let progress = min(1, max(0, model.driving.progress))
+                let position = progress * Double(geometry.count - 1)
                 let index = min(geometry.count - 2, Int(position))
                 let t = position - Double(index)
                 let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t

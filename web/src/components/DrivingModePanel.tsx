@@ -18,18 +18,29 @@ export function DrivingModePanel() {
   const frame = useRef<number | null>(null)
 
   useEffect(() => {
-    if (session.status !== 'running') return
+    if (session.status !== 'running') {
+      keys.current = { throttle: false, brake: false, steer: 0 }
+      return
+    }
     const down = (event: KeyboardEvent) => {
-      if (event.key === 'w' || event.key === 'ArrowUp') keys.current.throttle = true
-      if (event.key === 's' || event.key === 'ArrowDown') keys.current.brake = true
-      if (event.key === 'a' || event.key === 'ArrowLeft') keys.current.steer = -1
-      if (event.key === 'd' || event.key === 'ArrowRight') keys.current.steer = 1
+      // Ignore when typing in an input/search field.
+      const tag = (event.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (event.target as HTMLElement | null)?.isContentEditable) return
+      if (event.key === 'w' || event.key === 'W' || event.key === 'ArrowUp') keys.current.throttle = true
+      if (event.key === 's' || event.key === 'S' || event.key === 'ArrowDown' || event.key === ' ') keys.current.brake = true
+      if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') keys.current.steer = -1
+      if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') keys.current.steer = 1
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(event.key)) event.preventDefault()
     }
     const up = (event: KeyboardEvent) => {
-      if (event.key === 'w' || event.key === 'ArrowUp') keys.current.throttle = false
-      if (event.key === 's' || event.key === 'ArrowDown') keys.current.brake = false
-      if (event.key === 'a' || event.key === 'ArrowLeft' || event.key === 'd' || event.key === 'ArrowRight') keys.current.steer = 0
+      if (event.key === 'w' || event.key === 'W' || event.key === 'ArrowUp') keys.current.throttle = false
+      if (event.key === 's' || event.key === 'S' || event.key === 'ArrowDown' || event.key === ' ') keys.current.brake = false
+      if (event.key === 'a' || event.key === 'A' || event.key === 'ArrowLeft') {
+        if (keys.current.steer === -1) keys.current.steer = 0
+      }
+      if (event.key === 'd' || event.key === 'D' || event.key === 'ArrowRight') {
+        if (keys.current.steer === 1) keys.current.steer = 0
+      }
     }
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
@@ -105,6 +116,12 @@ export function DrivingModePanel() {
             {de ? 'Ziel' : 'Finish'}
           </Button>
         )}
+        {session.status === 'finished' && (
+          <Button size="lg" className="min-h-12 flex-1" onClick={app.resetDrivingMode}>
+            <RotateCcw className="mr-2 size-4" />
+            {de ? 'Nochmal' : 'Race again'}
+          </Button>
+        )}
       </div>
 
       {session.status === 'running' && (
@@ -113,9 +130,8 @@ export function DrivingModePanel() {
             size="lg"
             variant="secondary"
             className="maps-race-pad"
-            onPointerDown={() => hold('left', true)}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('left', true) }}
             onPointerUp={() => hold('left', false)}
-            onPointerLeave={() => hold('left', false)}
             onPointerCancel={() => hold('left', false)}
           >
             ←
@@ -124,9 +140,8 @@ export function DrivingModePanel() {
             size="lg"
             variant="secondary"
             className="maps-race-pad"
-            onPointerDown={() => hold('brake', true)}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('brake', true) }}
             onPointerUp={() => hold('brake', false)}
-            onPointerLeave={() => hold('brake', false)}
             onPointerCancel={() => hold('brake', false)}
           >
             {de ? 'Bremse' : 'Brake'}
@@ -134,9 +149,8 @@ export function DrivingModePanel() {
           <Button
             size="lg"
             className="maps-race-pad maps-race-pad--go"
-            onPointerDown={() => hold('throttle', true)}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('throttle', true) }}
             onPointerUp={() => hold('throttle', false)}
-            onPointerLeave={() => hold('throttle', false)}
             onPointerCancel={() => hold('throttle', false)}
           >
             {de ? 'Gas' : 'Go'}
@@ -145,9 +159,8 @@ export function DrivingModePanel() {
             size="lg"
             variant="secondary"
             className="maps-race-pad"
-            onPointerDown={() => hold('right', true)}
+            onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); hold('right', true) }}
             onPointerUp={() => hold('right', false)}
-            onPointerLeave={() => hold('right', false)}
             onPointerCancel={() => hold('right', false)}
           >
             →
@@ -157,8 +170,13 @@ export function DrivingModePanel() {
 
       {session.status === 'finished' && (
         <div className="maps-race-hud__finished">
-          <RotateCcw className="size-4" />
+          <Flag className="size-4" />
           {de ? 'Lauf fertig' : 'Run complete'} · {fmtTime(session.elapsedMs)}
+          {session.distanceM > 0 && session.elapsedMs > 0 && (
+            <span className="opacity-70">
+              · {Math.round((session.distanceM / 1000) / (session.elapsedMs / 3_600_000))} km/h avg
+            </span>
+          )}
         </div>
       )}
 

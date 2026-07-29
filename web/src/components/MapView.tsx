@@ -15,7 +15,7 @@ import {
 } from '../maps/types'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
-import { offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
+import { carPositionAt, offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
 import { useApp } from '../state'
 import { AppleMapView } from './AppleMapView'
 
@@ -469,7 +469,10 @@ function MapLibreMapView() {
     if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle') {
       drivingMarker.current?.remove(); drivingMarker.current = null
       // Leave race camera when exiting race (not when merely "ready").
-      if (racePrevStatus.current === 'running' || racePrevStatus.current === 'paused' || racePrevStatus.current === 'finished') {
+      if (
+        map
+        && (racePrevStatus.current === 'running' || racePrevStatus.current === 'paused' || racePrevStatus.current === 'finished')
+      ) {
         try {
           map.easeTo({ pitch: 0, bearing: 0, duration: 700, essential: true })
         } catch { /* map disposed */ }
@@ -478,10 +481,7 @@ function MapLibreMapView() {
       return
     }
     racePrevStatus.current = app.driving.status
-    if (app.driving.status === 'ready') {
-      drivingMarker.current?.remove(); drivingMarker.current = null
-      return
-    }
+    // Show the car from ready through finished so the start line is visible.
     if (!drivingMarker.current) {
       const el = document.createElement('div')
       el.className = 'maps-driving-car maps-driving-car--race'
@@ -489,24 +489,26 @@ function MapLibreMapView() {
       el.setAttribute('aria-label', 'Driving position')
       drivingMarker.current = new Marker({ element: el, anchor: 'center' }).addTo(map)
     }
-    const point = pointAtProgress(routeGeometry, app.driving.progress)
-    const bearing = bearingAtProgress(routeGeometry, app.driving.progress)
-    drivingMarker.current.setLngLat(point)
+    const progress = app.driving.progress
+    const point = pointAtProgress(routeGeometry, progress)
+    const bearing = bearingAtProgress(routeGeometry, progress)
+    const carLngLat = carPositionAt(point, bearing, app.driving.lateral ?? 0)
+    drivingMarker.current.setLngLat(carLngLat)
     const car = drivingMarker.current.getElement().querySelector('.maps-driving-car-body') as HTMLElement | null
     if (car) car.style.transform = `rotate(${bearing}deg)`
-    // Street-level chase cam while racing (and hold while paused).
-    if (app.driving.status === 'running' || app.driving.status === 'paused') {
+    // Street-level chase cam while racing (and hold while paused / finished).
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
       try { ensure3DScenery(map) } catch { /* optional sky */ }
-      const cam = raceCameraAt(point, bearing)
+      const cam = raceCameraAt(carLngLat, bearing)
       // Slight look-ahead so the road opens ahead of the car.
-      const center = offsetAlongBearing(point, bearing, 28)
+      const center = offsetAlongBearing(carLngLat, bearing, app.driving.status === 'ready' ? 12 : 28)
       const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
       const opts = {
         center,
         bearing: cam.bearing,
         pitch: cam.pitch,
         zoom: Math.max(map.getZoom(), cam.zoom),
-        duration: app.driving.status === 'running' && !reduced ? 90 : 0,
+        duration: app.driving.status === 'running' && !reduced ? 90 : (app.driving.status === 'ready' ? 500 : 0),
         essential: true as const,
         padding: { top: 40, bottom: 200, left: 20, right: 20 },
       }

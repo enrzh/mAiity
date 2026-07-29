@@ -11,8 +11,9 @@ import type {
   AppleColorScheme, AppleMapType, AppleOverlayTone, MapPreferences, MapProvider,
 } from './maps/types'
 import {
-  createDrivingSession, finishDriving, loadDrivingRuns, pauseDriving, resumeDriving,
-  saveDrivingRun, startDriving, tickDriving, toDrivingRun, type DrivingRun, type DrivingSession,
+  createDrivingSession, createDrivingSessionForMode, finishDriving, loadDrivingRuns,
+  pauseDriving, resetDriving, resumeDriving, saveDrivingRun, startDriving, tickDriving,
+  toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
 import { stepDrivingGame, type DrivingInput } from './lib/drivingGame'
 
@@ -91,6 +92,7 @@ interface AppState {
   startDrivingMode: () => void
   pauseDrivingMode: () => void
   resumeDrivingMode: () => void
+  resetDrivingMode: () => void
   tickDrivingMode: (now?: number) => void
   driveDrivingMode: (input: DrivingInput, now?: number) => void
   finishDrivingMode: () => void
@@ -422,7 +424,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const result = await api.route(from, to, mode)
       if (seq !== routeSeq.current) return
       setRoute({ from: fromPlace, to, mode, status: 'ready', result })
-      setDriving(createDrivingSession(result))
+      // Race mode is car-only; bike/foot routes must not arm the race HUD.
+      setDriving(createDrivingSessionForMode(mode, result))
     } catch (e) {
       if (seq !== routeSeq.current) return
       const code = (e as { code?: string })?.code
@@ -460,16 +463,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const startDrivingMode = useCallback(() => setDriving((s) => startDriving(s)), [])
   const pauseDrivingMode = useCallback(() => setDriving((s) => pauseDriving(s)), [])
   const resumeDrivingMode = useCallback(() => setDriving((s) => resumeDriving(s)), [])
+  const resetDrivingMode = useCallback(() => setDriving((s) => resetDriving(s)), [])
   const tickDrivingMode = useCallback((now = Date.now()) => {
     setDriving((s) => {
       const next = tickDriving(s, now)
       if (next.status === 'running' && next.progress >= 1) {
         const finished = finishDriving(next, now)
         const run = toDrivingRun(finished, now)
-        setDrivingRuns((runs) => {
-          const nextRuns = [run, ...runs].slice(0, 20)
-          try { localStorage.setItem('maps.driving-runs.v1', JSON.stringify(nextRuns)) } catch { /* best effort */ }
-          return nextRuns
+        setDrivingRuns(() => {
+          try { return saveDrivingRun(run) } catch { return [run] }
         })
         return finished
       }
@@ -479,17 +481,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const driveDrivingMode = useCallback((input: DrivingInput, now = Date.now()) => {
     setDriving((s) => {
       if (s.status !== 'running') return s
+      const dt = Math.min(0.1, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000))
       const nextPhysics = stepDrivingGame(
         { progress: s.progress, speedMps: s.speedMps, lateral: s.lateral },
         input,
-        Math.min(0.1, Math.max(0, (now - (s.lastInputAt ?? now)) / 1000)),
+        dt,
         s.distanceM,
       )
-      const next = { ...s, ...nextPhysics, elapsedMs: Math.min(s.durationMs, s.elapsedMs + Math.min(100, Math.max(0, now - (s.lastInputAt ?? now)))), lastInputAt: now }
+      const frameMs = Math.min(100, Math.max(0, now - (s.lastInputAt ?? now)))
+      const next = {
+        ...s,
+        ...nextPhysics,
+        elapsedMs: Math.min(s.durationMs, s.elapsedMs + frameMs),
+        lastInputAt: now,
+      }
       if (next.progress >= 1) {
         const finished = finishDriving(next, now)
         const run = toDrivingRun(finished, now)
-        setDrivingRuns((runs) => [run, ...runs].slice(0, 20))
+        setDrivingRuns(() => {
+          try { return saveDrivingRun(run) } catch { return [run] }
+        })
         return finished
       }
       return next
@@ -500,7 +511,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const finished = finishDriving(s)
       if (finished.status !== 'finished') return finished
       const run = toDrivingRun(finished)
-      setDrivingRuns((runs) => saveDrivingRun(run))
+      setDrivingRuns(() => {
+        try { return saveDrivingRun(run) } catch { return [run] }
+      })
       return finished
     })
   }, [])
@@ -567,7 +580,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
     driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
-    tickDrivingMode, driveDrivingMode, finishDrivingMode,
+    resetDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

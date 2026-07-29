@@ -123,7 +123,7 @@ struct MapScreen: View {
             // Race mode uses a tighter street-level chase cam; turn-by-turn stays wider.
             let racing: Bool = {
                 switch model.driving {
-                case .running, .paused: return true
+                case .ready, .running, .paused, .finished: return true
                 default: return false
                 }
             }()
@@ -188,9 +188,14 @@ struct MapScreen: View {
     }
 
     private var drivingCoordinate: CLLocationCoordinate2D? {
-        guard let geometry = model.route?.result?.geometry, geometry.count > 1,
-              model.driving.progress > 0, model.driving.progress < 1 else { return nil }
-        let position = model.driving.progress * Double(geometry.count - 1)
+        // Show car from ready (start line) through finished — not only mid-run.
+        switch model.driving {
+        case .idle: return nil
+        default: break
+        }
+        guard let geometry = model.route?.result?.geometry, geometry.count > 1 else { return nil }
+        let progress = min(1, max(0, model.driving.progress))
+        let position = progress * Double(geometry.count - 1)
         let index = min(geometry.count - 2, Int(position))
         let t = position - Double(index)
         let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t

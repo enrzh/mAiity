@@ -79,13 +79,24 @@ export function RoutePanel() {
             <Button className="w-full gap-2" onClick={app.startNavigation}>
               <Navigation2 className="size-4" /> {t('nav-start')}
             </Button>
-            {/* Driving HUD is a map overlay (App.tsx). Ready/running UI lives
-                there so the rail can collapse without burying controls. */}
-            {route.mode === 'car' && app.driving.status !== 'idle' && (
+            {/* Race mode: entry from the route rail + HUD overlay on the map. */}
+            {route.mode === 'car' && app.driving.status === 'ready' && (
+              <Button className="w-full gap-2" variant="secondary" onClick={app.startDrivingMode}>
+                <Car className="size-4" />
+                {app.lang === 'de' ? 'Rennen starten' : 'Start race'}
+              </Button>
+            )}
+            {route.mode === 'car' && app.driving.status === 'finished' && (
+              <Button className="w-full gap-2" variant="secondary" onClick={app.resetDrivingMode}>
+                <Car className="size-4" />
+                {app.lang === 'de' ? 'Nochmal fahren' : 'Race again'}
+              </Button>
+            )}
+            {route.mode === 'car' && (app.driving.status === 'running' || app.driving.status === 'paused') && (
               <p className="text-center text-xs text-muted-foreground">
                 {app.lang === 'de'
-                  ? 'Rennmodus: Steuerung und HUD liegen unten über der Karte.'
-                  : 'Race mode: controls and HUD sit over the bottom of the map.'}
+                  ? 'Rennmodus aktiv — HUD unten über der Karte.'
+                  : 'Race mode active — HUD is on the map below.'}
               </p>
             )}
             <Separator />

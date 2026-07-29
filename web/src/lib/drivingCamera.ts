@@ -34,3 +34,22 @@ export function offsetAlongBearing(point: LngLat, bearingDeg: number, meters: nu
   const dLon = (meters / (111_320 * Math.max(0.2, Math.cos((point[1] * Math.PI) / 180)))) * Math.sin(rad)
   return [point[0] + dLon, point[1] + dLat]
 }
+
+/** Lane offset: positive `meters` is to the right of travel direction. */
+export function offsetLateral(point: LngLat, bearingDeg: number, meters: number): LngLat {
+  return offsetAlongBearing(point, bearingDeg + 90, meters)
+}
+
+/** Convert game lateral (-1…1) into meters of lane offset. */
+export const RACE_LANE_M = 3.2
+
+export function carPositionAt(
+  point: LngLat,
+  bearingDeg: number,
+  lateral: number,
+  laneM = RACE_LANE_M,
+): LngLat {
+  const clamped = Math.max(-1, Math.min(1, lateral))
+  if (Math.abs(clamped) < 1e-4) return point
+  return offsetLateral(point, bearingDeg, clamped * laneM)
+}

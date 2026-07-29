@@ -221,7 +221,7 @@ function Shell() {
   // Selecting something while collapsed should reveal it, like Maps does.
   // Exception: active driving is immersive — keep the rail collapsed.
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused') return
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') return
     if (app.selected || app.route) setCollapsed(false)
   }, [app.selected, app.route, app.driving.status])
   // Category results must take over the rail: with the packs/saved panel
@@ -230,8 +230,9 @@ function Shell() {
   useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
   // Driving mode: one surface — close packs/saved and free the map (desktop
   // collapse + mobile peek). Controls live in a map overlay, not the rail.
+  // Keep immersive until the run is reset (finished still shows map HUD).
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused') {
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') {
       setPanel('none')
       setCollapsed(true)
       setDetent('peek')
@@ -240,7 +241,7 @@ function Shell() {
   // New contextual content while the mobile sheet is at peek would be
   // invisible — lift to half so a tap on the map/chips visibly answers.
   useEffect(() => {
-    if (app.driving.status === 'running' || app.driving.status === 'paused') return
+    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'finished') return
     if (app.selected || app.route || app.pois.length > 0)
       setDetent((d) => (d === 'peek' ? 'half' : d))
   }, [app.selected, app.route, app.pois, app.driving.status])

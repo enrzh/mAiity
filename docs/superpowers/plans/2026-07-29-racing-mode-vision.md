@@ -43,6 +43,16 @@ Applies to:
 | **D — Pack + Apple parity** | ✅ Shared race session + chase cam on both web renderers + native |
 | **E — Polish** | ⬜ Minimap, countdown, true 3D mesh cars, haptics, multiplayer |
 
+## Bugfix pass (post ship)
+
+- [x] Car-only race session (bike/foot no longer arm the HUD)
+- [x] Pause/finish preserve game physics progress (no teleport)
+- [x] Race-again reset after finished (web + iOS)
+- [x] Lateral steering applied to car marker on MapLibre + Apple web
+- [x] Car visible at start line (ready) and finish on web + iOS
+- [x] Completed runs always persisted to localStorage
+- [x] Immersive rail collapse through finished state
+
 ## Acceptance checks
 
 - [x] With a car route open, open texture packs → pack list is actually visible

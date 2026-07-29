@@ -355,7 +355,7 @@ struct SheetView: View {
     private var drivingSection: some View {
         let state = model.driving
         return VStack(alignment: .leading, spacing: 8) {
-            Label("Driving mode", systemImage: "car.fill")
+            Label("Race mode", systemImage: "car.fill")
                 .font(.subheadline.bold())
             HStack {
                 Text(Self.fmtTime(state.elapsed)).monospacedDigit().font(.title3.bold())
@@ -367,14 +367,13 @@ struct SheetView: View {
             HStack(spacing: 8) {
                 switch state {
                 case .ready:
-                    Button("Start") { model.startDriving() }.buttonStyle(.borderedProminent)
+                    Button("Start race") { model.startDriving() }.buttonStyle(.borderedProminent)
                 case .running:
                     Button("Pause") { model.pauseDriving() }.buttonStyle(.bordered)
                 case .paused:
                     Button("Resume") { model.resumeDriving() }.buttonStyle(.borderedProminent)
                 case .finished:
-                    Label("Finished", systemImage: "flag.checkered")
-                        .font(.caption.bold()).foregroundStyle(.green)
+                    Button("Race again") { model.resetDriving() }.buttonStyle(.borderedProminent)
                 case .idle:
                     EmptyView()
                 }
@@ -385,6 +384,9 @@ struct SheetView: View {
                     Button("Finish") { model.finishDriving() }.buttonStyle(.bordered)
                 }
             }
+            Text("Street-level chase cam follows the car. Controls stay in this sheet.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }

@@ -503,9 +503,13 @@ final class AppModel: ObservableObject {
     private var drivingTask: Task<Void, Never>?
 
     func prepareDriving() {
-        guard let r = route?.result, r.mode == "car", r.geometry.count > 1 else { return }
+        guard let r = route?.result, r.mode == "car", r.geometry.count > 1 else {
+            stopDriving()
+            return
+        }
         let duration = max(30, Double(r.durationS) * 0.72)
         driving = .ready(elapsed: 0, progress: 0, duration: duration, distanceM: Double(r.distanceM))
+        publishDrivingCamera(progress: 0)
     }
 
     func startDriving() {
@@ -533,7 +537,19 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func stopDriving() { drivingTask?.cancel(); drivingTask = nil; driving = .idle }
+    /// Re-arm the same car route for another race after finish.
+    func resetDriving() {
+        guard case let .finished(_, _, duration, distance) = driving else {
+            // Also allow reset from any non-idle state when a car route is ready.
+            prepareDriving()
+            return
+        }
+        drivingTask?.cancel(); drivingTask = nil
+        driving = .ready(elapsed: 0, progress: 0, duration: duration, distanceM: distance)
+        publishDrivingCamera(progress: 0)
+    }
+
+    func stopDriving() { drivingTask?.cancel(); drivingTask = nil; driving = .idle; navCamera = nil }
 
     private func startDrivingLoop(elapsed: TimeInterval, duration: TimeInterval, distance: Double) {
         drivingTask?.cancel()
@@ -555,7 +571,8 @@ final class AppModel: ObservableObject {
     /// Street-level chase cam for race mode (same idea as web MapLibre/Apple).
     private func publishDrivingCamera(progress: Double) {
         guard let geometry = route?.result?.geometry, geometry.count > 1 else { return }
-        let position = max(0, min(1, progress)) * Double(geometry.count - 1)
+        let clamped = max(0, min(1, progress))
+        let position = clamped * Double(geometry.count - 1)
         let index = min(geometry.count - 2, Int(position))
         let t = position - Double(index)
         let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
@@ -565,8 +582,14 @@ final class AppModel: ObservableObject {
             (lon: lon, lat: lat),
             (lon: geometry[nextIdx][0], lat: geometry[nextIdx][1])
         )
+        // Look slightly ahead so the street opens in front of the car.
+        let lookM = 28.0
+        let rad = head * .pi / 180
+        let dLat = (lookM / 111_320) * cos(rad)
+        let cosLat = max(0.2, cos(lat * .pi / 180))
+        let dLon = (lookM / (111_320 * cosLat)) * sin(rad)
         navCamera = NavCamera(
-            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+            center: CLLocationCoordinate2D(latitude: lat + dLat, longitude: lon + dLon),
             heading: head
         )
     }
