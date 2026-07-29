@@ -1,6 +1,7 @@
 import CoreLocation
 import MapKit
 import SwiftUI
+import UIKit
 
 /// Apple Maps is the default renderer. Real custom styles keep using the
 /// shared MapLibre style files instead of being approximated with map types.
@@ -11,10 +12,11 @@ struct MapScreen: View {
     @ObservedObject private var location = LocationService.shared
     @Namespace private var mapScope
     @State private var position: MapCameraPosition = .region(
-        MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
-            span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
-        )
+        MapPersistence.readViewport(provider: "apple")?.region
+            ?? MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
+                span: MKCoordinateSpan(latitudeDelta: 8.0, longitudeDelta: 11.0)
+            )
     )
     @State private var visibleRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
@@ -87,6 +89,7 @@ struct MapScreen: View {
                 // Keep route/category searches anchored to the actual Apple map.
                 visibleRegion = context.region
                 model.mapCenter = context.region.center
+                model.noteMapRegion(context.region)
             }
             .gesture(
                 SpatialTapGesture().onEnded { event in
@@ -137,11 +140,12 @@ struct MapScreen: View {
                 default: return false
                 }
             }()
+            let reduceMotion = UIAccessibility.isReduceMotionEnabled
             position = .camera(MapCamera(
                 centerCoordinate: camera.center,
                 distance: racing ? 280 : 900,
                 heading: camera.heading,
-                pitch: racing ? 68 : 55
+                pitch: reduceMotion ? (racing ? 45 : 0) : (racing ? 68 : 55)
             ))
         }
         .overlay(alignment: .bottomTrailing) {

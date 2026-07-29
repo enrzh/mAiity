@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Map-overlay race HUD (mirrors web DrivingModePanel) so the sheet can
 /// collapse without burying Start / Pause / touch pads.
@@ -6,6 +7,7 @@ struct RaceHUDView: View {
     @EnvironmentObject private var model: AppModel
 
     private var state: AppModel.DrivingState { model.driving }
+    private var countdown: Int? { model.raceCountdown }
 
     var body: some View {
         if case .idle = state {
@@ -13,6 +15,17 @@ struct RaceHUDView: View {
         } else {
             VStack(spacing: 10) {
                 statsRow
+                if let c = countdown {
+                    VStack(spacing: 2) {
+                        Text(c == 0 ? "GO" : "\(c)")
+                            .font(.system(size: 40, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.mint)
+                        Text(L.t("race-countdown"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
                 actionsRow
                 if case .running = state {
                     touchPads
@@ -20,7 +33,7 @@ struct RaceHUDView: View {
                 if case .finished = state {
                     finishedRow
                 }
-                if case .ready = state {
+                if case .ready = state, countdown == nil {
                     Text(L.t("race-hint"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -40,6 +53,22 @@ struct RaceHUDView: View {
             .padding(.horizontal, 12)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(L.t("race-mode"))
+            .onChange(of: model.raceCountdown) { _, new in
+                guard let new else { return }
+                if new <= 0 {
+                    model.startDriving()
+                    return
+                }
+                let reduce = UIAccessibility.isReduceMotionEnabled
+                DispatchQueue.main.asyncAfter(deadline: .now() + (reduce ? 0.2 : 0.7)) {
+                    if model.raceCountdown == new {
+                        model.raceCountdown = new - 1
+                    }
+                }
+            }
+            .onChange(of: model.driving) { _, new in
+                if case .idle = new { model.raceCountdown = nil }
+            }
         }
     }
 
@@ -67,14 +96,24 @@ struct RaceHUDView: View {
         HStack(spacing: 8) {
             switch state {
             case .ready:
-                Button {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    model.startDriving()
-                } label: {
-                    Label(L.t("race-start"), systemImage: "play.fill")
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                if countdown != nil {
+                    Button {
+                        model.cancelRaceCountdown()
+                    } label: {
+                        Text(L.t("cancel"))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.bordered)
+                } else {
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        model.requestStartRace()
+                    } label: {
+                        Label(L.t("race-start"), systemImage: "play.fill")
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
             case .running:
                 Button { model.pauseDriving() } label: {
                     Label(L.t("race-pause"), systemImage: "pause.fill")

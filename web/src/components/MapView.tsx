@@ -595,10 +595,21 @@ function MapLibreMapView() {
 }
 
 /** Apple Maps is the default renderer; custom packs continue to use MapLibre. */
-export function MapView() {
+export function MapView({
+  onAppleFailed,
+}: {
+  onAppleFailed?: () => void
+} = {}) {
   const app = useApp()
   const [appleFailed, setAppleFailed] = useState(false)
-  const handleAppleFailure = useCallback(() => setAppleFailed(true), [])
+  const handleAppleFailure = useCallback(() => {
+    setAppleFailed(true)
+    onAppleFailed?.()
+  }, [onAppleFailed])
+  // Reset failure when leaving Apple so switching back tries a clean load.
+  useEffect(() => {
+    if (app.mapProvider !== 'apple') setAppleFailed(false)
+  }, [app.mapProvider])
   if (app.mapProvider === 'apple' && !appleFailed) {
     return <AppleMapView onFailure={handleAppleFailure} />
   }

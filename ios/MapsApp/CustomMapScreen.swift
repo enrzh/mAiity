@@ -1,8 +1,10 @@
 import CoreLocation
+import MapKit
 import MapLibre
 import MapLibreSwiftDSL
 import MapLibreSwiftUI
 import SwiftUI
+import UIKit
 
 /// Shared-style renderer for every non-Apple pack.
 struct CustomMapScreen: View {
@@ -141,14 +143,19 @@ struct CustomMapScreen: View {
                 }
             }()
             // Street-level race: higher pitch/zoom so pack buildings fill the view.
+            let reduceMotion = UIAccessibility.isReduceMotionEnabled
             let z = racing ? 17.6 : 17.0
             currentZoom = z
             camera = .center(
                 target.center,
                 zoom: z,
-                pitch: racing ? 68 : 60,
+                pitch: reduceMotion ? (racing ? 40 : 0) : (racing ? 68 : 60),
                 direction: target.heading
             )
+            model.noteMapRegion(MKCoordinateRegion(
+                center: target.center,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            ))
         }
     }
 

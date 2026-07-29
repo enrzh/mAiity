@@ -15,8 +15,9 @@ across screen sizes and map providers.
 
 mAiity provides a fast, map-first discovery and navigation experience with a
 choice between native Apple Maps and custom visual map styles. Success means
-that search, location, camera, saved places, and navigation behave predictably
-regardless of the selected renderer.
+that search, location, camera, saved places, navigation, and optional **race
+mode** on car routes behave predictably regardless of the selected renderer
+(web and iOS).
 
 ## Brand Personality
 

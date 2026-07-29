@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { pointAtProgress } from '../lib/driving'
 import { useT } from '../lib/useT'
 import { useApp } from '../state'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const fmtTime = (ms: number) => {
   const total = Math.floor(ms / 1000)
@@ -20,10 +20,25 @@ export function DrivingModePanel() {
   const session = app.driving
   const keys = useRef({ throttle: false, brake: false, steer: 0 })
   const frame = useRef<number | null>(null)
+  const [countdown, setCountdown] = useState<number | null>(null)
+
+  // 3-2-1 before the race actually starts.
+  useEffect(() => {
+    if (countdown == null) return
+    if (countdown <= 0) {
+      setCountdown(null)
+      app.startDrivingMode()
+      return
+    }
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const id = window.setTimeout(() => setCountdown((c) => (c == null ? null : c - 1)), reduced ? 200 : 700)
+    return () => window.clearTimeout(id)
+  }, [countdown, app.startDrivingMode])
 
   useEffect(() => {
     if (session.status !== 'running') {
       keys.current = { throttle: false, brake: false, steer: 0 }
+      if (session.status === 'idle' || session.status === 'ready') setCountdown(null)
       return
     }
     const down = (event: KeyboardEvent) => {
@@ -63,9 +78,33 @@ export function DrivingModePanel() {
     () => (route ? pointAtProgress(route.geometry, session.progress) : null),
     [route, session.progress],
   )
+  const minimap = useMemo(() => {
+    if (!route || route.geometry.length < 2) return null
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    for (const [lon, lat] of route.geometry) {
+      minX = Math.min(minX, lon); maxX = Math.max(maxX, lon)
+      minY = Math.min(minY, lat); maxY = Math.max(maxY, lat)
+    }
+    const pad = 0.08
+    const w = Math.max(1e-6, maxX - minX)
+    const h = Math.max(1e-6, maxY - minY)
+    const to = (lon: number, lat: number) => {
+      const x = ((lon - minX) / w) * (1 - 2 * pad) + pad
+      const y = 1 - (((lat - minY) / h) * (1 - 2 * pad) + pad)
+      return [x * 100, y * 100] as const
+    }
+    const path = route.geometry.map(([lon, lat], i) => {
+      const [x, y] = to(lon, lat)
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
+    }).join(' ')
+    const car = currentPoint ? to(currentPoint[0], currentPoint[1]) : null
+    return { path, car }
+  }, [route, currentPoint])
+
   if (!route || session.status === 'idle') return null
   const speed = Math.round(session.speedMps * 3.6)
   const recent = app.drivingRuns.slice(0, 5)
+  const countingDown = countdown != null
 
   const hold = (type: 'throttle' | 'brake' | 'left' | 'right', value: boolean) => {
     if (type === 'throttle') keys.current.throttle = value
@@ -94,11 +133,33 @@ export function DrivingModePanel() {
         </div>
       </div>
 
+      {countingDown && (
+        <div className="maps-race-hud__countdown" aria-live="assertive">
+          <span>{countdown === 0 ? 'GO' : countdown}</span>
+          <small>{t('race-countdown')}</small>
+        </div>
+      )}
+
+      {minimap && (session.status === 'running' || session.status === 'paused' || session.status === 'ready') && (
+        <svg className="maps-race-minimap" viewBox="0 0 100 56" aria-hidden>
+          <rect x="0" y="0" width="100" height="56" rx="8" className="maps-race-minimap__bg" />
+          <path d={minimap.path} className="maps-race-minimap__route" />
+          {minimap.car && (
+            <circle cx={minimap.car[0]} cy={minimap.car[1]} r="2.8" className="maps-race-minimap__car" />
+          )}
+        </svg>
+      )}
+
       <div className="maps-race-hud__actions">
-        {session.status === 'ready' && (
-          <Button size="lg" className="min-h-12 flex-1" onClick={app.startDrivingMode}>
+        {session.status === 'ready' && !countingDown && (
+          <Button size="lg" className="min-h-12 flex-1" onClick={() => setCountdown(3)}>
             <Play className="mr-2 size-4" />
             {t('race-start')}
+          </Button>
+        )}
+        {session.status === 'ready' && countingDown && (
+          <Button size="lg" variant="outline" className="min-h-12 flex-1" onClick={() => setCountdown(null)}>
+            {t('close')}
           </Button>
         )}
         {session.status === 'running' && (

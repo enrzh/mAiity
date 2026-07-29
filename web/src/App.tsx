@@ -23,6 +23,7 @@ import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
 import { DrivingModePanel } from './components/DrivingModePanel'
+import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
 
 type Panel = 'none' | 'saved' | 'packs'
@@ -171,6 +172,8 @@ function Shell() {
   const t = useT()
   const [panel, setPanel] = useState<Panel>('none')
   const [collapsed, setCollapsed] = useState(() => readSidebarCollapsed())
+  const [appleFailed, setAppleFailed] = useState(false)
+  const [mapKey, setMapKey] = useState(0)
   const railRef = useRef<HTMLElement>(null)
   const [sheetH, setSheetH] = useState(0)
   // Mobile sheet detent + live height while the grabber is being dragged.
@@ -178,6 +181,9 @@ function Shell() {
   const [dragH, setDragH] = useState<number | null>(null)
   const dragFrom = useRef<{ y: number; h: number } | null>(null)
   useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
+  useEffect(() => {
+    if (app.mapProvider !== 'apple') setAppleFailed(false)
+  }, [app.mapProvider])
 
   // Global shortcuts when not typing in an input: / search, +/- zoom, Esc close.
   useEffect(() => {
@@ -382,7 +388,17 @@ function Shell() {
 
       {/* ---- Map ------------------------------------------------------- */}
       <main className="relative min-w-0 flex-1">
-        <MapView />
+        <MapView
+          key={mapKey}
+          onAppleFailed={() => setAppleFailed(true)}
+        />
+        <MapStatus
+          appleFailed={appleFailed}
+          onRetryApple={() => {
+            setAppleFailed(false)
+            setMapKey((k) => k + 1)
+          }}
+        />
 
         {/* Driving HUD sits on the map so collapsing the rail (immersive race)
             does not bury Start/Pause/touch controls under the sidebar. */}

@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import MapKit
 import SwiftUI
 import UIKit
 
@@ -111,19 +112,28 @@ final class AppModel: ObservableObject {
     @Published var raceInput = DrivingInput()
     @Published var raceSpeedMps: Double = 0
     @Published var raceLateral: Double = 0
+    /// Shared 3-2-1 countdown (nil = idle). Driven by RaceHUDView.
+    @Published var raceCountdown: Int? = nil
     /// Set by the floating map button; the sheet presents the pack picker.
     @Published var showPackPicker = false
     /// One-shot startup position so the map opens where the user is.
     @Published var startupLocation: CameraEvent?
     @Published var activePackId: String {
-        didSet { UserDefaults.standard.set(activePackId, forKey: "maps.activePack") }
+        didSet { persistMapPreferences() }
     }
     @Published var appleMapType: String {
-        didSet { UserDefaults.standard.set(appleMapType, forKey: "maps.appleMapType") }
+        didSet { persistMapPreferences() }
     }
     @Published var appleColorScheme: String {
-        didSet { UserDefaults.standard.set(appleColorScheme, forKey: "maps.appleColorScheme") }
+        didSet { persistMapPreferences() }
     }
+    /// Live map region for “search this area” + viewport persistence.
+    @Published var mapRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45),
+        span: MKCoordinateSpan(latitudeDelta: 8, longitudeDelta: 11)
+    )
+    @Published var mapMovedForCategory = false
+    private var categoryAnchor: CLLocationCoordinate2D?
     @Published var bookmarks: [Bookmark] = []
     @Published var selected: Place? {
         didSet { if selected != nil { panel = .none } }
@@ -158,12 +168,68 @@ final class AppModel: ObservableObject {
     }
 
     init() {
-        activePackId = UserDefaults.standard.string(forKey: "maps.activePack") ?? "light"
-        appleMapType = UserDefaults.standard.string(forKey: "maps.appleMapType") ?? "standard"
-        appleColorScheme = UserDefaults.standard.string(forKey: "maps.appleColorScheme") ?? "adaptive"
+        let prefs = MapPersistence.readPreferences()
+        activePackId = prefs.provider == "apple" ? "light" : prefs.customPackId
+        appleMapType = prefs.appleMapType
+        appleColorScheme = prefs.appleColorScheme
+        if let saved = MapPersistence.readViewport(provider: prefs.provider) {
+            mapRegion = saved.region
+        }
         if let data = UserDefaults.standard.data(forKey: "maps.recents"),
            let stored = try? JSONDecoder().decode([GeoResult].self, from: data) {
             recents = stored
+        }
+    }
+
+    private func persistMapPreferences() {
+        MapPersistence.writePreferences(MapPreferences(
+            version: 1,
+            provider: activePackId == "light" ? "apple" : "custom",
+            customPackId: activePackId == "light" ? "dark" : activePackId,
+            appleMapType: appleMapType,
+            appleColorScheme: appleColorScheme
+        ))
+    }
+
+    /// Called by map screens when the camera settles.
+    func noteMapRegion(_ region: MKCoordinateRegion) {
+        mapRegion = region
+        let provider = activePackId == "light" ? "apple" : "custom"
+        MapPersistence.writeViewport(provider: provider, SavedViewport(region: region))
+        if let anchor = categoryAnchor, activeCategory != nil {
+            let d = Nav.distance(
+                (lon: anchor.longitude, lat: anchor.latitude),
+                (lon: region.center.longitude, lat: region.center.latitude)
+            )
+            if d > 350 { mapMovedForCategory = true }
+        }
+    }
+
+    func searchThisArea() {
+        guard let id = activeCategory,
+              let cat = NearbyCategory.all.first(where: { $0.id == id }) else { return }
+        let r = mapRegion
+        let halfLat = r.span.latitudeDelta / 2
+        let halfLon = r.span.longitudeDelta / 2
+        let bounds = (
+            west: r.center.longitude - halfLon,
+            south: r.center.latitude - halfLat,
+            east: r.center.longitude + halfLon,
+            north: r.center.latitude + halfLat
+        )
+        mapMovedForCategory = false
+        categoryAnchor = r.center
+        // Force re-query even if same category (don't toggle off).
+        poiTask?.cancel()
+        activeCategory = cat.id
+        poiTask = Task { [weak self] in
+            guard let self else { return }
+            let center = (lat: r.center.latitude, lon: r.center.longitude)
+            let results = (try? await APIClient.shared.nearby(
+                cat: cat.id, lat: center.lat, lon: center.lon, bounds: bounds
+            )) ?? []
+            guard !Task.isCancelled else { return }
+            self.pois = results
         }
     }
 
@@ -316,6 +382,8 @@ final class AppModel: ObservableObject {
         poiTask?.cancel()
         if activeCategory == cat.id { clearPois(); return }
         activeCategory = cat.id
+        mapMovedForCategory = false
+        categoryAnchor = mapRegion.center
         poiTask = Task { [weak self] in
             guard let self else { return }
             // Search around: the selected place, else the user, else the last
@@ -324,10 +392,12 @@ final class AppModel: ObservableObject {
             if let s = self.selected { center = (s.lat, s.lon) }
             else if let loc = await LocationService.shared.currentLocation() { center = (loc.latitude, loc.longitude) }
             else if let t = self.cameraTarget { center = (t.place.lat, t.place.lon) }
+            else { center = (self.mapRegion.center.latitude, self.mapRegion.center.longitude) }
             guard !Task.isCancelled else { return }
             let results = (try? await APIClient.shared.nearby(cat: cat.id, lat: center.lat, lon: center.lon, bounds: bounds)) ?? []
             guard !Task.isCancelled else { return }
             self.pois = results
+            self.categoryAnchor = CLLocationCoordinate2D(latitude: center.lat, longitude: center.lon)
         }
     }
 
@@ -335,6 +405,8 @@ final class AppModel: ObservableObject {
         poiTask?.cancel()
         pois = []
         activeCategory = nil
+        mapMovedForCategory = false
+        categoryAnchor = nil
     }
 
     // MARK: - Bookmarks
@@ -526,8 +598,17 @@ final class AppModel: ObservableObject {
         publishDrivingCamera(progress: 0, lateral: 0)
     }
 
+    /// Begin 3-2-1 countdown; HUD completes it and calls `startDriving()`.
+    func requestStartRace() {
+        guard case .ready = driving else { return }
+        raceCountdown = 3
+    }
+
+    func cancelRaceCountdown() { raceCountdown = nil }
+
     func startDriving() {
         guard case let .ready(elapsed, progress, duration, distance) = driving else { return }
+        raceCountdown = nil
         startDrivingLoop(elapsed: elapsed, progress: progress, duration: duration, distance: distance)
     }
 

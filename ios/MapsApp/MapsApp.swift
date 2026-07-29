@@ -38,6 +38,22 @@ struct RootView: View {
             MapScreen(sheetHeight: raceImmersive ? 180 : sheetHeight)
                 .ignoresSafeArea()
 
+            if model.mapMovedForCategory, model.activeCategory != nil, !raceImmersive {
+                Button {
+                    model.searchThisArea()
+                } label: {
+                    Label(L.t("search-this-area"), systemImage: "arrow.clockwise")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.regularMaterial, in: Capsule())
+                        .shadow(color: .black.opacity(0.2), radius: 10, y: 4)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, max(sheetHeight + 12, 120))
+                .transition(.opacity)
+            }
+
             if !isIdle(model.driving) {
                 RaceHUDView()
                     .padding(.bottom, raceImmersive ? 28 : max(12, sheetHeight * 0.15))

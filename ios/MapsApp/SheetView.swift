@@ -361,7 +361,7 @@ struct SheetView: View {
             HStack(spacing: 8) {
                 switch state {
                 case .ready:
-                    Button(L.t("race-start")) { model.startDriving() }
+                    Button(L.t("race-start")) { model.requestStartRace() }
                         .buttonStyle(.borderedProminent)
                 case .running, .paused:
                     Text(L.t("race-active-hint"))

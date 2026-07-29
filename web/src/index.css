@@ -391,6 +391,51 @@ body { overscroll-behavior: none; }
   gap: 8px;
   opacity: 0.9;
 }
+.maps-race-hud__countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 0 2px;
+}
+.maps-race-hud__countdown span {
+  font: 800 2.5rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.04em;
+  color: #7cf0c2;
+  text-shadow: 0 0 24px rgb(124 240 194 / 45%);
+}
+.maps-race-hud__countdown small {
+  font-size: 0.7rem;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.maps-race-minimap {
+  width: 100%;
+  height: 56px;
+  display: block;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.maps-race-minimap__bg {
+  fill: rgb(0 0 0 / 28%);
+}
+.maps-race-minimap__route {
+  fill: none;
+  stroke: #4da3ff;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.maps-race-minimap__car {
+  fill: #7cf0c2;
+  stroke: #fff;
+  stroke-width: 0.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .maps-race-hud__countdown span { text-shadow: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .maps-driving-car-body { transition: none; }
   .maps-race-hud__progress span { transition: none; }
