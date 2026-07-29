@@ -1,12 +1,18 @@
 import type { LngLat } from './navigation'
 
-/** Street-level race camera: high pitch + zoom so buildings fill the view. */
-export const RACE_PITCH = 72
-export const RACE_ZOOM = 17.6
-/** MapKit altitude (meters above ground) for street-level chase cam. */
-export const RACE_ALTITUDE_M = 140
-export const RACE_ALTITUDE_READY_M = 220
-/** Look slightly ahead of the car so the street opens in front of the player. */
+/**
+ * First-person race camera: driver-eye height on the street, looking forward
+ * so buildings and the road fill the frame (not a top-down chase cam).
+ */
+export const RACE_PITCH = 82
+export const RACE_ZOOM = 18.8
+/** MapKit altitude (meters AGL) for driver-eye view. */
+export const RACE_ALTITUDE_M = 28
+export const RACE_ALTITUDE_READY_M = 42
+/** Meters the view center sits ahead of the car (road opens in front). */
+export const RACE_LOOKAHEAD_M = 22
+export const RACE_LOOKAHEAD_READY_M = 14
+/** Legacy export — same as ready look-ahead fraction for older call sites. */
 export const RACE_LOOKAHEAD = 0.012
 
 export interface RaceCamera {
@@ -14,19 +20,27 @@ export interface RaceCamera {
   bearing: number
   pitch: number
   zoom: number
+  /** MapKit-only: meters above ground. */
+  altitudeM: number
 }
 
-/** Build a third-person follow camera along the route. */
+/**
+ * First-person camera: placed at the car, view aimed slightly down the road.
+ * `point` is the car position; we look ahead along `bearingDeg`.
+ */
 export function raceCameraAt(
   point: LngLat,
   bearingDeg: number,
-  opts?: { pitch?: number; zoom?: number },
+  opts?: { pitch?: number; zoom?: number; altitudeM?: number; lookAheadM?: number },
 ): RaceCamera {
+  const lookAheadM = opts?.lookAheadM ?? RACE_LOOKAHEAD_M
+  const center = offsetAlongBearing(point, bearingDeg, lookAheadM)
   return {
-    center: point,
+    center,
     bearing: bearingDeg,
     pitch: opts?.pitch ?? RACE_PITCH,
     zoom: opts?.zoom ?? RACE_ZOOM,
+    altitudeM: opts?.altitudeM ?? RACE_ALTITUDE_M,
   }
 }
 

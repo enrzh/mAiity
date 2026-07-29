@@ -17,7 +17,7 @@ import { readViewport, writeViewport } from '../maps/viewportStorage'
 import { railInset } from '../maps/railInset'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
-import { carPositionAt, offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
+import { carPositionAt, raceCameraAt } from '../lib/drivingCamera'
 import { useApp } from '../state'
 import { cn } from '../lib/utils'
 
@@ -639,13 +639,13 @@ export function MapLibreMapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
 
-  // Race car marker + street-level follow camera (buildings via pitch/zoom).
-  // Works on every custom MapLibre pack without style-specific layers.
+  // First-person race camera (driver-eye). The 3D car is a viewport overlay
+  // (RaceCar3D) — no top-down map pin, which broke the FP illusion.
   const racePrevStatus = useRef(app.driving.status)
   useEffect(() => {
     if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle') {
+      // Drop any legacy pin if present.
       drivingMarker.current?.remove(); drivingMarker.current = null
-      // Leave race camera when exiting race (not when merely "ready").
       if (
         map
         && (racePrevStatus.current === 'running' || racePrevStatus.current === 'paused' || racePrevStatus.current === 'finished')
@@ -658,49 +658,36 @@ export function MapLibreMapView() {
       return
     }
     racePrevStatus.current = app.driving.status
-    // Compute position BEFORE creating the marker — MapLibre Marker.addTo
-    // reads _lngLat.lng and throws if setLngLat was never called (blank #root).
     const progress = app.driving.progress
     const point = pointAtProgress(routeGeometry, progress)
     const bearing = bearingAtProgress(routeGeometry, progress)
     const carLngLat = carPositionAt(point, bearing, app.driving.lateral ?? 0)
     if (!Number.isFinite(carLngLat[0]) || !Number.isFinite(carLngLat[1])) return
+    // Never show a top-down marker in FP race.
+    drivingMarker.current?.remove(); drivingMarker.current = null
+    if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
     try {
-      if (!drivingMarker.current) {
-        const el = document.createElement('div')
-        el.className = 'maps-driving-car maps-driving-car--race'
-        el.innerHTML = '<span class="maps-driving-car-body" aria-hidden="true"><i></i><i></i></span>'
-        el.setAttribute('aria-label', 'Driving position')
-        drivingMarker.current = new Marker({ element: el, anchor: 'center' })
-          .setLngLat(carLngLat)
-          .addTo(map)
-      } else {
-        drivingMarker.current.setLngLat(carLngLat)
+      try { ensure3DScenery(map) } catch { /* optional sky/terrain */ }
+      try { attachTerrainWhenReady(map) } catch { /* DEM optional */ }
+      const ready = app.driving.status === 'ready'
+      const cam = raceCameraAt(carLngLat, bearing, {
+        lookAheadM: ready ? 14 : 22,
+      })
+      const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const opts = {
+        center: cam.center as [number, number],
+        bearing: cam.bearing,
+        pitch: cam.pitch,
+        zoom: Math.max(map.getZoom(), cam.zoom),
+        duration: app.driving.status === 'running' && !reduced ? 70 : (ready ? 450 : 0),
+        essential: true as const,
+        // Bottom padding leaves room for the 3D car + race HUD.
+        padding: { top: 12, bottom: 200, left: 12, right: 64 },
       }
-      const car = drivingMarker.current.getElement().querySelector('.maps-driving-car-body') as HTMLElement | null
-      if (car) car.style.transform = `rotate(${bearing}deg)`
-      // Street-level chase cam while racing (and hold while paused / finished).
-      if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
-        try { ensure3DScenery(map) } catch { /* optional sky */ }
-        const cam = raceCameraAt(carLngLat, bearing)
-        // Slight look-ahead so the road opens ahead of the car.
-        const center = offsetAlongBearing(carLngLat, bearing, app.driving.status === 'ready' ? 12 : 28)
-        const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        const opts = {
-          center,
-          bearing: cam.bearing,
-          pitch: cam.pitch,
-          zoom: Math.max(map.getZoom(), cam.zoom),
-          duration: app.driving.status === 'running' && !reduced ? 90 : (app.driving.status === 'ready' ? 500 : 0),
-          essential: true as const,
-          // Leave room for the race HUD (bottom) and map controls (right).
-          padding: { top: 24, bottom: 160, left: 16, right: 72 },
-        }
-        if (opts.duration > 0) map.easeTo(opts)
-        else map.jumpTo(opts)
-      }
+      if (opts.duration > 0) map.easeTo(opts)
+      else map.jumpTo(opts)
     } catch (e) {
-      console.error('[maplibre] race marker failed', e)
+      console.error('[maplibre] race camera failed', e)
     }
   }, [map, routeGeometry, app.driving])
 

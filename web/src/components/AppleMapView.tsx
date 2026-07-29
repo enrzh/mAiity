@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import {
-  carPositionAt, offsetAlongBearing,
-  RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_PITCH,
+  carPositionAt,
+  raceCameraAt,
+  RACE_ALTITUDE_M, RACE_ALTITUDE_READY_M, RACE_LOOKAHEAD_M, RACE_LOOKAHEAD_READY_M, RACE_PITCH,
 } from '../lib/drivingCamera'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
@@ -497,9 +498,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     }
   }, [map, app.route])
 
-  // Race / drive → street-level chase camera (pitch + low altitude).
-  // MapKit has no MapLibre-style 3D extrusions everywhere, but Camera pitch +
-  // buildings + hybrid still gives a street-level race feel.
+  // First-person race camera (driver-eye). 3D car is RaceCar3D overlay in App.
   useEffect(() => {
     if (!map || !aliveRef.current || !mapIsLive(map, el.current)) return
     const mk = (window as any).mapkit
@@ -512,7 +511,6 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         || app.driving.status === 'ready'
         || app.driving.status === 'finished'
 
-      // Prefer buildings + standard (or hybrid) while racing for street context.
       try {
         if (typeof map.showsBuildings !== 'undefined') map.showsBuildings = racing
         if (typeof map.showsCompass !== 'undefined' && mk.FeatureVisibility) {
@@ -538,25 +536,27 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       const bearing = bearingAtProgress(pts, app.driving.progress)
       const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
       if (!Number.isFinite(carPt[0]) || !Number.isFinite(carPt[1])) return
-      const lookAhead = app.driving.status === 'ready' ? 18 : 32
-      const look = offsetAlongBearing(carPt, bearing, lookAhead)
       if (!(app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready')) return
 
-      const coord = new mk.Coordinate(look[1], look[0])
-      const altitude = app.driving.status === 'ready' ? RACE_ALTITUDE_READY_M : RACE_ALTITUDE_M
+      const ready = app.driving.status === 'ready'
+      const cam = raceCameraAt(carPt, bearing, {
+        lookAheadM: ready ? RACE_LOOKAHEAD_READY_M : RACE_LOOKAHEAD_M,
+        altitudeM: ready ? RACE_ALTITUDE_READY_M : RACE_ALTITUDE_M,
+        pitch: Math.min(RACE_PITCH, 85),
+      })
+      const coord = new mk.Coordinate(cam.center[1], cam.center[0])
       const animated = app.driving.status === 'running'
       try {
         if (mk.Camera) {
-          const cam = new mk.Camera(coord, {
-            heading: bearing,
-            // MapKit pitch is degrees from nadir-ish; clamp to what the API allows.
-            pitch: Math.min(RACE_PITCH, 80),
-            altitude,
+          const camera = new mk.Camera(coord, {
+            heading: cam.bearing,
+            pitch: cam.pitch,
+            altitude: cam.altitudeM,
           })
           if (typeof map.setCameraAnimated === 'function') {
-            map.setCameraAnimated(cam, animated)
+            map.setCameraAnimated(camera, animated)
           } else if ('camera' in map) {
-            map.camera = cam
+            map.camera = camera
           } else {
             throw new Error('no camera setter')
           }
@@ -564,14 +564,13 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           throw new Error('no Camera class')
         }
       } catch {
-        // Fallback stack: rotation + region zoom for a pseudo street view.
         try {
           map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), animated)
           if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
           if (typeof map.setCameraDistanceAnimated === 'function') {
-            map.setCameraDistanceAnimated(altitude, animated)
+            map.setCameraDistanceAnimated(cam.altitudeM, animated)
           } else if (map.region) {
-            const span = 0.0025
+            const span = 0.0012
             map.setRegionAnimated(new mk.CoordinateRegion(
               new mk.Coordinate(carPt[1], carPt[0]),
               new mk.CoordinateSpan(span, span),
@@ -580,7 +579,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         } catch { /* last resort already failed */ }
       }
     } catch (e) {
-      console.error('[mapkit] drive camera failed', e)
+      console.error('[mapkit] race camera failed', e)
     }
   }, [map, app.route, app.driving])
 

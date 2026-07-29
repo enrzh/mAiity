@@ -23,6 +23,7 @@ import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
 import { DrivingModePanel } from './components/DrivingModePanel'
+import { RaceCar3D } from './components/RaceCar3D'
 import { MapStatus } from './components/MapStatus'
 import { AuthModal } from './components/AuthModal'
 
@@ -459,6 +460,15 @@ function Shell() {
             setMapKey((k) => k + 1)
           }}
         />
+
+        {/* First-person 3D car — sits in the lower frame while racing. */}
+        {app.driving.status !== 'idle' && app.driving.status !== 'finished' && (
+          <RaceCar3D
+            lateral={app.driving.lateral ?? 0}
+            speedMps={app.driving.speedMps ?? 0}
+            active={app.driving.status === 'running'}
+          />
+        )}
 
         {/* Race HUD — exclusive bottom strip; map controls clear it via --race-hud-h. */}
         {app.driving.status !== 'idle' && (
