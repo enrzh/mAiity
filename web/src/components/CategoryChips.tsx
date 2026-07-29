@@ -29,8 +29,10 @@ export function CategoryChips({ getCenter }: { getCenter: () => { lat: number; l
 
   const pick = (cat: NearbyCategory) => {
     if (app.activeCategory === cat) { app.clearPois(); return }
-    const center = getCenter()
-    if (center) void app.showCategory(cat, center)
+    // Fall back to a Germany-wide center if the map hasn't reported a viewport yet
+    // (e.g. before the first region-change / geolocation).
+    const center = getCenter() ?? { lat: 51.16, lon: 10.45 }
+    void app.showCategory(cat, center)
   }
 
   return (

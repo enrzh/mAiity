@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785356786.618157,
-    "ast_hash": "3664fdbd8847e545da31a8327ef685bf",
+    "mtime": 1785356921.4297152,
+    "ast_hash": "0e3123bbf7405b5535edde165e6fce9a",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
-    "mtime": 1785356097.9180145,
-    "ast_hash": "026d44f55db6658e9b68c3c928686c51",
+    "mtime": 1785356921.4286885,
+    "ast_hash": "b486b94c030f921a6d308674a6d26172",
     "semantic_hash": ""
   },
   "web/src/components/NavigationPanel.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "web/src/components/RoutePanel.tsx": {
-    "mtime": 1785356769.278381,
-    "ast_hash": "09d804278d589b7bab79704d4bd9a86a",
+    "mtime": 1785356921.4295094,
+    "ast_hash": "6dad376d79adedba1a41edae3af1f180",
     "semantic_hash": ""
   },
   "web/src/components/SavedPanel.tsx": {

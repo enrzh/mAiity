@@ -67,6 +67,8 @@ export function SearchBar() {
     // Abort the previous in-flight request instead of letting it finish and
     // be discarded — frees the connection and cuts typeahead latency.
     const ctrl = new AbortController()
+    let timedOut = false
+    const kill = window.setTimeout(() => { timedOut = true; ctrl.abort() }, 8_000)
     const t = setTimeout(async () => {
       try {
         // Bias to what the user is looking at. Without this, "Rheinpark"
@@ -80,13 +82,18 @@ export function SearchBar() {
         setActiveIndex(0) // fresh list — cursor back to the top hit
         setOpen(true)
       } catch (e) {
-        if ((e as Error)?.name === 'AbortError') return
+        if ((e as Error)?.name === 'AbortError') {
+          // Only treat explicit timeouts as failures — supersede/cleanup aborts are quiet.
+          if (timedOut && seq.current === mySeq) { setResults([]); setError(true); setOpen(true) }
+          return
+        }
         if (seq.current === mySeq) { setResults([]); setError(true); setOpen(true) }
       } finally {
+        window.clearTimeout(kill)
         if (seq.current === mySeq) setBusy(false)
       }
-    }, 200)
-    return () => { clearTimeout(t); ctrl.abort() }
+    }, 180)
+    return () => { clearTimeout(t); window.clearTimeout(kill); ctrl.abort() }
   }, [q])
 
   // Click-away closes the dropdown.
