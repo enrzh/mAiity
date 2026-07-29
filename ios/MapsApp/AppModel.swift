@@ -547,7 +547,7 @@ final class AppModel: ObservableObject {
                 self?.driving = .running(elapsed: e, progress: p, duration: duration, distanceM: distance)
                 self?.publishDrivingCamera(progress: p)
                 if p >= 1 { self?.completeDriving(elapsed: duration, duration: duration, distance: distance); return }
-                try? await Task.sleep(nanoseconds: 100_000_000)
+                try? await Task.sleep(nanoseconds: 50_000_000)
             }
         }
     }

@@ -275,7 +275,80 @@ body { overscroll-behavior: none; }
   padding: 12px;
   font-weight: 700;
 }
+/* Compact race HUD (map overlay — keeps the real street map visible) */
+.maps-race-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 28rem;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(12 16 24 / 78%);
+  color: #f4f7fb;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 35%);
+}
+.maps-race-hud__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.maps-race-hud__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+.maps-race-hud__progress {
+  flex: 1 0 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 18%);
+}
+.maps-race-hud__progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #4da3ff, #7cf0c2);
+  transition: width 80ms linear;
+}
+.maps-race-hud__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.maps-race-hud__touch {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.maps-race-pad {
+  min-height: 3.25rem;
+  font-weight: 700;
+  touch-action: none;
+  user-select: none;
+}
+.maps-race-hud__finished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  padding: 6px 0 2px;
+}
+.maps-race-hud__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.8;
+  text-align: center;
+}
 @media (prefers-reduced-motion: reduce) {
   .maps-driving-car-body { transition: none; }
+  .maps-race-hud__progress span { transition: none; }
   .maps-driving-progress span { transition: none; }
 }

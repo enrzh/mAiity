@@ -9,7 +9,7 @@ const fmtTime = (ms: number) => {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
-/** Race HUD over the live map (MapLibre packs + Apple). Not a separate fake road. */
+/** Compact race HUD over the live map (not a full-screen fake road). */
 export function DrivingModePanel() {
   const app = useApp()
   const route = app.route?.result
@@ -51,6 +51,7 @@ export function DrivingModePanel() {
   )
   if (!route || session.status === 'idle') return null
   const speed = Math.round(session.speedMps * 3.6)
+  const de = app.lang === 'de'
 
   const hold = (type: 'throttle' | 'brake' | 'left' | 'right', value: boolean) => {
     if (type === 'throttle') keys.current.throttle = value
@@ -60,95 +61,115 @@ export function DrivingModePanel() {
   }
 
   return (
-    <section className="maps-driving-overlay" aria-label="Race mode">
-      <div className="maps-driving-hud maps-driving-hud--live">
-        <div className="maps-driving-stat">
-          <Car className="size-4" /> Race
+    <section className="maps-race-hud" aria-label={de ? 'Rennmodus' : 'Race mode'}>
+      <div className="maps-race-hud__top">
+        <div className="maps-race-hud__stat">
+          <Car className="size-4 shrink-0" aria-hidden />
+          <span>{de ? 'Rennen' : 'Race'}</span>
         </div>
-        <div className="maps-driving-stat">
-          <Gauge className="size-4" /> {speed} km/h
+        <div className="maps-race-hud__stat">
+          <Gauge className="size-4 shrink-0" aria-hidden />
+          <span>{speed} km/h</span>
         </div>
-        <div className="maps-driving-stat">
-          {fmtTime(session.elapsedMs)} · {Math.round(session.progress * 100)}%
+        <div className="maps-race-hud__stat">
+          <span>{fmtTime(session.elapsedMs)}</span>
+          <span className="opacity-70">· {Math.round(session.progress * 100)}%</span>
         </div>
-        <div className="maps-driving-progress">
+        <div className="maps-race-hud__progress" aria-hidden>
           <span style={{ width: `${session.progress * 100}%` }} />
         </div>
       </div>
 
-      <div className="maps-driving-dock">
-        <div className="maps-driving-actions">
-          {session.status === 'ready' && (
-            <Button size="lg" className="min-h-12 flex-1" onClick={app.startDrivingMode}>
-              <Play className="mr-2 size-5" /> Start race
-            </Button>
-          )}
-          {session.status === 'running' && (
-            <Button size="lg" variant="secondary" className="min-h-12 flex-1" onClick={app.pauseDrivingMode}>
-              <Pause className="mr-2 size-5" /> Pause
-            </Button>
-          )}
-          {session.status === 'paused' && (
-            <Button size="lg" className="min-h-12 flex-1" onClick={app.resumeDrivingMode}>
-              <Play className="mr-2 size-5" /> Resume
-            </Button>
-          )}
-          {(session.status === 'running' || session.status === 'paused') && (
-            <Button size="lg" variant="outline" className="min-h-12 flex-1" onClick={app.finishDrivingMode}>
-              <Flag className="mr-2 size-5" /> Finish
-            </Button>
-          )}
-          {session.status === 'finished' && (
-            <div className="maps-driving-finished">
-              <RotateCcw className="size-4" /> Run complete · {fmtTime(session.elapsedMs)}
-            </div>
-          )}
-        </div>
-
+      <div className="maps-race-hud__actions">
+        {session.status === 'ready' && (
+          <Button size="lg" className="min-h-12 flex-1" onClick={app.startDrivingMode}>
+            <Play className="mr-2 size-4" />
+            {de ? 'Rennen starten' : 'Start race'}
+          </Button>
+        )}
         {session.status === 'running' && (
-          <div className="maps-driving-touch" aria-label="Driving controls">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="min-h-14 min-w-14 text-xl"
-              onPointerDown={() => hold('left', true)}
-              onPointerUp={() => hold('left', false)}
-              onPointerLeave={() => hold('left', false)}
-            >
-              ←
-            </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="min-h-14 flex-1 text-base"
-              onPointerDown={() => hold('brake', true)}
-              onPointerUp={() => hold('brake', false)}
-              onPointerLeave={() => hold('brake', false)}
-            >
-              Brake
-            </Button>
-            <Button
-              size="lg"
-              className="min-h-14 flex-1 text-base"
-              onPointerDown={() => hold('throttle', true)}
-              onPointerUp={() => hold('throttle', false)}
-              onPointerLeave={() => hold('throttle', false)}
-            >
-              Go
-            </Button>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="min-h-14 min-w-14 text-xl"
-              onPointerDown={() => hold('right', true)}
-              onPointerUp={() => hold('right', false)}
-              onPointerLeave={() => hold('right', false)}
-            >
-              →
-            </Button>
-          </div>
+          <Button size="lg" variant="secondary" className="min-h-12 flex-1" onClick={app.pauseDrivingMode}>
+            <Pause className="mr-2 size-4" />
+            {de ? 'Pause' : 'Pause'}
+          </Button>
+        )}
+        {session.status === 'paused' && (
+          <Button size="lg" className="min-h-12 flex-1" onClick={app.resumeDrivingMode}>
+            <Play className="mr-2 size-4" />
+            {de ? 'Weiter' : 'Resume'}
+          </Button>
+        )}
+        {(session.status === 'running' || session.status === 'paused') && (
+          <Button size="lg" variant="outline" className="min-h-12" onClick={app.finishDrivingMode}>
+            <Flag className="mr-2 size-4" />
+            {de ? 'Ziel' : 'Finish'}
+          </Button>
         )}
       </div>
+
+      {session.status === 'running' && (
+        <div className="maps-race-hud__touch" aria-label={de ? 'Steuerung' : 'Driving controls'}>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="maps-race-pad"
+            onPointerDown={() => hold('left', true)}
+            onPointerUp={() => hold('left', false)}
+            onPointerLeave={() => hold('left', false)}
+            onPointerCancel={() => hold('left', false)}
+          >
+            ←
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="maps-race-pad"
+            onPointerDown={() => hold('brake', true)}
+            onPointerUp={() => hold('brake', false)}
+            onPointerLeave={() => hold('brake', false)}
+            onPointerCancel={() => hold('brake', false)}
+          >
+            {de ? 'Bremse' : 'Brake'}
+          </Button>
+          <Button
+            size="lg"
+            className="maps-race-pad maps-race-pad--go"
+            onPointerDown={() => hold('throttle', true)}
+            onPointerUp={() => hold('throttle', false)}
+            onPointerLeave={() => hold('throttle', false)}
+            onPointerCancel={() => hold('throttle', false)}
+          >
+            {de ? 'Gas' : 'Go'}
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="maps-race-pad"
+            onPointerDown={() => hold('right', true)}
+            onPointerUp={() => hold('right', false)}
+            onPointerLeave={() => hold('right', false)}
+            onPointerCancel={() => hold('right', false)}
+          >
+            →
+          </Button>
+        </div>
+      )}
+
+      {session.status === 'finished' && (
+        <div className="maps-race-hud__finished">
+          <RotateCcw className="size-4" />
+          {de ? 'Lauf fertig' : 'Run complete'} · {fmtTime(session.elapsedMs)}
+        </div>
+      )}
+
+      {session.status === 'ready' && (
+        <p className="maps-race-hud__hint">
+          {de
+            ? 'Kamera folgt der Strecke in Straßenansicht. WASD / Pfeile oder Touch-Pads.'
+            : 'Camera follows the route at street level. WASD / arrows or touch pads.'}
+        </p>
+      )}
+
       {currentPoint && (
         <span className="sr-only">
           Position {currentPoint[1].toFixed(4)}, {currentPoint[0].toFixed(4)}
