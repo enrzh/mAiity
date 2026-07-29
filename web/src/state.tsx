@@ -17,9 +17,27 @@ import {
   toDrivingRun, type DrivingRun, type DrivingSession,
 } from './lib/drivingSession'
 import { stepDrivingGame, stepFreeDrive, type DrivingInput } from './lib/drivingGame'
-import { activeMapViewport } from './maps/rendererController'
+import { activeMapViewport, queryActiveMapBuildingsNear } from './maps/rendererController'
 import { pointAtProgress, bearingAtProgress } from './lib/driving'
-import { carPositionAt } from './lib/drivingCamera'
+import { carPositionAt, RACE_CAR_RADIUS_M } from './lib/drivingCamera'
+import { resolveBuildingCollision } from './lib/drivingCollision'
+
+/** Throttled building footprint cache for free-drive collision. */
+let buildingCache: { lon: number; lat: number; at: number; fps: { ring: [number, number][] }[] } | null = null
+function nearbyBuildings(lon: number, lat: number) {
+  const now = Date.now()
+  if (
+    buildingCache
+    && now - buildingCache.at < 160
+    && Math.abs(buildingCache.lon - lon) < 0.0002
+    && Math.abs(buildingCache.lat - lat) < 0.0002
+  ) {
+    return buildingCache.fps
+  }
+  const fps = queryActiveMapBuildingsNear(lon, lat, 50)
+  buildingCache = { lon, lat, at: now, fps }
+  return fps
+}
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -497,12 +515,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const armDrivingMode = useCallback(() => {
     const r = routeRef.current
     if (r?.status === 'ready' && r.mode === 'car' && r.result) {
+      // Race and turn-by-turn are exclusive.
+      setNavigating(false)
       const geo = r.result.geometry as [number, number][] | undefined
       const start = geo?.[0]
       const pose = start
         ? { lon: start[0], lat: start[1], heading: bearingAtProgress(geo!, 0) }
         : undefined
       setDriving(createDrivingSessionForMode('car', r.result, pose))
+      setIs3D(true)
     }
   }, [])
   const armFreeDrivingMode = useCallback(() => {
@@ -540,7 +561,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const frameMs = Math.min(50, Math.max(0, now - (s.lastInputAt ?? now)))
 
       if (s.kind === 'free') {
-        const free = stepFreeDrive(
+        let free = stepFreeDrive(
           {
             lon: s.lon, lat: s.lat, heading: s.heading,
             speedMps: s.speedMps, lateral: s.lateral, distanceM: s.distanceM,
@@ -548,6 +569,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           input,
           dt,
         )
+        // Soft building walls (MapLibre Protomaps); no-op on Apple / empty tiles.
+        try {
+          const fps = nearbyBuildings(free.lon, free.lat)
+          if (fps.length > 0) {
+            const resolved = resolveBuildingCollision(
+              {
+                lon: free.lon,
+                lat: free.lat,
+                heading: free.heading,
+                speedMps: free.speedMps,
+              },
+              fps,
+              RACE_CAR_RADIUS_M,
+            )
+            free = {
+              ...free,
+              lon: resolved.lon,
+              lat: resolved.lat,
+              speedMps: resolved.speedMps,
+            }
+          }
+        } catch { /* collision optional */ }
         return {
           ...s,
           ...free,
@@ -659,7 +702,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggle3D: () => setIs3D((v) => !v),
     setIs3D,
     navigating,
-    startNavigation: () => setNavigating(true),
+    startNavigation: () => {
+      // Turn-by-turn and race game are exclusive.
+      setDriving(idleSession())
+      setNavigating(true)
+    },
     stopNavigation: () => setNavigating(false),
     setAuthOpen, login, register, logout, select, selectResult,
     setMapProvider, setAppleAppearance, setCustomPack, setActivePack,

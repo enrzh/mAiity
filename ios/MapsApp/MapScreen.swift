@@ -143,9 +143,10 @@ struct MapScreen: View {
             let reduceMotion = UIAccessibility.isReduceMotionEnabled
             position = .camera(MapCamera(
                 centerCoordinate: camera.center,
-                distance: racing ? 280 : 900,
+                // Street-scale race: closer camera so roads dominate (web ~72 m alt).
+                distance: racing ? 110 : 900,
                 heading: camera.heading,
-                pitch: reduceMotion ? (racing ? 45 : 0) : (racing ? 68 : 55)
+                pitch: reduceMotion ? (racing ? 45 : 0) : (racing ? 66 : 55)
             ))
         }
         .overlay(alignment: .bottomTrailing) {

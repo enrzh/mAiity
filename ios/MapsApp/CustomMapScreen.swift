@@ -149,14 +149,14 @@ struct CustomMapScreen: View {
                 default: return false
                 }
             }()
-            // Street-level race: higher pitch/zoom so pack buildings fill the view.
+            // Street-scale race: closer zoom so roads read larger (parity with web ~18.6).
             let reduceMotion = UIAccessibility.isReduceMotionEnabled
-            let z = racing ? 17.6 : 17.0
+            let z = racing ? 18.4 : 17.0
             currentZoom = z
             camera = .center(
                 target.center,
                 zoom: z,
-                pitch: reduceMotion ? (racing ? 40 : 0) : (racing ? 68 : 60),
+                pitch: reduceMotion ? (racing ? 40 : 0) : (racing ? 66 : 60),
                 direction: target.heading
             )
             model.noteMapRegion(MKCoordinateRegion(

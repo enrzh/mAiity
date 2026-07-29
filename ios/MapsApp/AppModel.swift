@@ -809,7 +809,7 @@ final class AppModel: ObservableObject {
 
     /// Street-level chase cam from live vehicle pose.
     private func publishDrivingCameraFromPose() {
-        let lookM = 22.0
+        let lookM = 26.0
         let rad = carHeading * .pi / 180
         let dLat = (lookM / 111_320) * cos(rad)
         let cosLat = max(0.2, cos(carLat * .pi / 180))

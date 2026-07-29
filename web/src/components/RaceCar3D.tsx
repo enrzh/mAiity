@@ -42,10 +42,10 @@ export function RaceCar3D({
     if (!host) return
 
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 40)
-    // Rear / slightly elevated — reads as first-person hood + car body
-    camera.position.set(0, 1.15, 4.2)
-    camera.lookAt(0, 0.45, 0)
+    // Tighter FOV + farther cam so the car reads smaller on the road
+    const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 40)
+    camera.position.set(0, 1.35, 5.4)
+    camera.lookAt(0, 0.35, 0)
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -94,6 +94,7 @@ export function RaceCar3D({
     const car = buildSportsCar()
     // Pivot so we can bank/yaw without losing the rear-facing base orientation.
     const pivot = new THREE.Group()
+    pivot.scale.setScalar(0.72)
     pivot.add(car.root)
     scene.add(pivot)
     const baseYaw = Math.PI // rear of car faces the camera

@@ -26,3 +26,7 @@ export const followActiveNavigation = (state: NavFollowState) => active?.followN
 export const subscribeActiveMapMoveEnd = (listener: () => void): (() => void) =>
   active?.subscribeMoveEnd?.(listener) ?? (() => {})
 
+/** Soft free-drive collision geometry (empty on Apple / no tiles). */
+export const queryActiveMapBuildingsNear = (lon: number, lat: number, radiusM = 48) =>
+  active?.queryBuildingsNear?.(lon, lat, radiusM) ?? []
+

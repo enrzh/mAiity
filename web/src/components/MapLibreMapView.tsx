@@ -289,7 +289,7 @@ export function MapLibreMapView() {
       // packs looking empty — still enabled, but clamped on restore below.
       hash: true,
       minZoom: 3,
-      maxZoom: 18,
+      maxZoom: 19,
       attributionControl: { compact: true },
       maxPitch: 85, // near-horizon 3D views
       // Low-zoom water polygons in this archive are heavily generalized (a
@@ -484,6 +484,54 @@ export function MapLibreMapView() {
           if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return null
           return { x: p.x, y: p.y }
         } catch { return null }
+      },
+      queryBuildingsNear: (lon, lat, radiusM = 48) => {
+        try {
+          if (!m.getSource('protomaps')) return []
+          // Loaded vector tiles only (Protomaps buildings layer).
+          const raw = m.querySourceFeatures('protomaps', { sourceLayer: 'buildings' }) as Array<{
+            geometry?: { type?: string; coordinates?: unknown }
+          }>
+          if (!raw.length) return []
+          const cosLat = Math.max(0.2, Math.cos((lat * Math.PI) / 180))
+          const r2 = radiusM * radiusM
+          const near: typeof raw = []
+          for (const f of raw) {
+            const g = f.geometry
+            if (!g?.coordinates) continue
+            // Quick reject via first ring vertex
+            let ring: number[][] | null = null
+            if (g.type === 'Polygon') ring = (g.coordinates as number[][][])[0] ?? null
+            else if (g.type === 'MultiPolygon') ring = (g.coordinates as number[][][][])[0]?.[0] ?? null
+            if (!ring?.length) continue
+            const [flon, flat] = ring[0]
+            const dx = (flon - lon) * 111_320 * cosLat
+            const dy = (flat - lat) * 111_320
+            if (dx * dx + dy * dy > r2 * 4) continue // coarse
+            near.push(f)
+            if (near.length >= 64) break
+          }
+          // Lazy import-free: inline footprint extract for ring only
+          const out: { ring: [number, number][] }[] = []
+          for (const f of near) {
+            const g = f.geometry
+            if (!g) continue
+            if (g.type === 'Polygon') {
+              const r = (g.coordinates as number[][][])[0]
+              if (r?.length >= 3) out.push({ ring: r.map((c) => [c[0], c[1]] as [number, number]) })
+            } else if (g.type === 'MultiPolygon') {
+              for (const poly of g.coordinates as number[][][][]) {
+                const r = poly[0]
+                if (r?.length >= 3) out.push({ ring: r.map((c) => [c[0], c[1]] as [number, number]) })
+                if (out.length >= 48) break
+              }
+            }
+            if (out.length >= 48) break
+          }
+          return out
+        } catch {
+          return []
+        }
       },
       followNavigation: ({ lat, lon, heading }) => {
         showUserDot(m, [lon, lat])
@@ -701,10 +749,11 @@ export function MapLibreMapView() {
         center: cam.center as [number, number],
         bearing: cam.bearing,
         pitch: cam.pitch,
-        zoom: Math.max(map.getZoom(), cam.zoom),
+        // Street-scale: force race zoom (not max with prior zoom — that kept roads small)
+        zoom: cam.zoom,
         duration: app.driving.status === 'running' && !reduced ? 55 : (ready ? 400 : 0),
         essential: true as const,
-        padding: { top: 16, bottom: 180, left: 16, right: 64 },
+        padding: { top: 12, bottom: 140, left: 12, right: 56 },
       }
       if (opts.duration > 0) map.easeTo(opts)
       else map.jumpTo(opts)

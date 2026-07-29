@@ -3,17 +3,22 @@ import type { DrivingSession } from './drivingSession'
 import { bearingAtProgress, pointAtProgress } from './driving'
 
 /**
- * Close third-person chase: car stays visible lower-center, road opens ahead.
+ * Street-scale chase: roads fill the frame; car is a small motion marker.
+ * Tuned so the 3D overlay reads ~≤18% of viewport height when anchored.
  */
-export const RACE_PITCH = 68
-export const RACE_ZOOM = 18.2
-export const RACE_ALTITUDE_M = 95
-export const RACE_ALTITUDE_READY_M = 140
-export const RACE_CAM_BACK_M = 14
-export const RACE_LOOKAHEAD_M = 32
-export const RACE_LOOKAHEAD_READY_M = 18
+export const RACE_PITCH = 66
+export const RACE_ZOOM = 18.6
+/** MapLibre maxZoom while racing (must be ≥ RACE_ZOOM). */
+export const RACE_MAX_ZOOM = 19
+export const RACE_ALTITUDE_M = 72
+export const RACE_ALTITUDE_READY_M = 110
+export const RACE_CAM_BACK_M = 10
+export const RACE_LOOKAHEAD_M = 26
+export const RACE_LOOKAHEAD_READY_M = 16
 export const RACE_LOOKAHEAD = 0.012
 export const RACE_LANE_M = 3.2
+/** Half-width of car AABB for building collisions (metres). */
+export const RACE_CAR_RADIUS_M = 1.6
 
 export interface RaceCamera {
   center: LngLat

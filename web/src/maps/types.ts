@@ -37,6 +37,11 @@ export interface NavFollowState {
   heading: number
 }
 
+/** Building footprints for free-drive collision (MapLibre packs). */
+export interface BuildingFootprintQuery {
+  ring: [number, number][]
+}
+
 export interface MapRendererController {
   readonly provider: MapProvider
   readonly capabilities: MapRendererCapabilities
@@ -52,5 +57,10 @@ export interface MapRendererController {
   followNavigation?(state: NavFollowState): void
   /** Optional: fire when the user pans/zooms the map (for “search this area”). */
   subscribeMoveEnd?(listener: () => void): () => void
+  /**
+   * Nearby building footprints for soft collision (MapLibre Protomaps).
+   * Apple / missing tiles → empty array.
+   */
+  queryBuildingsNear?(lon: number, lat: number, radiusM?: number): BuildingFootprintQuery[]
 }
 
