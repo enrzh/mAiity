@@ -178,6 +178,35 @@ function Shell() {
   const [dragH, setDragH] = useState<number | null>(null)
   const dragFrom = useRef<{ y: number; h: number } | null>(null)
   useEffect(() => writeSidebarCollapsed(collapsed), [collapsed])
+
+  // Global shortcuts when not typing in an input: / search, +/- zoom, Esc close.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement | null)?.isContentEditable) return
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault()
+        const input = document.querySelector<HTMLInputElement>('input[type="search"], input[name="q"], header input, .search-bar input, [data-search-input]')
+        if (input) {
+          input.focus()
+          input.select()
+        } else {
+          // Fall back: first text input in the rail
+          document.querySelector<HTMLInputElement>('aside input')?.focus()
+        }
+        if (collapsed) setCollapsed(false)
+        return
+      }
+      if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1); return }
+      if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomBy(-1); return }
+      if (e.key === 'Escape') {
+        setPanel('none')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [collapsed])
+
   const toggle = (p: Panel) => {
     // Acting on a rail function while collapsed reopens the rail to show it.
     if (collapsed) setCollapsed(false)

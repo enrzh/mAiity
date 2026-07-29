@@ -166,6 +166,7 @@ export function SearchBar() {
         </span>
         <Input
           role="combobox"
+          data-search-input
           aria-expanded={open}
           aria-controls="search-results"
           aria-autocomplete="list"

@@ -31,21 +31,50 @@ struct RootView: View {
         }
     }
 
+    private var raceImmersive: Bool { model.driving.isImmersive }
+
     var body: some View {
-        MapScreen(sheetHeight: sheetHeight)
-            .sheet(isPresented: $sheetShown) {
-                SheetView(detent: $detent)
-                    .presentationDetents([.height(96), .height(220), .medium, .large], selection: $detent)
-                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                    .presentationDragIndicator(.visible)
-                    .interactiveDismissDisabled()
-                    .presentationBackground(.regularMaterial)
-                    .environmentObject(model)
+        ZStack(alignment: .bottom) {
+            MapScreen(sheetHeight: raceImmersive ? 180 : sheetHeight)
+                .ignoresSafeArea()
+
+            if !isIdle(model.driving) {
+                RaceHUDView()
+                    .padding(.bottom, raceImmersive ? 28 : max(12, sheetHeight * 0.15))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .task { await model.boot() }
-            .onChange(of: model.selected) { place in
-                // Surface the place card when something is selected from the map.
-                if place != nil && detent == .height(96) { detent = .height(220) }
+        }
+        .sheet(isPresented: $sheetShown) {
+            SheetView(detent: $detent)
+                .presentationDetents(
+                    raceImmersive
+                        ? [.height(96)]
+                        : [.height(96), .height(220), .medium, .large],
+                    selection: $detent
+                )
+                .presentationBackgroundInteraction(.enabled(upThrough: raceImmersive ? .height(96) : .medium))
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled()
+                .presentationBackground(.regularMaterial)
+                .environmentObject(model)
+        }
+        .task { await model.boot() }
+        .onChange(of: model.selected) { place in
+            if place != nil && detent == .height(96) && !raceImmersive {
+                detent = .height(220)
             }
+        }
+        .onChange(of: model.driving) { _, new in
+            if new.isImmersive {
+                detent = .height(96)
+                model.showPackPicker = false
+            }
+        }
+        .animation(.easeOut(duration: 0.25), value: raceImmersive)
+    }
+
+    private func isIdle(_ state: AppModel.DrivingState) -> Bool {
+        if case .idle = state { return true }
+        return false
     }
 }

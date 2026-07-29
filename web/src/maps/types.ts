@@ -28,6 +28,13 @@ export interface MapRendererCapabilities {
   nativeControls: boolean
 }
 
+/** Turn-by-turn follow camera + user position (provider-neutral). */
+export interface NavFollowState {
+  lat: number
+  lon: number
+  heading: number
+}
+
 export interface MapRendererController {
   readonly provider: MapProvider
   readonly capabilities: MapRendererCapabilities
@@ -37,5 +44,9 @@ export interface MapRendererController {
   focusPlace(place: Place): void
   showPlaces(places: Place[]): void
   getViewport(): MapViewport | null
+  /** Optional: chase camera during turn-by-turn (Apple + custom). */
+  followNavigation?(state: NavFollowState): void
+  /** Optional: fire when the user pans/zooms the map (for “search this area”). */
+  subscribeMoveEnd?(listener: () => void): () => void
 }
 

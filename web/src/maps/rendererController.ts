@@ -1,4 +1,4 @@
-import type { MapRendererCapabilities, MapRendererController } from './types'
+import type { MapRendererCapabilities, MapRendererController, NavFollowState } from './types'
 import type { Place } from '../state'
 
 let active: MapRendererController | null = null
@@ -17,4 +17,7 @@ export const locateActiveMap = () => active?.locate()
 export const setActiveMap3D = (on: boolean) => active?.set3D(on)
 export const focusActiveMapPlace = (place: Place) => active?.focusPlace(place)
 export const showActiveMapPlaces = (places: Place[]) => active?.showPlaces(places)
+export const followActiveNavigation = (state: NavFollowState) => active?.followNavigation?.(state)
+export const subscribeActiveMapMoveEnd = (listener: () => void): (() => void) =>
+  active?.subscribeMoveEnd?.(listener) ?? (() => {})
 

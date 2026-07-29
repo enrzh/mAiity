@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Navigation2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { liveMap, showUserDot } from './MapView'
+import { followActiveNavigation } from '../maps/rendererController'
 import {
   OFF_ROUTE_M, bearing, currentStep, metresToNextManeuver, snapToRoute, type LngLat,
 } from '../lib/navigation'
@@ -16,8 +16,8 @@ const fmtEta = (s: number) => {
 }
 
 /// Turn-by-turn: follows the user, advances steps by proximity, and reroutes
-/// when they leave the line. Uses watchPosition rather than polling so it
-/// tracks at whatever rate the device actually produces fixes.
+/// when they leave the line. Provider-neutral via followActiveNavigation
+/// (MapLibre + Apple MapKit JS).
 export function NavigationPanel() {
   const app = useApp()
   const t = useT()
@@ -41,15 +41,11 @@ export function NavigationPanel() {
         const snap = snapToRoute(pos, geometry, lastIdx.current)
         lastIdx.current = snap.index
 
-        const m = liveMap.current
-        if (m) {
-          showUserDot(m, pos)
-          // Heading: GPS course when moving, else the route's own direction.
-          const head = Number.isFinite(p.coords.heading as number) && (p.coords.speed ?? 0) > 1
-            ? (p.coords.heading as number)
-            : bearing(geometry[snap.index], geometry[Math.min(snap.index + 1, geometry.length - 1)])
-          m.easeTo({ center: pos, zoom: 17, pitch: 60, bearing: head, duration: 900 })
-        }
+        // Heading: GPS course when moving, else the route's own direction.
+        const head = Number.isFinite(p.coords.heading as number) && (p.coords.speed ?? 0) > 1
+          ? (p.coords.heading as number)
+          : bearing(geometry[snap.index], geometry[Math.min(snap.index + 1, geometry.length - 1)])
+        followActiveNavigation({ lat: pos[1], lon: pos[0], heading: head })
 
         const si = currentStep(steps, snap.index)
         setStepIdx(si)

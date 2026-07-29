@@ -13,6 +13,7 @@ import {
 import {
   type MapViewport,
 } from '../maps/types'
+import { readViewport, writeViewport } from '../maps/viewportStorage'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import { carPositionAt, offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
@@ -311,6 +312,22 @@ function MapLibreMapView() {
         longitudeDelta: Math.abs(bounds.getEast() - bounds.getWest()),
       }
     }
+    const moveListeners = new Set<() => void>()
+    const onMoveEnd = () => {
+      writeViewport('custom', viewport())
+      for (const listener of moveListeners) listener()
+    }
+    m.on('moveend', onMoveEnd)
+    // Restore last custom viewport if we have one.
+    const savedCustom = readViewport('custom')
+    if (savedCustom) {
+      try {
+        m.jumpTo({
+          center: [savedCustom.center.lon, savedCustom.center.lat],
+          zoom: Math.max(2, Math.min(18, Math.log2(360 / Math.max(0.01, savedCustom.longitudeDelta)) - 1)),
+        })
+      } catch { /* ignore bad saved state */ }
+    }
     const unregisterController = registerMapRenderer({
       provider: 'custom',
       capabilities: {
@@ -336,12 +353,21 @@ function MapLibreMapView() {
         m.fitBounds(bounds, { padding: framePad(80), duration: 700, maxZoom: 15 })
       },
       getViewport: viewport,
+      followNavigation: ({ lat, lon, heading }) => {
+        showUserDot(m, [lon, lat])
+        m.easeTo({ center: [lon, lat], zoom: 17, pitch: 60, bearing: heading, duration: 900 })
+      },
+      subscribeMoveEnd: (listener) => {
+        moveListeners.add(listener)
+        return () => { moveListeners.delete(listener) }
+      },
     })
     // Debug handle (harmless, and invaluable for diagnosing render issues).
     ;(window as unknown as { __map?: MLMap }).__map = m
     return () => {
       if (raf) cancelAnimationFrame(raf)
       ro.disconnect()
+      m.off('moveend', onMoveEnd)
       selMarker.current?.remove(); selMarker.current = null
       drivingMarker.current?.remove(); drivingMarker.current = null
       for (const [, mk] of bmMarkers.current) mk.remove()

@@ -32,60 +32,70 @@ struct MapScreen: View {
     }
 
     private var appleMap: some View {
-        Map(position: $position, selection: $selectedMarkerID) {
-            if location.isAuthorized {
-                UserAnnotation()
-            }
+        MapReader { proxy in
+            Map(position: $position, selection: $selectedMarkerID) {
+                if location.isAuthorized {
+                    UserAnnotation()
+                }
 
-            ForEach(model.pois) { place in
-                Marker(place.name, coordinate: coordinate(place.lat, place.lon))
-                    .tint(.teal)
-                    .tag("poi:\(place.id)")
-            }
+                ForEach(model.pois) { place in
+                    Marker(place.name, coordinate: coordinate(place.lat, place.lon))
+                        .tint(.teal)
+                        .tag("poi:\(place.id)")
+                }
 
-            ForEach(model.bookmarks) { bookmark in
-                Marker(bookmark.name, coordinate: coordinate(bookmark.lat, bookmark.lon))
-                    .tint(.yellow)
-                    .tag("bookmark:\(bookmark.id)")
-            }
+                ForEach(model.bookmarks) { bookmark in
+                    Marker(bookmark.name, coordinate: coordinate(bookmark.lat, bookmark.lon))
+                        .tint(.yellow)
+                        .tag("bookmark:\(bookmark.id)")
+                }
 
-            if let selected = model.selected {
-                Marker(selected.name, coordinate: coordinate(selected.lat, selected.lon))
-                    .tint(.red)
-                    .tag("selected")
-            }
+                if let selected = model.selected {
+                    Marker(selected.name, coordinate: coordinate(selected.lat, selected.lon))
+                        .tint(.red)
+                        .tag("selected")
+                }
 
-            if let geometry = model.route?.result?.geometry, geometry.count > 1 {
-                MapPolyline(coordinates: geometry.map { coordinate($0[1], $0[0]) })
-                    .stroke(.blue, lineWidth: 6)
-            }
+                if let geometry = model.route?.result?.geometry, geometry.count > 1 {
+                    MapPolyline(coordinates: geometry.map { coordinate($0[1], $0[0]) })
+                        .stroke(.blue, lineWidth: 6)
+                }
 
-            if let car = drivingCoordinate {
-                Annotation("Driving position", coordinate: car) {
-                    Image(systemName: "car.fill")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .padding(8)
-                        .background(.blue, in: Circle())
-                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                if let car = drivingCoordinate {
+                    Annotation("Driving position", coordinate: car) {
+                        Image(systemName: "car.fill")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(8)
+                            .background(.blue, in: Circle())
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
                 }
             }
-        }
-        .mapStyle(selectedMapStyle)
-        .preferredColorScheme(preferredMapColorScheme)
-        .mapScope(mapScope)
-        .mapControls {
-            MapCompass(scope: mapScope)
-            MapScaleView(scope: mapScope)
-        }
-        .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: sheetHeight)
-        }
-        .ignoresSafeArea()
-        .onMapCameraChange(frequency: .onEnd) { context in
-            // Keep route/category searches anchored to the actual Apple map.
-            visibleRegion = context.region
-            model.mapCenter = context.region.center
+            .mapStyle(selectedMapStyle)
+            .preferredColorScheme(preferredMapColorScheme)
+            .mapScope(mapScope)
+            .mapControls {
+                MapCompass(scope: mapScope)
+                MapScaleView(scope: mapScope)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: sheetHeight)
+            }
+            .ignoresSafeArea()
+            .onMapCameraChange(frequency: .onEnd) { context in
+                // Keep route/category searches anchored to the actual Apple map.
+                visibleRegion = context.region
+                model.mapCenter = context.region.center
+            }
+            .gesture(
+                SpatialTapGesture().onEnded { event in
+                    // Empty-map reverse-geocode (parity with custom MapLibre).
+                    if let coord = proxy.convert(event.location, from: .local) {
+                        Task { await model.selectTap(lat: coord.latitude, lon: coord.longitude) }
+                    }
+                }
+            )
         }
         .onChange(of: model.selected) { _, place in
             guard let place else { return }
@@ -194,13 +204,12 @@ struct MapScreen: View {
         default: break
         }
         guard let geometry = model.route?.result?.geometry, geometry.count > 1 else { return nil }
-        let progress = min(1, max(0, model.driving.progress))
-        let position = progress * Double(geometry.count - 1)
-        let index = min(geometry.count - 2, Int(position))
-        let t = position - Double(index)
-        let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
-        let lat = geometry[index][1] + (geometry[index + 1][1] - geometry[index][1]) * t
-        return coordinate(lat, lon)
+        let car = DrivingPhysics.carPosition(
+            progress: model.driving.progress,
+            lateral: model.raceLateral,
+            geometry: geometry
+        )
+        return coordinate(car.lat, car.lon)
     }
 
     private func regionAround(_ lat: Double, _ lon: Double, span: Double) -> MKCoordinateRegion {

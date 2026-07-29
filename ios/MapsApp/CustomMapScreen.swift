@@ -15,6 +15,7 @@ struct CustomMapScreen: View {
     )
     @State private var is3D = false
     @State private var lastCenter = CLLocationCoordinate2D(latitude: 51.19297, longitude: 6.71375)
+    @State private var currentZoom: Double = 13
 
     var body: some View {
         Group {
@@ -98,6 +99,26 @@ struct CustomMapScreen: View {
                     location.onAuthorized = { camera = .trackUserLocation(zoom: 15) }
                     location.requestOrTrack()
                 }
+
+                // Zoom stack matches Apple MapScreen (44pt targets).
+                VStack(spacing: 0) {
+                    Button {
+                        camera = .center(lastCenter, zoom: min(20, currentZoom + 1), pitch: is3D ? 60 : 0)
+                    } label: {
+                        Image(systemName: "plus").frame(width: 44, height: 44)
+                    }
+                    Divider().padding(.horizontal, 8)
+                    Button {
+                        camera = .center(lastCenter, zoom: max(2, currentZoom - 1), pitch: is3D ? 60 : 0)
+                    } label: {
+                        Image(systemName: "minus").frame(width: 44, height: 44)
+                    }
+                }
+                .buttonStyle(.plain)
+                .frame(width: 44, height: 89)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 22))
+                .fixedSize()
+                .accessibilityElement(children: .contain)
             }
             .padding(.trailing, 14)
             .padding(.bottom, sheetHeight + 16)
@@ -120,9 +141,11 @@ struct CustomMapScreen: View {
                 }
             }()
             // Street-level race: higher pitch/zoom so pack buildings fill the view.
+            let z = racing ? 17.6 : 17.0
+            currentZoom = z
             camera = .center(
                 target.center,
-                zoom: racing ? 17.6 : 17,
+                zoom: z,
                 pitch: racing ? 68 : 60,
                 direction: target.heading
             )
@@ -132,6 +155,7 @@ struct CustomMapScreen: View {
     private func move(to place: Place, zoom: Double) {
         let center = CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon)
         lastCenter = center
+        currentZoom = zoom
         camera = .center(center, zoom: zoom, pitch: is3D ? 60 : 0)
     }
 
@@ -188,13 +212,12 @@ struct CustomMapScreen: View {
                 }
             }()
             if active, let geometry = model.route?.result?.geometry, geometry.count > 1 {
-                let progress = min(1, max(0, model.driving.progress))
-                let position = progress * Double(geometry.count - 1)
-                let index = min(geometry.count - 2, Int(position))
-                let t = position - Double(index)
-                let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
-                let lat = geometry[index][1] + (geometry[index + 1][1] - geometry[index][1]) * t
-                MLNPointFeature(coordinate: coordinate(lat, lon))
+                let car = DrivingPhysics.carPosition(
+                    progress: model.driving.progress,
+                    lateral: model.raceLateral,
+                    geometry: geometry
+                )
+                MLNPointFeature(coordinate: coordinate(car.lat, car.lon))
             }
         }
     }

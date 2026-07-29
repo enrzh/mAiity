@@ -354,39 +354,26 @@ struct SheetView: View {
 
     private var drivingSection: some View {
         let state = model.driving
+        // Full controls live in RaceHUDView (map overlay). Sheet keeps a short entry.
         return VStack(alignment: .leading, spacing: 8) {
-            Label("Race mode", systemImage: "car.fill")
+            Label(L.t("race-mode"), systemImage: "car.fill")
                 .font(.subheadline.bold())
-            HStack {
-                Text(Self.fmtTime(state.elapsed)).monospacedDigit().font(.title3.bold())
-                Spacer()
-                Text("\(Int(state.progress * 100))%")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            ProgressView(value: state.progress)
             HStack(spacing: 8) {
                 switch state {
                 case .ready:
-                    Button("Start race") { model.startDriving() }.buttonStyle(.borderedProminent)
-                case .running:
-                    Button("Pause") { model.pauseDriving() }.buttonStyle(.bordered)
-                case .paused:
-                    Button("Resume") { model.resumeDriving() }.buttonStyle(.borderedProminent)
+                    Button(L.t("race-start")) { model.startDriving() }
+                        .buttonStyle(.borderedProminent)
+                case .running, .paused:
+                    Text(L.t("race-active-hint"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 case .finished:
-                    Button("Race again") { model.resetDriving() }.buttonStyle(.borderedProminent)
+                    Button(L.t("race-again")) { model.resetDriving() }
+                        .buttonStyle(.borderedProminent)
                 case .idle:
                     EmptyView()
                 }
-                if case .running = state {
-                    Button("Finish") { model.finishDriving() }.buttonStyle(.bordered)
-                }
-                if case .paused = state {
-                    Button("Finish") { model.finishDriving() }.buttonStyle(.bordered)
-                }
             }
-            Text("Street-level chase cam follows the car. Controls stay in this sheet.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }

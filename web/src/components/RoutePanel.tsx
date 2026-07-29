@@ -83,21 +83,17 @@ export function RoutePanel() {
             {route.mode === 'car' && app.driving.status === 'ready' && (
               <Button className="w-full gap-2" variant="secondary" onClick={app.startDrivingMode}>
                 <Car className="size-4" />
-                {app.lang === 'de' ? 'Rennen starten' : 'Start race'}
+                {t('race-start')}
               </Button>
             )}
             {route.mode === 'car' && app.driving.status === 'finished' && (
               <Button className="w-full gap-2" variant="secondary" onClick={app.resetDrivingMode}>
                 <Car className="size-4" />
-                {app.lang === 'de' ? 'Nochmal fahren' : 'Race again'}
+                {t('race-again')}
               </Button>
             )}
             {route.mode === 'car' && (app.driving.status === 'running' || app.driving.status === 'paused') && (
-              <p className="text-center text-xs text-muted-foreground">
-                {app.lang === 'de'
-                  ? 'Rennmodus aktiv — HUD unten über der Karte.'
-                  : 'Race mode active — HUD is on the map below.'}
-              </p>
+              <p className="text-center text-xs text-muted-foreground">{t('race-active-hint')}</p>
             )}
             <Separator />
             <ol className="space-y-2 pr-1 text-sm">

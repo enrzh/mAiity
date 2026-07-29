@@ -146,6 +146,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 })
       }
 
+      const moveListeners = new Set<() => void>()
       unregister = registerMapRenderer({
         provider: 'apple',
         capabilities: {
@@ -180,6 +181,34 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
             longitudeDelta: region.span.longitudeDelta,
           }
         },
+        followNavigation: ({ lat, lon, heading }) => {
+          const coordinate = new mk.Coordinate(lat, lon)
+          if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
+          userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
+            title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
+            color: '#1677ff',
+          })
+          instance.addAnnotation(userAnnotation.current)
+          instance.showsUserLocation = true
+          try {
+            if (mk.Camera && typeof instance.setCameraAnimated === 'function') {
+              instance.setCameraAnimated(new mk.Camera(coordinate, {
+                heading,
+                pitch: 58,
+                altitude: 450,
+              }), true)
+            } else {
+              instance.setCenterAnimated(coordinate, true)
+              if (typeof instance.setRotationAnimated === 'function') instance.setRotationAnimated(heading)
+            }
+          } catch {
+            instance.setCenterAnimated(coordinate, true)
+          }
+        },
+        subscribeMoveEnd: (listener) => {
+          moveListeners.add(listener)
+          return () => { moveListeners.delete(listener) }
+        },
       })
 
       instance.addEventListener?.('single-tap', (event: any) => {
@@ -200,6 +229,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           latitudeDelta: region.span.latitudeDelta,
           longitudeDelta: region.span.longitudeDelta,
         })
+        for (const listener of moveListeners) listener()
       })
 
       if (!saved && !new URLSearchParams(window.location.search).has('p')) locate()

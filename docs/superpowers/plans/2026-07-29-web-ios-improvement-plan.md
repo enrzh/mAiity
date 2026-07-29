@@ -46,11 +46,11 @@
 
 ## Success metrics (end of plan)
 
-- [ ] iOS race is **playable** with touch pads (not autoplay-only) on Apple + custom.
-- [ ] Web turn-by-turn + “search this area” work when provider is **Apple**.
-- [ ] Provider/style/viewport survive cold start on both platforms.
-- [ ] Finished race runs show a **history list** on both platforms.
-- [ ] Race strings localized (iOS all langs; web via i18n keys).
+- [x] iOS race is **playable** with touch pads (not autoplay-only) on Apple + custom. *(shipped 2026-07-29)*
+- [x] Web turn-by-turn + “search this area” work when provider is **Apple**. *(shipped 2026-07-29)*
+- [x] Provider/style/viewport survive cold start on both platforms. *(web custom viewport + Apple; iOS partial)*
+- [x] Finished race runs show a **history list** on both platforms. *(shipped 2026-07-29)*
+- [x] Race strings localized (iOS all langs; web via i18n keys). *(shipped 2026-07-29)*
 - [ ] Automated web tests green; native build installable; production smoke on `maps.aiity.de` + device.
 
 ---
@@ -69,9 +69,9 @@
 
 | Phase | Weeks | Theme | Priority |
 |-------|-------|--------|----------|
-| **1** | 1–2 | Race parity (iOS) + critical web Apple nav | **P0** |
-| **2** | 2–3 | Provider & interaction parity | **P0 / P1** |
-| **3** | 3–4 | Persistence UX, run history, a11y | **P1** |
+| **1** | 1–2 | Race parity (iOS) + critical web Apple nav | **P0** ✅ largely shipped |
+| **2** | 2–3 | Provider & interaction parity | **P0 / P1** ✅ partial (tap, zoom, status remaining) |
+| **3** | 3–4 | Persistence UX, run history, a11y | **P1** ✅ history + keys; prefs v1 still open |
 | **4** | 4–5 | Phase E lite polish | **P2** |
 | **5** | 5–6 | Hardening, perf, deploy | Buffer |
 

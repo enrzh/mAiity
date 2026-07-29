@@ -364,6 +364,33 @@ body { overscroll-behavior: none; }
   opacity: 0.8;
   text-align: center;
 }
+.maps-race-hud__history {
+  border-top: 1px solid rgb(255 255 255 / 12%);
+  padding-top: 8px;
+}
+.maps-race-hud__history-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.maps-race-hud__history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: 600 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.maps-race-hud__history-list li {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  opacity: 0.9;
+}
 @media (prefers-reduced-motion: reduce) {
   .maps-driving-car-body { transition: none; }
   .maps-race-hud__progress span { transition: none; }
