@@ -10,16 +10,24 @@ struct SheetView: View {
     @Binding var detent: PresentationDetent
     @State private var showAuth = false
     @State private var showInstallPack = false
+    /// Full-screen search mode (expanded from chrome search icon).
+    @State private var searchExpanded = false
     @FocusState private var searchFocused: Bool
 
     var body: some View {
         NavigationStack {
             List {
-                if !model.searchResults.isEmpty {
-                    resultsSection
+                if searchExpanded {
+                    searchFieldSection
+                    if !model.searchResults.isEmpty {
+                        resultsSection
+                    } else if model.searchQuery.isEmpty && !model.recents.isEmpty {
+                        recentsSection
+                    }
+                } else {
+                    chromeSection
+                    contextualBody
                 }
-                searchSection
-                contextualBody
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -28,12 +36,28 @@ struct SheetView: View {
         .sheet(isPresented: $showAuth) { AuthSheet() }
         .sheet(isPresented: $showInstallPack) { InstallPackSheet() }
         .sheet(isPresented: $model.showPackPicker) { PackPickerSheet() }
-        .onChange(of: searchFocused) { focused in
-            if focused { detent = .large }
+        .onChange(of: searchFocused) { _, focused in
+            if focused {
+                searchExpanded = true
+                detent = .large
+            }
+        }
+        .onChange(of: searchExpanded) { _, expanded in
+            if expanded {
+                detent = .large
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    searchFocused = true
+                }
+            } else {
+                searchFocused = false
+                model.searchQuery = ""
+                model.searchResults = []
+            }
         }
     }
 
     /// One thing at a time, like Maps — the web Shell's precedence chain.
+    /// Search results never live here: pick closes search and shows detail.
     @ViewBuilder
     private var contextualBody: some View {
         if let nav = model.nav {
@@ -50,40 +74,145 @@ struct SheetView: View {
             poiSection
         } else {
             categorySection
-            if model.searchQuery.isEmpty && !model.recents.isEmpty {
+            if !model.recents.isEmpty {
                 recentsSection
             }
-            secondarySection
         }
     }
 
-    // MARK: Search
+    // MARK: Chrome — [Saved] [Me] ····· [Search]
 
-    private var searchSection: some View {
+    private var chromeSection: some View {
         Section {
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(L.t("search-placeholder"), text: $model.searchQuery)
-                    .focused($searchFocused)
-                    .autocorrectionDisabled()
-                    .submitLabel(.search)
-                    .onSubmit {
-                        if let first = model.searchResults.first { pick(first) }
-                    }
-                if model.searching { ProgressView().controlSize(.small) }
-                if !model.searchQuery.isEmpty {
-                    Button {
-                        model.searchQuery = ""
-                        model.searchResults = []
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(L.t("search-clear"))
+            HStack(spacing: 6) {
+                Button {
+                    model.panel = model.panel == .saved ? .none : .saved
+                    if detent == .height(96) { detent = .medium }
+                } label: {
+                    Label(L.t("chrome-saved"), systemImage: "star.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .labelStyle(.titleAndIcon)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 40)
+                        .background(
+                            Capsule().fill(model.panel == .saved
+                                ? Color.accentColor.opacity(0.18)
+                                : Color(.secondarySystemFill))
+                        )
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.t("saved-places"))
+
+                Menu {
+                    if let user = model.user {
+                        Section(user.displayName ?? user.email ?? L.t("account")) {
+                            Button {
+                                model.panel = .packs
+                                if detent == .height(96) { detent = .medium }
+                            } label: {
+                                Label(L.t("map-style"), systemImage: "paintpalette")
+                            }
+                            Button(role: .destructive) {
+                                Task { await model.logout() }
+                            } label: {
+                                Label(L.t("sign-out"), systemImage: "rectangle.portrait.and.arrow.right")
+                            }
+                        }
+                    } else {
+                        Button { showAuth = true } label: {
+                            Label(L.t("sign-in"), systemImage: "person.crop.circle")
+                        }
+                        Button {
+                            model.panel = .packs
+                            if detent == .height(96) { detent = .medium }
+                        } label: {
+                            Label(L.t("map-style"), systemImage: "paintpalette")
+                        }
+                    }
+                    Picker(selection: Binding(get: { model.lang }, set: { model.setLang($0) })) {
+                        ForEach(L.languages) { l in
+                            Text(l.name).tag(l.id)
+                        }
+                    } label: {
+                        Label(L.t("language"), systemImage: "globe")
+                    }
+                } label: {
+                    Label(L.t("chrome-me"), systemImage: "person.crop.circle")
+                        .font(.subheadline.weight(.semibold))
+                        .labelStyle(.titleAndIcon)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 40)
+                        .background(Capsule().fill(Color(.secondarySystemFill)))
+                }
+                .accessibilityLabel(L.t("chrome-me"))
+
+                Spacer(minLength: 4)
+
+                Button {
+                    searchExpanded = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 40, height: 40)
+                        .background(Circle().fill(Color(.secondarySystemFill)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.t("search"))
             }
+            .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+            .listRowBackground(Color.clear)
+        }
+    }
+
+    // MARK: Search (full sheet)
+
+    private var searchFieldSection: some View {
+        Section {
+            HStack(spacing: 10) {
+                Button {
+                    searchExpanded = false
+                    if model.selected != nil || model.route != nil {
+                        detent = .height(220)
+                    } else {
+                        detent = .height(96)
+                    }
+                } label: {
+                    Text(L.t("cancel"))
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField(L.t("search-placeholder"), text: $model.searchQuery)
+                        .focused($searchFocused)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
+                        .onSubmit {
+                            if let first = model.searchResults.first { pick(first) }
+                        }
+                    if model.searching { ProgressView().controlSize(.small) }
+                    if !model.searchQuery.isEmpty {
+                        Button {
+                            model.searchQuery = ""
+                            model.searchResults = []
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 36, height: 36)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(L.t("search-clear"))
+                    }
+                }
+                .padding(.horizontal, 10)
+                .frame(minHeight: 40)
+                .background(Capsule().fill(Color(.secondarySystemFill)))
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+            .listRowBackground(Color.clear)
         }
     }
 
@@ -91,11 +220,16 @@ struct SheetView: View {
         Section(L.t("results")) {
             ForEach(model.searchResults) { r in
                 Button { pick(r) } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(r.name).fontWeight(.semibold)
-                        Text(r.label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                    HStack(spacing: 12) {
+                        Image(systemName: "mappin.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(Color.accentColor)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(r.name).fontWeight(.semibold)
+                            Text(r.label).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
                 .buttonStyle(.plain)
             }
@@ -394,25 +528,52 @@ struct SheetView: View {
 
     private func placeSection(_ place: Place) -> some View {
         Section {
-            HStack(alignment: .top, spacing: 4) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(place.name).font(.headline)
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(place.name).font(.title3.weight(.semibold))
                     Text(place.label).font(.footnote).foregroundStyle(.secondary)
-                    Text(String(format: "%.5f, %.5f", place.lat, place.lon))
-                        .font(.caption2).foregroundStyle(.tertiary)
                 }
-                Spacer()
+                Spacer(minLength: 0)
+                Button {
+                    model.selected = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(L.t("close"))
+            }
+
+            HStack(spacing: 10) {
                 Button {
                     model.startRoute(to: place)
                     detent = .medium
                 } label: {
-                    Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
+                    Label(L.t("route-to-here"), systemImage: "arrow.triangle.turn.up.right.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+
+                Button {
+                    Task {
+                        let ok = await model.toggleBookmark(place)
+                        if !ok { showAuth = true }
+                    }
+                } label: {
+                    Image(systemName: model.bookmarkFor(place) != nil ? "star.fill" : "star")
+                        .font(.title3)
+                        .foregroundStyle(.yellow)
                         .frame(width: 44, height: 44)
+                        .background(Circle().fill(Color(.secondarySystemFill)))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(L.t("route-to-here"))
+                .accessibilityLabel(L.t(model.bookmarkFor(place) != nil ? "saved-remove" : "save-place"))
+
                 ShareLink(
                     item: URL(string: "https://maps.aiity.de/maps/?p=\(String(format: "%.5f,%.5f", place.lat, place.lon)),\(place.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!,
                     subject: Text(place.name)
@@ -421,33 +582,57 @@ struct SheetView: View {
                         .font(.title3)
                         .foregroundStyle(.secondary)
                         .frame(width: 44, height: 44)
+                        .background(Circle().fill(Color(.secondarySystemFill)))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(L.t("share-place"))
-                Button {
-                    Task {
-                        let ok = await model.toggleBookmark(place)
-                        if !ok { showAuth = true }
-                    }
-                } label: {
-                    Image(systemName: model.bookmarkFor(place) != nil ? "star.fill" : "star")
-                        .font(.title2)
-                        .foregroundStyle(.yellow)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.t(model.bookmarkFor(place) != nil ? "saved-remove" : "save-place"))
-                Button {
-                    model.selected = nil
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 44, height: 44)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(L.t("close"))
+            }
+
+            // Track strip when route is ready for this place
+            if let route = model.route, route.status == .ready, let r = route.result {
+                trackStrip(result: r, mode: route.mode)
             }
         }
+    }
+
+    /// Liquid-glass style track stats (ETA / distance / mode).
+    private func trackStrip(result: RouteResult, mode: RouteMode) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(L.t("track-info"), systemImage: "point.topleft.down.to.point.bottomright.curvepath")
+                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 8) {
+                trackStat(title: L.t("track-eta"), value: Self.fmtDur(result.durationS))
+                trackStat(title: L.t("track-distance"), value: Self.fmtDist(result.distanceM))
+                trackStat(title: L.t("track-avg"), value: mode.label)
+            }
+            if model.nav == nil {
+                Button {
+                    model.startNavigation()
+                    detent = .height(220)
+                } label: {
+                    Label(L.t("nav-start"), systemImage: "location.north.line.fill")
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .fontWeight(.semibold)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func trackStat(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title.uppercased())
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline.monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(.secondarySystemFill)))
     }
 
     // MARK: Saved panel
@@ -660,7 +845,12 @@ struct SheetView: View {
         // Quiet write — a normal assignment would re-trigger the debounced
         // search and pop the results list back open 350ms later.
         model.setQueryQuietly(r.name)
+        // Leave full-screen search — place is no longer “in the list”.
+        searchExpanded = false
         searchFocused = false
+        model.searchResults = []
+        model.panel = .none
+        // Shrink sheet so map shows above with location details.
         detent = .height(220)
     }
 }

@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { api, type PlaceDetails } from '../lib/api'
 import { useT } from '../lib/useT'
 import { useApp } from '../state'
+import { TrackCard } from './TrackCard'
 
 /// Place panel: name, address, and whatever OSM knows — opening hours,
 /// phone, website, cuisine, accessibility.
@@ -63,41 +64,60 @@ export function PlaceCard() {
   }
 
   return (
-    // Flat surface — no nested card chrome inside the rail.
-    <div className="space-y-3">
+    <div className="space-y-3.5">
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[17px] font-semibold leading-tight tracking-tight">{place.name}</h2>
-            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
+            <h2 className="truncate text-[20px] font-semibold leading-tight tracking-tight">{place.name}</h2>
+            <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted-foreground">
               {address || place.label}
             </p>
             {details?.kind && (
-              <Badge variant="secondary" className="mt-1.5 text-[11px] font-medium capitalize">
+              <Badge variant="secondary" className="mt-2 rounded-full text-[11px] font-medium capitalize">
                 {details.kind.replace(/_/g, ' ')}
               </Badge>
             )}
             {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={() => app.select(null)} aria-label={t('close')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-9 shrink-0 rounded-full bg-muted/60"
+            onClick={() => app.select(null)}
+            aria-label={t('close')}
+          >
             <X className="size-4 text-muted-foreground" />
           </Button>
         </div>
 
-        {/* Primary actions */}
+        {/* Primary actions — liquid glass pills */}
         <div className="flex gap-2">
-          <Button className="flex-1 gap-1.5" onClick={() => app.startRoute(place)}>
+          <Button className="h-11 flex-1 gap-1.5 rounded-full font-semibold" onClick={() => app.startRoute(place)}>
             <Navigation className="size-4" /> {t('route')}
           </Button>
           <Button
-            variant="outline" size="icon" onClick={toggleSave} disabled={saving}
-            aria-pressed={saved} aria-label={saved ? t('saved-remove') : t('save-place')}
+            variant="secondary"
+            size="icon"
+            className="size-11 rounded-full"
+            onClick={toggleSave}
+            disabled={saving}
+            aria-pressed={saved}
+            aria-label={saved ? t('saved-remove') : t('save-place')}
           >
-            <Star className={cn('size-4', saved && 'fill-yellow-400 text-yellow-400')} />
+            <Star className={cn('size-4', saved && 'fill-amber-400 text-amber-400')} />
           </Button>
-          <Button variant="outline" size="icon" onClick={share} aria-label={t('share-place')}>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="size-11 rounded-full"
+            onClick={share}
+            aria-label={t('share-place')}
+          >
             <Share2 className="size-4" />
           </Button>
         </div>
+
+        {/* Track strip when a route is already calculated to this place */}
+        {app.route?.status === 'ready' && app.route.result && <TrackCard />}
 
         {loading ? (
           <div className="space-y-2 pt-1">

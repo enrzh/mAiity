@@ -85,7 +85,8 @@ struct RootView: View {
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
-                .presentationBackground(.regularMaterial)
+                .presentationBackground(.ultraThinMaterial)
+                .presentationCornerRadius(24)
                 .environmentObject(model)
         }
         .task { await model.boot() }
