@@ -77,9 +77,15 @@ export function RoutePanel() {
             <Button className="w-full gap-2" onClick={app.startNavigation}>
               <Navigation2 className="size-4" /> {t('nav-start')}
             </Button>
-            {/* Race mode: entry from the route rail + HUD overlay on the map. */}
+            {/* Race mode: arm / start from the route rail; HUD owns live controls. */}
+            {route.mode === 'car' && app.driving.status === 'idle' && (
+              <Button className="w-full gap-2" variant="secondary" onClick={app.armDrivingMode}>
+                <Car className="size-4" />
+                {t('race-start')}
+              </Button>
+            )}
             {route.mode === 'car' && app.driving.status === 'ready' && (
-              <Button className="w-full gap-2" variant="secondary" onClick={app.startDrivingMode}>
+              <Button className="w-full gap-2" variant="secondary" onClick={() => { app.startDrivingMode() }}>
                 <Car className="size-4" />
                 {t('race-start')}
               </Button>

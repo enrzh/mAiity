@@ -338,6 +338,14 @@ body { overscroll-behavior: none; }
   touch-action: none;
   user-select: none;
 }
+.maps-race-pad:focus-visible,
+.maps-race-hud button:focus-visible {
+  outline: 2px solid #7cf0c2;
+  outline-offset: 2px;
+}
+.maps-race-hud__dismiss {
+  flex-shrink: 0;
+}
 .maps-race-hud--compact .maps-race-hud__countdown span {
   font-size: 2rem;
 }

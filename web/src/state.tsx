@@ -93,6 +93,10 @@ interface AppState {
   pauseDrivingMode: () => void
   resumeDrivingMode: () => void
   resetDrivingMode: () => void
+  /** Arm race HUD for the current car route (idle → ready). */
+  armDrivingMode: () => void
+  /** Hide race HUD without clearing the route (any → idle). */
+  exitDrivingMode: () => void
   tickDrivingMode: (now?: number) => void
   driveDrivingMode: (input: DrivingInput, now?: number) => void
   finishDrivingMode: () => void
@@ -464,6 +468,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const pauseDrivingMode = useCallback(() => setDriving((s) => pauseDriving(s)), [])
   const resumeDrivingMode = useCallback(() => setDriving((s) => resumeDriving(s)), [])
   const resetDrivingMode = useCallback(() => setDriving((s) => resetDriving(s)), [])
+  const armDrivingMode = useCallback(() => {
+    const r = routeRef.current
+    if (r?.status === 'ready' && r.mode === 'car' && r.result) {
+      setDriving(createDrivingSessionForMode('car', r.result))
+    }
+  }, [])
+  const exitDrivingMode = useCallback(() => {
+    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
+  }, [])
   const tickDrivingMode = useCallback((now = Date.now()) => {
     setDriving((s) => {
       const next = tickDriving(s, now)
@@ -580,7 +593,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
     driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
-    resetDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
+    resetDrivingMode, armDrivingMode, exitDrivingMode, tickDrivingMode, driveDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

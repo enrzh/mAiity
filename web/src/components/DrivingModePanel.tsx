@@ -1,4 +1,4 @@
-import { Car, Flag, Pause, Play, RotateCcw, Gauge } from 'lucide-react'
+import { Car, Flag, Pause, Play, RotateCcw, Gauge, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { pointAtProgress } from '../lib/driving'
 import { useT } from '../lib/useT'
@@ -133,6 +133,18 @@ export function DrivingModePanel() {
           <span>{fmtTime(session.elapsedMs)}</span>
           <span className="opacity-70">{Math.round(session.progress * 100)}%</span>
         </div>
+        {(session.status === 'ready' || session.status === 'finished') && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="maps-race-hud__dismiss ml-auto size-7 text-white/70 hover:bg-white/10 hover:text-white"
+            onClick={app.exitDrivingMode}
+            aria-label={t('close')}
+          >
+            <X className="size-3.5" />
+          </Button>
+        )}
         <div className="maps-race-hud__progress" aria-hidden>
           <span style={{ width: `${session.progress * 100}%` }} />
         </div>

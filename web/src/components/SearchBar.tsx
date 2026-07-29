@@ -196,7 +196,7 @@ export function SearchBar() {
         )}
       </div>
       {!open && showRecents && (
-        <ul className="absolute z-30 mt-2 w-full rounded-xl border bg-popover p-1.5 shadow-xl">
+        <ul className="absolute z-50 mt-2 w-full rounded-xl border bg-popover p-1.5 shadow-xl">
           <li className="px-3 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
             {t('recent-searches')}
           </li>
@@ -218,7 +218,7 @@ export function SearchBar() {
           id="search-results"
           role="listbox"
           aria-label={t('search')}
-          className="absolute z-30 mt-2 max-h-[50vh] w-full overflow-y-auto rounded-xl border bg-popover p-1.5 shadow-xl"
+          className="absolute z-50 mt-2 max-h-[50vh] w-full overflow-y-auto rounded-xl border bg-popover p-1.5 shadow-xl"
         >
           {error ? (
             <li className="px-3 py-2.5 text-sm text-muted-foreground">

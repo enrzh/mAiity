@@ -41,7 +41,8 @@ type Panel = 'none' | 'saved' | 'packs'
 type Detent = 'peek' | 'half' | 'full'
 const DETENTS: Detent[] = ['peek', 'half', 'full']
 function detentPx(d: Detent): number {
-  return d === 'peek' ? 130 : Math.round(window.innerHeight * (d === 'half' ? 0.45 : 0.85))
+  // Peek: search + chips only — keep short so the map stays the hero.
+  return d === 'peek' ? 118 : Math.round(window.innerHeight * (d === 'half' ? 0.42 : 0.85))
 }
 
 /// One control stack, bottom-right. Sits above the mobile sheet and above the
@@ -485,11 +486,12 @@ function Shell() {
         )}
 
         {!racing && <SearchAreaButton />}
-        <MapControls racing={racing && app.driving.status !== 'ready'} />
+        <MapControls racing={racing} />
       </main>
 
       <AuthModal />
-      <Toaster position="top-center" />
+      {/* Offset toasts below top chrome (search-area / status banners). */}
+      <Toaster position="top-center" offset={64} gap={8} />
     </div>
   )
 }
