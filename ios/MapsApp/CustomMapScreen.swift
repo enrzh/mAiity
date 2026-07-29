@@ -113,7 +113,19 @@ struct CustomMapScreen: View {
         .onChange(of: model.navCamera) { _, target in
             guard let target else { return }
             lastCenter = target.center
-            camera = .center(target.center, zoom: 17, pitch: 60, direction: target.heading)
+            let racing: Bool = {
+                switch model.driving {
+                case .running, .paused: return true
+                default: return false
+                }
+            }()
+            // Street-level race: higher pitch/zoom so pack buildings fill the view.
+            camera = .center(
+                target.center,
+                zoom: racing ? 17.6 : 17,
+                pitch: racing ? 68 : 60,
+                direction: target.heading
+            )
         }
     }
 

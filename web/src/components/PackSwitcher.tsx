@@ -38,7 +38,11 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant={app.mapProvider === 'apple' ? 'default' : 'outline'}
-              onClick={() => app.setMapProvider('apple')}
+              onClick={() => {
+                app.setMapProvider('apple')
+                // Apple appearance options stay open for type/tone; only pack
+                // picks auto-close (see texture buttons below).
+              }}
             >
               <Map className="size-4" /> Apple Maps
             </Button>
@@ -105,7 +109,12 @@ export function PackSwitcher({ onClose }: { onClose: () => void }) {
                       app.activePack === p.id ? 'border-primary bg-accent' : 'border-transparent',
                     )}
                     aria-pressed={app.activePack === p.id}
-                    onClick={() => app.setActivePack(p.id)}
+                    onClick={() => {
+                      app.setActivePack(p.id)
+                      // Choosing a texture pack is a complete action — return to
+                      // the route/place rail so packs and driving don't stack.
+                      onClose()
+                    }}
                   >
                     {p.preview?.colors?.length ? (
                       <span className="flex gap-1" aria-hidden="true">

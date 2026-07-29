@@ -120,11 +120,18 @@ struct MapScreen: View {
         }
         .onChange(of: model.navCamera) { _, camera in
             guard let camera else { return }
+            // Race mode uses a tighter street-level chase cam; turn-by-turn stays wider.
+            let racing: Bool = {
+                switch model.driving {
+                case .running, .paused: return true
+                default: return false
+                }
+            }()
             position = .camera(MapCamera(
                 centerCoordinate: camera.center,
-                distance: 900,
+                distance: racing ? 280 : 900,
                 heading: camera.heading,
-                pitch: 55
+                pitch: racing ? 68 : 55
             ))
         }
         .overlay(alignment: .bottomTrailing) {

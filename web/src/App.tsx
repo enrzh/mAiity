@@ -22,6 +22,7 @@ import { RoutePanel } from './components/RoutePanel'
 import { NavigationPanel } from './components/NavigationPanel'
 import { SavedPanel } from './components/SavedPanel'
 import { PackSwitcher } from './components/PackSwitcher'
+import { DrivingModePanel } from './components/DrivingModePanel'
 import { AuthModal } from './components/AuthModal'
 
 type Panel = 'none' | 'saved' | 'packs'
@@ -208,20 +209,41 @@ function Shell() {
     setDragH(null) // hand height control back to the detent (animated)
   }
 
-  // A place or route takes over the rail; side panels step aside.
-  useEffect(() => { if (app.selected || app.route) setPanel('none') }, [app.selected, app.route])
+  // Opening a place/route should not leave a stale packs/saved highlight — but
+  // once a route is already open the user must still be able to open packs
+  // (provider/style). That is handled by content precedence below, not by
+  // forcing panel off on every route identity change.
+  useEffect(() => {
+    // Only clear side panels when a NEW route/place appears from "none", not
+    // when the user intentionally opens packs while routing.
+    if (app.selected && !app.route) setPanel('none')
+  }, [app.selected, app.route])
   // Selecting something while collapsed should reveal it, like Maps does.
-  useEffect(() => { if (app.selected || app.route) setCollapsed(false) }, [app.selected, app.route])
+  // Exception: active driving is immersive — keep the rail collapsed.
+  useEffect(() => {
+    if (app.driving.status === 'running' || app.driving.status === 'paused') return
+    if (app.selected || app.route) setCollapsed(false)
+  }, [app.selected, app.route, app.driving.status])
   // Category results must take over the rail: with the packs/saved panel
   // open they loaded into a slot BELOW it in the precedence chain, so the
   // chips looked broken. One thing at a time, like Maps.
   useEffect(() => { if (app.pois.length > 0) { setPanel('none'); setCollapsed(false) } }, [app.pois])
+  // Driving mode: one surface — close packs/saved and free the map (desktop
+  // collapse + mobile peek). Controls live in a map overlay, not the rail.
+  useEffect(() => {
+    if (app.driving.status === 'running' || app.driving.status === 'paused') {
+      setPanel('none')
+      setCollapsed(true)
+      setDetent('peek')
+    }
+  }, [app.driving.status])
   // New contextual content while the mobile sheet is at peek would be
   // invisible — lift to half so a tap on the map/chips visibly answers.
   useEffect(() => {
+    if (app.driving.status === 'running' || app.driving.status === 'paused') return
     if (app.selected || app.route || app.pois.length > 0)
       setDetent((d) => (d === 'peek' ? 'half' : d))
-  }, [app.selected, app.route, app.pois])
+  }, [app.selected, app.route, app.pois, app.driving.status])
   // Tell the map how much of its left edge the rail covers, so framing a place
   // or route puts it in the VISIBLE half rather than behind the panel. Only on
   // desktop — on mobile the rail is a bottom sheet, not a left panel.
@@ -315,11 +337,14 @@ function Shell() {
             detent === 'peek' ? 'overflow-y-hidden md:overflow-y-auto' : 'overflow-y-auto',
           )}
         >
-          {app.navigating ? <NavigationPanel />
+          {/* Side panels (packs/saved) outrank route/place so the rail content
+              always matches the highlighted control. Previously packs stayed
+              "pressed" while RoutePanel kept winning the slot — UI mismatch. */}
+          {panel === 'packs' ? <PackSwitcher onClose={() => setPanel('none')} />
+            : panel === 'saved' ? <SavedPanel onClose={() => setPanel('none')} />
+            : app.navigating ? <NavigationPanel />
             : app.route ? <RoutePanel />
             : app.selected ? <PlaceCard />
-            : panel === 'saved' ? <SavedPanel onClose={() => setPanel('none')} />
-            : panel === 'packs' ? <PackSwitcher onClose={() => setPanel('none')} />
             : app.pois.length > 0 ? <PoiResults />
             : <EmptyRail />}
         </div>
@@ -328,6 +353,19 @@ function Shell() {
       {/* ---- Map ------------------------------------------------------- */}
       <main className="relative min-w-0 flex-1">
         <MapView />
+
+        {/* Driving HUD sits on the map so collapsing the rail (immersive race)
+            does not bury Start/Pause/touch controls under the sidebar. */}
+        {app.driving.status !== 'idle' && (
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 md:bottom-4 md:px-4"
+            style={{ paddingBottom: 'max(0.75rem, calc(var(--sheet-h, 0px) * 0.15 + 0.5rem))' }}
+          >
+            <div className="pointer-events-auto w-full max-w-lg">
+              <DrivingModePanel />
+            </div>
+          </div>
+        )}
 
         {/* Collapsing hides the rail, never its functions: search, chips and
             the rail controls float over the map instead. */}

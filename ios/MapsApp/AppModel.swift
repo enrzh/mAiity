@@ -539,15 +539,36 @@ final class AppModel: ObservableObject {
         drivingTask?.cancel()
         let started = Date().timeIntervalSince1970 - elapsed
         driving = .running(elapsed: elapsed, progress: min(1, elapsed / duration), duration: duration, distanceM: distance)
+        publishDrivingCamera(progress: min(1, elapsed / duration))
         drivingTask = Task { [weak self] in
             while !Task.isCancelled {
                 let e = Date().timeIntervalSince1970 - started
                 let p = min(1, e / duration)
                 self?.driving = .running(elapsed: e, progress: p, duration: duration, distanceM: distance)
+                self?.publishDrivingCamera(progress: p)
                 if p >= 1 { self?.completeDriving(elapsed: duration, duration: duration, distance: distance); return }
                 try? await Task.sleep(nanoseconds: 100_000_000)
             }
         }
+    }
+
+    /// Street-level chase cam for race mode (same idea as web MapLibre/Apple).
+    private func publishDrivingCamera(progress: Double) {
+        guard let geometry = route?.result?.geometry, geometry.count > 1 else { return }
+        let position = max(0, min(1, progress)) * Double(geometry.count - 1)
+        let index = min(geometry.count - 2, Int(position))
+        let t = position - Double(index)
+        let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
+        let lat = geometry[index][1] + (geometry[index + 1][1] - geometry[index][1]) * t
+        let nextIdx = min(index + 1, geometry.count - 1)
+        let head = Nav.bearing(
+            (lon: lon, lat: lat),
+            (lon: geometry[nextIdx][0], lat: geometry[nextIdx][1])
+        )
+        navCamera = NavCamera(
+            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+            heading: head
+        )
     }
 
     private func completeDriving(elapsed: TimeInterval, duration: TimeInterval, distance: Double) {

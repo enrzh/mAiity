@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
-import { pointAtProgress } from '../lib/driving'
+import { bearingAtProgress, pointAtProgress } from '../lib/driving'
+import { offsetAlongBearing, RACE_PITCH } from '../lib/drivingCamera'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
@@ -303,14 +304,44 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     if (drivingAnnotation.current) map.removeAnnotation(drivingAnnotation.current)
     drivingAnnotation.current = null
     const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
-    if (!geometry || geometry.length < 2 || app.driving.status === 'idle' || app.driving.status === 'ready') return
+    if (!geometry || geometry.length < 2 || app.driving.status === 'idle' || app.driving.status === 'ready') {
+      // Flatten camera when leaving an active race.
+      if (app.driving.status === 'idle' && typeof map.setCameraAnimated === 'function') {
+        try {
+          const center = map.center
+          if (mk.Camera && center) {
+            map.setCameraAnimated(new mk.Camera(center, { pitch: 0, altitude: 2500 }), false)
+          }
+        } catch { /* MapKit version without Camera */ }
+      }
+      return
+    }
     const point = pointAtProgress(geometry, app.driving.progress)
+    const bearing = bearingAtProgress(geometry, app.driving.progress)
+    const look = offsetAlongBearing(point, bearing, 36)
     drivingAnnotation.current = new mk.MarkerAnnotation(new mk.Coordinate(point[1], point[0]), {
-      title: 'Driving position', color: '#1677ff', glyphText: '▶',
+      title: 'Driving position',
+      color: '#0b5fff',
+      glyphText: '🚗',
     })
     map.addAnnotation(drivingAnnotation.current)
-    if (app.driving.status === 'running') {
-      map.setCenterAnimated(new mk.Coordinate(point[1], point[0]), false)
+    if (app.driving.status === 'running' || app.driving.status === 'paused') {
+      const coord = new mk.Coordinate(look[1], look[0])
+      try {
+        if (mk.Camera && typeof map.setCameraAnimated === 'function') {
+          // Street-level chase cam (MapKit JS Camera API).
+          map.setCameraAnimated(new mk.Camera(coord, {
+            heading: bearing,
+            pitch: RACE_PITCH,
+            altitude: 220,
+          }), app.driving.status === 'running')
+        } else {
+          map.setCenterAnimated(new mk.Coordinate(point[1], point[0]), false)
+          if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
+        }
+      } catch {
+        map.setCenterAnimated(new mk.Coordinate(point[1], point[0]), false)
+      }
     }
   }, [map, app.route, app.driving])
 

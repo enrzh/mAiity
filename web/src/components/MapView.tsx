@@ -15,6 +15,7 @@ import {
 } from '../maps/types'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
 import { bearingAtProgress, pointAtProgress } from '../lib/driving'
+import { offsetAlongBearing, raceCameraAt } from '../lib/drivingCamera'
 import { useApp } from '../state'
 import { AppleMapView } from './AppleMapView'
 
@@ -461,26 +462,56 @@ function MapLibreMapView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
 
-  // A lightweight DOM marker keeps the driving mode independent of the style
-  // and works on every custom MapLibre pack.
+  // Race car marker + street-level follow camera (buildings via pitch/zoom).
+  // Works on every custom MapLibre pack without style-specific layers.
+  const racePrevStatus = useRef(app.driving.status)
   useEffect(() => {
-    if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle' || app.driving.status === 'ready') {
+    if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle') {
+      drivingMarker.current?.remove(); drivingMarker.current = null
+      // Leave race camera when exiting race (not when merely "ready").
+      if (racePrevStatus.current === 'running' || racePrevStatus.current === 'paused' || racePrevStatus.current === 'finished') {
+        try {
+          map.easeTo({ pitch: 0, bearing: 0, duration: 700, essential: true })
+        } catch { /* map disposed */ }
+      }
+      racePrevStatus.current = app.driving.status
+      return
+    }
+    racePrevStatus.current = app.driving.status
+    if (app.driving.status === 'ready') {
       drivingMarker.current?.remove(); drivingMarker.current = null
       return
     }
     if (!drivingMarker.current) {
       const el = document.createElement('div')
-      el.className = 'maps-driving-car'
-      el.innerHTML = '<span aria-hidden="true"></span>'
+      el.className = 'maps-driving-car maps-driving-car--race'
+      el.innerHTML = '<span class="maps-driving-car-body" aria-hidden="true"><i></i><i></i></span>'
       el.setAttribute('aria-label', 'Driving position')
       drivingMarker.current = new Marker({ element: el, anchor: 'center' }).addTo(map)
     }
     const point = pointAtProgress(routeGeometry, app.driving.progress)
+    const bearing = bearingAtProgress(routeGeometry, app.driving.progress)
     drivingMarker.current.setLngLat(point)
-    const car = drivingMarker.current.getElement().firstElementChild as HTMLElement | null
-    if (car) car.style.transform = `rotate(${bearingAtProgress(routeGeometry, app.driving.progress)}deg)`
-    if (app.driving.status === 'running') {
-      map.easeTo({ center: point, duration: 120, essential: true })
+    const car = drivingMarker.current.getElement().querySelector('.maps-driving-car-body') as HTMLElement | null
+    if (car) car.style.transform = `rotate(${bearing}deg)`
+    // Street-level chase cam while racing (and hold while paused).
+    if (app.driving.status === 'running' || app.driving.status === 'paused') {
+      try { ensure3DScenery(map) } catch { /* optional sky */ }
+      const cam = raceCameraAt(point, bearing)
+      // Slight look-ahead so the road opens ahead of the car.
+      const center = offsetAlongBearing(point, bearing, 28)
+      const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const opts = {
+        center,
+        bearing: cam.bearing,
+        pitch: cam.pitch,
+        zoom: Math.max(map.getZoom(), cam.zoom),
+        duration: app.driving.status === 'running' && !reduced ? 90 : 0,
+        essential: true as const,
+        padding: { top: 40, bottom: 200, left: 20, right: 20 },
+      }
+      if (opts.duration > 0) map.easeTo(opts)
+      else map.jumpTo(opts)
     }
   }, [map, routeGeometry, app.driving])
 

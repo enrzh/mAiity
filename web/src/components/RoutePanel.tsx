@@ -6,8 +6,6 @@ import { Separator } from '@/components/ui/separator'
 import type { RouteMode } from '../lib/api'
 import { useT } from '../lib/useT'
 import { useApp } from '../state'
-import { DrivingModePanel } from './DrivingModePanel'
-
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`)
 const fmtDur = (s: number) => {
   const min = Math.round(s / 60)
@@ -81,7 +79,15 @@ export function RoutePanel() {
             <Button className="w-full gap-2" onClick={app.startNavigation}>
               <Navigation2 className="size-4" /> {t('nav-start')}
             </Button>
-            {route.mode === 'car' && <DrivingModePanel />}
+            {/* Driving HUD is a map overlay (App.tsx). Ready/running UI lives
+                there so the rail can collapse without burying controls. */}
+            {route.mode === 'car' && app.driving.status !== 'idle' && (
+              <p className="text-center text-xs text-muted-foreground">
+                {app.lang === 'de'
+                  ? 'Rennmodus: Steuerung und HUD liegen unten über der Karte.'
+                  : 'Race mode: controls and HUD sit over the bottom of the map.'}
+              </p>
+            )}
             <Separator />
             <ol className="space-y-2 pr-1 text-sm">
               {route.result.steps.map((s, i) => (
