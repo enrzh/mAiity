@@ -151,41 +151,29 @@ struct RaceHUDView: View {
     }
 
     private var touchPads: some View {
+        // UIKit hold buttons: SwiftUI DragGesture is single-touch, so Gas+steer
+        // never worked together on a real phone.
         HStack(spacing: 8) {
-            pad("←", label: L.t("race-left")) {
-                model.setRaceSteer($0 ? -1 : 0)
+            HoldPadButton(title: "←", accessibilityLabel: L.t("race-left")) { down in
+                model.setRaceSteerLeft(down)
             }
-            pad(L.t("race-brake"), label: L.t("race-brake")) {
-                model.setRaceBrake($0)
-            }
-            pad(L.t("race-go"), label: L.t("race-go"), prominent: true) {
-                model.setRaceThrottle($0)
-            }
-            pad("→", label: L.t("race-right")) {
-                model.setRaceSteer($0 ? 1 : 0)
-            }
-        }
-    }
+            .frame(maxWidth: .infinity, minHeight: 56)
 
-    private func pad(
-        _ title: String,
-        label: String,
-        prominent: Bool = false,
-        onHold: @escaping (Bool) -> Void
-    ) -> some View {
-        Text(title)
-            .font(.headline.bold())
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .background(prominent ? Color.accentColor : Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
-            .foregroundStyle(prominent ? Color.white : Color.primary)
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in onHold(true) }
-                    .onEnded { _ in onHold(false) }
-            )
-            .accessibilityLabel(label)
-            .accessibilityAddTraits(.isButton)
+            HoldPadButton(title: L.t("race-brake"), accessibilityLabel: L.t("race-brake")) { down in
+                model.setRaceBrake(down)
+            }
+            .frame(maxWidth: .infinity, minHeight: 56)
+
+            HoldPadButton(title: L.t("race-go"), accessibilityLabel: L.t("race-go"), prominent: true) { down in
+                model.setRaceThrottle(down)
+            }
+            .frame(maxWidth: .infinity, minHeight: 56)
+
+            HoldPadButton(title: "→", accessibilityLabel: L.t("race-right")) { down in
+                model.setRaceSteerRight(down)
+            }
+            .frame(maxWidth: .infinity, minHeight: 56)
+        }
     }
 
     private var finishedRow: some View {

@@ -616,6 +616,8 @@ final class AppModel: ObservableObject {
         guard case let .running(elapsed, progress, duration, distance) = driving else { return }
         drivingTask?.cancel(); drivingTask = nil
         raceInput = DrivingInput()
+        raceSteerLeft = false
+        raceSteerRight = false
         // Keep physics progress (do not recompute from wall clock).
         driving = .paused(elapsed: elapsed, progress: progress, duration: duration, distanceM: distance)
     }
@@ -652,19 +654,45 @@ final class AppModel: ObservableObject {
         drivingTask?.cancel(); drivingTask = nil
         driving = .idle
         raceInput = DrivingInput()
+        raceSteerLeft = false
+        raceSteerRight = false
         raceSpeedMps = 0
         raceLateral = 0
         navCamera = nil
     }
 
+    /// Independent hold flags so Gas+steer multi-touch works and releasing
+    /// one side does not clear the other.
+    private var raceSteerLeft = false
+    private var raceSteerRight = false
+
     func setRaceThrottle(_ on: Bool) { raceInput.throttle = on }
     func setRaceBrake(_ on: Bool) { raceInput.brake = on }
-    func setRaceSteer(_ value: Double) { raceInput.steer = max(-1, min(1, value)) }
+    func setRaceSteerLeft(_ on: Bool) {
+        raceSteerLeft = on
+        recomputeRaceSteer()
+    }
+    func setRaceSteerRight(_ on: Bool) {
+        raceSteerRight = on
+        recomputeRaceSteer()
+    }
+    /// Legacy single-axis setter (sheet / tests).
+    func setRaceSteer(_ value: Double) {
+        raceSteerLeft = value < -0.1
+        raceSteerRight = value > 0.1
+        recomputeRaceSteer()
+    }
+    private func recomputeRaceSteer() {
+        if raceSteerLeft && !raceSteerRight { raceInput.steer = -1 }
+        else if raceSteerRight && !raceSteerLeft { raceInput.steer = 1 }
+        else { raceInput.steer = 0 }
+    }
 
     private func startDrivingLoop(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distance: Double) {
         drivingTask?.cancel()
-        raceSpeedMps = 0
-        var state = DrivingPhysicsState(progress: progress, speedMps: raceSpeedMps, lateral: raceLateral)
+        // Keep lateral on resume; only reset speed from rest on a fresh start.
+        let startSpeed = elapsed > 0.05 ? raceSpeedMps : 0
+        var state = DrivingPhysicsState(progress: progress, speedMps: startSpeed, lateral: raceLateral)
         var elapsedAcc = elapsed
         var lastTick = Date()
         driving = .running(elapsed: elapsed, progress: progress, duration: duration, distanceM: distance)
@@ -673,7 +701,8 @@ final class AppModel: ObservableObject {
             while !Task.isCancelled {
                 guard let self else { return }
                 let now = Date()
-                let dt = min(0.1, max(0, now.timeIntervalSince(lastTick)))
+                // Cap dt so a background hitch doesn't teleport the car.
+                let dt = min(0.05, max(1.0 / 120.0, now.timeIntervalSince(lastTick)))
                 lastTick = now
                 state = DrivingPhysics.step(state, input: self.raceInput, dt: dt, distanceM: distance)
                 elapsedAcc = min(duration, elapsedAcc + dt)
@@ -690,17 +719,17 @@ final class AppModel: ObservableObject {
                     self.completeDriving(elapsed: elapsedAcc, duration: duration, distance: distance)
                     return
                 }
-                try? await Task.sleep(nanoseconds: 33_000_000) // ~30 fps
+                try? await Task.sleep(nanoseconds: 16_000_000) // ~60 fps for smoother mobile feel
             }
         }
     }
 
-    /// Street-level chase cam for race mode (same idea as web MapLibre/Apple).
+    /// Street-level first-person-ish chase cam for race mode.
     private func publishDrivingCamera(progress: Double, lateral: Double) {
         guard let geometry = route?.result?.geometry, geometry.count > 1 else { return }
         let car = DrivingPhysics.carPosition(progress: progress, lateral: lateral, geometry: geometry)
-        // Look slightly ahead so the street opens in front of the car.
-        let lookM = 28.0
+        // Look ahead so the road opens in front of the car (driver view).
+        let lookM = 18.0
         let rad = car.heading * .pi / 180
         let dLat = (lookM / 111_320) * cos(rad)
         let cosLat = max(0.2, cos(car.lat * .pi / 180))

@@ -31,11 +31,11 @@ struct RootView: View {
         }
     }
 
-    /// Hide sheet only while actively racing (not merely ready).
+    /// Any armed race session: hide sheet so Start / touch pads aren't buried.
     private var raceImmersive: Bool {
         switch model.driving {
-        case .running, .paused, .finished: return true
-        default: return false
+        case .idle: return false
+        default: return true
         }
     }
 
@@ -65,12 +65,14 @@ struct RootView: View {
                 .transition(.opacity)
             }
 
-            // Race HUD whenever session is armed (ready…finished).
+            // Race HUD above the map; zIndex so multi-touch pads beat Map gestures.
             if !isIdle(model.driving) {
                 RaceHUDView()
                     .padding(.horizontal, 10)
-                    .padding(.bottom, raceImmersive ? 10 : max(sheetHeight * 0.08, 8))
+                    .padding(.bottom, 10)
                     .safeAreaPadding(.bottom, 4)
+                    .zIndex(50)
+                    .allowsHitTesting(true)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -94,13 +96,11 @@ struct RootView: View {
         }
         .onChange(of: model.driving) { _, new in
             switch new {
-            case .running, .paused, .finished:
+            case .ready, .running, .paused, .finished:
                 model.showPackPicker = false
             case .idle:
                 sheetShown = true
                 if detent == .height(1) { detent = .height(96) }
-            case .ready:
-                sheetShown = true
             }
         }
         .animation(.easeOut(duration: 0.22), value: raceImmersive)
