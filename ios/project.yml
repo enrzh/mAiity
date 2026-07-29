@@ -4,24 +4,12 @@ options:
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
-packages:
-  # Official SwiftUI wrapper for MapLibre Native. Pre-1.0 — pinned EXACT so a
-  # minor release can't break the build (research: pin 0.25.0, resolves
-  # MapLibre Native >= 6.21.2 which includes pmtiles:// support since 6.10.0).
-  MapLibreSwiftUI:
-    url: https://github.com/maplibre/swiftui-dsl
-    exactVersion: 0.25.0
 targets:
   MapsApp:
     type: application
     platform: iOS
     sources:
       - path: MapsApp
-    dependencies:
-      - package: MapLibreSwiftUI
-        product: MapLibreSwiftUI
-      - package: MapLibreSwiftUI
-        product: MapLibreSwiftDSL
     info:
       path: MapsApp/Info.plist
       properties:

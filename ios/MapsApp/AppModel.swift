@@ -51,6 +51,8 @@ final class AppModel: ObservableObject {
     @Published var recents: [GeoResult] = []
     /// Live turn-by-turn session (nil when not navigating).
     @Published var nav: NavState?
+    /// Current center of the native Apple map, used to bias nearby searches.
+    @Published var mapCenter = CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45)
 
     struct NavState: Equatable {
         var stepIndex = 0
@@ -397,7 +399,17 @@ final class AppModel: ObservableObject {
     }
 
     /// Consumed by MapScreen to drive the follow camera.
-    struct NavCamera: Equatable { let id = UUID(); let center: CLLocationCoordinate2D; let heading: Double }
+    struct NavCamera: Equatable {
+        let id = UUID()
+        let center: CLLocationCoordinate2D
+        let heading: Double
+
+        static func == (lhs: NavCamera, rhs: NavCamera) -> Bool {
+            lhs.center.latitude == rhs.center.latitude &&
+            lhs.center.longitude == rhs.center.longitude &&
+            lhs.heading == rhs.heading
+        }
+    }
     @Published var navCamera: NavCamera?
 
     // MARK: - Routing

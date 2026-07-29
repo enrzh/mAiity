@@ -74,6 +74,17 @@ export async function createApp(opts: AppOpts): Promise<FastifyInstance & { db: 
   await app.register(
     async (scope) => {
       scope.get("/healthz", async () => ({ ok: true }));
+      scope.get("/mapkit-token", async (req, reply) => {
+        if (!opts.appleMaps) return reply.code(501).send({ error: "apple_maps_unconfigured" });
+        const origin = String(req.headers.origin ?? "");
+        const allowed = origin === "https://maps.aiity.de" || (opts.devCors && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin));
+        if (!allowed) return reply.code(403).send({ error: "origin_not_allowed" });
+        try {
+          return await opts.appleMaps.mapKitToken("maps.aiity.de");
+        } catch {
+          return reply.code(502).send({ error: "apple_maps_unavailable" });
+        }
+      });
       const authOpts = {
         db,
         jwtSecret: opts.jwtSecret,
