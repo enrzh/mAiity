@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/MapScreen.swift": {
-    "mtime": 1785330575.888955,
-    "ast_hash": "777a28f5b0db780aecd42151508fa6ec",
+    "mtime": 1785335411.7689066,
+    "ast_hash": "a2eefc8e4ef950df2ef82dbf71042e0d",
     "semantic_hash": ""
   },
   "ios/MapsApp/MapsApp.swift": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "ios/MapsApp/SheetView.swift": {
-    "mtime": 1785078415.0414946,
-    "ast_hash": "d8e484c4d39bdc323cc2390675f4e0eb",
+    "mtime": 1785335411.7674806,
+    "ast_hash": "283c085e6bc4f5b38127f5e247b1dfaf",
     "semantic_hash": ""
   },
   "packs/dark/pack.json": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "server/src/social.ts": {
-    "mtime": 1785333134.370487,
-    "ast_hash": "365e77c2a41d08d370f5dce794539bea",
+    "mtime": 1785335357.1787283,
+    "ast_hash": "e65dec050e713f739cf7fdf2abff2208",
     "semantic_hash": ""
   },
   "server/src/userpacks.ts": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "server/test/api.test.ts": {
-    "mtime": 1785333079.383375,
-    "ast_hash": "e253fbd57569cbfea3ab51c83a968c4e",
+    "mtime": 1785335284.8474948,
+    "ast_hash": "2dea4dc776a211c0dad551ffad0f8797",
     "semantic_hash": ""
   },
   "server/test/geocode-chain.test.ts": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "web/src/App.tsx": {
-    "mtime": 1785078196.7737153,
-    "ast_hash": "1da9fbf54eaf97bb26617fff384f4dd4",
+    "mtime": 1785335874.7715425,
+    "ast_hash": "9d5c1d956ae6609c0b939475f9484a42",
     "semantic_hash": ""
   },
   "web/src/components/AuthModal.tsx": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "web/src/components/MapView.tsx": {
-    "mtime": 1785330575.887222,
-    "ast_hash": "3cc24c8173dc43263834051e696082a5",
+    "mtime": 1785335765.9764028,
+    "ast_hash": "2fece95d62d2db3004053a39c3bf3323",
     "semantic_hash": ""
   },
   "web/src/components/NavigationPanel.tsx": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "web/tsconfig.json": {
-    "mtime": 1784903574.2483578,
-    "ast_hash": "413c3308138202013c45ade210fa4fa9",
+    "mtime": 1785335449.5926974,
+    "ast_hash": "121e027984f6b4c865bc9831e46678c7",
     "semantic_hash": ""
   },
   "web/vite.config.ts": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "web/src/components/AppleMapView.tsx": {
-    "mtime": 1785327847.7879186,
-    "ast_hash": "7ca4a0997a318fd2d572f4ae1f811b3b",
+    "mtime": 1785335765.977484,
+    "ast_hash": "78fc514caeb434b54a1a741ec0aa5308",
     "semantic_hash": ""
   },
   "web/src/lib/i18n.ts": {
@@ -612,6 +612,46 @@
   "server/test/applemaps.test.ts": {
     "mtime": 1785334361.605749,
     "ast_hash": "be186a0683295fcba783b8d8c6bfc06d",
+    "semantic_hash": ""
+  },
+  ".impeccable/live/config.json": {
+    "mtime": 1785334946.79524,
+    "ast_hash": "8c7621d427147c9d0f47cef890762143",
+    "semantic_hash": ""
+  },
+  "web/src/lib/mapController.test.ts": {
+    "mtime": 1785335284.8482442,
+    "ast_hash": "36f072588668e0d34eb4bb532efe2763",
+    "semantic_hash": ""
+  },
+  "web/src/lib/mapController.ts": {
+    "mtime": 1785335357.1793146,
+    "ast_hash": "878a75d4a661d05702ef9ef3d8d780e6",
+    "semantic_hash": ""
+  },
+  "web/src/lib/sidebarState.test.ts": {
+    "mtime": 1785335423.765105,
+    "ast_hash": "245b1bb36f1f704307f3cbdb97d99456",
+    "semantic_hash": ""
+  },
+  "web/src/lib/sidebarState.ts": {
+    "mtime": 1785335357.1795769,
+    "ast_hash": "ca4de11d4ed0cc726ec2aed5abb5382e",
+    "semantic_hash": ""
+  },
+  "PRODUCT.md": {
+    "mtime": 1785334946.7942107,
+    "ast_hash": "4a5d8525271a6734bb29243b1a079f89",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-07-29-map-controls-and-layout-plan.md": {
+    "mtime": 1785335136.7397387,
+    "ast_hash": "464b001906becf4c8aebd887a63fd9c4",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-29-map-controls-and-layout-design.md": {
+    "mtime": 1785335136.7392282,
+    "ast_hash": "f7ffce26f37734ab5a78d7d2467a06fc",
     "semantic_hash": ""
   }
 }

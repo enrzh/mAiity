@@ -19,6 +19,7 @@
   "17": "compilerOptions",
   "18": "SheetView",
   "19": "devDependencies",
+  "20": "PackSwitcher.tsx",
   "21": "AuthSheet",
   "22": "View",
   "23": "maps — web + native map with swappable texture packs",
@@ -46,13 +47,18 @@
   "45": "vite.config.ts",
   "46": "AppleMapsClient",
   "47": "createApp",
+  "48": "i18n.ts",
   "49": "Apple Web Login Design",
   "50": "MapScreen",
+  "51": "RoutePanel.tsx",
   "52": "RootView",
   "53": "MapTokens",
   "54": "InstallPackSheet",
   "55": "Global Constraints",
   "56": "userpacks.ts",
   "57": "lucide-react",
-  "58": "auth.test.ts"
+  "58": "auth.test.ts",
+  "59": "sidebarState.ts",
+  "60": "2026-07-29-map-controls-and-layout-plan.md",
+  "61": "@fontsource-variable/geist"
 }
