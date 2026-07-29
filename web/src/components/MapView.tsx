@@ -69,8 +69,8 @@ class MapErrorBoundary extends Component<
   }
 }
 
-/** Apple Maps is the default renderer; custom packs continue to use MapLibre.
- *  Each engine is code-split so Apple-first loads skip the MapLibre bundle. */
+/** Custom MapLibre packs are the default renderer; Apple MapKit is opt-in.
+ *  Each engine is code-split so MapLibre-first loads skip the MapKit bundle. */
 export function MapView({
   onAppleFailed,
 }: {

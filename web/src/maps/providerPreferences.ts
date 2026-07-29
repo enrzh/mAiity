@@ -4,7 +4,9 @@ const KEY = 'maps.preferences.v1'
 
 export const DEFAULT_MAP_PREFERENCES: MapPreferences = {
   version: 1,
-  provider: 'apple',
+  // MapLibre packs are the reliable default. Apple MapKit JS remains available
+  // as an opt-in provider (annotation lifecycle is fragile in MapKit JS).
+  provider: 'custom',
   customPackId: 'dark',
   appleMapType: 'standard',
   appleColorScheme: 'adaptive',
