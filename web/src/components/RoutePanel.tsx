@@ -102,14 +102,14 @@ export function RoutePanel() {
             )}
             <Separator />
             <ol className="max-h-[40vh] space-y-2 overflow-y-auto overscroll-contain pr-1 text-sm md:max-h-none">
-              {route.result.steps.map((s, i) => (
+              {(route.result.steps ?? []).map((s, i) => (
                 <li key={i} className="flex gap-2.5">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 leading-snug">
                     {s.instruction}
-                    {s.distanceM > 0 && (
+                    {(s.distanceM ?? 0) > 0 && (
                       <span className="ml-1 text-xs text-muted-foreground">({fmtDist(s.distanceM)})</span>
                     )}
                   </span>

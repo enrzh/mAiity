@@ -120,57 +120,84 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
 
     const load = async () => {
       if (!el.current) return
+      // Resolve a real JWT before touching Map() — creating a Map without
+      // calling done(token) leaves MapKit half-alive and later annotation
+      // ops throw (supportsLabelRegions on null) which can blank the shell.
+      const tokenResult = await api.mapkitToken()
+      if (cancelled || !el.current) return
+      if (tokenResult.fallback || !tokenResult.token) {
+        onFailure?.()
+        return
+      }
       await loadScript()
       if (cancelled || !el.current) return
       const mk = (window as any).mapkit
-      mk.init({
-        language: appRef.current.lang,
-        authorizationCallback: async (done: (token: string) => void) => {
-          try {
-            const result = await api.mapkitToken()
-            if (result.fallback) throw new Error('MapKit token unavailable')
-            done(result.token)
-          } catch {
-            onFailure?.()
-          }
-        },
-      })
+      try {
+        mk.init({
+          language: appRef.current.lang,
+          authorizationCallback: (done: (token: string) => void) => {
+            done(tokenResult.token)
+          },
+        })
+      } catch (e) {
+        console.error('[mapkit] init failed', e)
+        onFailure?.()
+        return
+      }
       if (cancelled || !el.current) return
 
-      instance = new mk.Map(el.current, {
-        isScrollEnabled: true,
-        isZoomEnabled: true,
-        isRotationEnabled: true,
-        showsCompass: mk.FeatureVisibility?.Adaptive ?? true,
-        showsScale: mk.FeatureVisibility?.Adaptive ?? true,
-        showsMapTypeControl: true,
-        showsZoomControl: false,
-        showsUserLocationControl: false,
-      })
+      try {
+        instance = new mk.Map(el.current, {
+          isScrollEnabled: true,
+          isZoomEnabled: true,
+          isRotationEnabled: true,
+          showsCompass: mk.FeatureVisibility?.Adaptive ?? true,
+          showsScale: mk.FeatureVisibility?.Adaptive ?? true,
+          showsMapTypeControl: true,
+          showsZoomControl: false,
+          showsUserLocationControl: false,
+        })
+      } catch (e) {
+        console.error('[mapkit] Map() failed', e)
+        onFailure?.()
+        return
+      }
       ;(window as unknown as { __appleMap?: unknown }).__appleMap = instance
       const saved = readViewport('apple')
-      instance.region = new mk.CoordinateRegion(
-        new mk.Coordinate(saved?.center.lat ?? INITIAL_REGION.lat, saved?.center.lon ?? INITIAL_REGION.lon),
-        new mk.CoordinateSpan(saved?.latitudeDelta ?? INITIAL_REGION.latDelta, saved?.longitudeDelta ?? INITIAL_REGION.lonDelta),
-      )
+      try {
+        instance.region = new mk.CoordinateRegion(
+          new mk.Coordinate(saved?.center.lat ?? INITIAL_REGION.lat, saved?.center.lon ?? INITIAL_REGION.lon),
+          new mk.CoordinateSpan(saved?.latitudeDelta ?? INITIAL_REGION.latDelta, saved?.longitudeDelta ?? INITIAL_REGION.lonDelta),
+        )
+      } catch {
+        /* region restore is best-effort */
+      }
       setMap(instance)
 
       const locate = () => {
-        instance.showsUserLocation = true
-        if (!navigator.geolocation) return
-        navigator.geolocation.getCurrentPosition((position) => {
-          const coordinate = new mk.Coordinate(position.coords.latitude, position.coords.longitude)
-          if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
-          userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
-            title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
-            color: '#1677ff',
-          })
-          instance.addAnnotation(userAnnotation.current)
-          instance.setRegionAnimated(new mk.CoordinateRegion(
-            coordinate,
-            new mk.CoordinateSpan(0.025, 0.025),
-          ), true)
-        }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 })
+        try {
+          instance.showsUserLocation = true
+          if (!navigator.geolocation) return
+          navigator.geolocation.getCurrentPosition((position) => {
+            try {
+              const coordinate = new mk.Coordinate(position.coords.latitude, position.coords.longitude)
+              if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
+              userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
+                title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
+                color: '#1677ff',
+              })
+              instance.addAnnotation(userAnnotation.current)
+              instance.setRegionAnimated(new mk.CoordinateRegion(
+                coordinate,
+                new mk.CoordinateSpan(0.025, 0.025),
+              ), true)
+            } catch (e) {
+              console.error('[mapkit] locate annotation failed', e)
+            }
+          }, () => {}, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 })
+        } catch (e) {
+          console.error('[mapkit] locate failed', e)
+        }
       }
 
       const moveListeners = new Set<() => void>()
@@ -184,40 +211,54 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
           nativeControls: false,
         },
         zoomBy: (delta) => {
-          const region = instance.region
-          if (!region) return
-          const factor = delta > 0 ? 0.55 : 1.8
-          instance.setRegionAnimated(new mk.CoordinateRegion(
-            region.center,
-            new mk.CoordinateSpan(
-              Math.max(0.0008, Math.min(160, region.span.latitudeDelta * factor)),
-              Math.max(0.0008, Math.min(320, region.span.longitudeDelta * factor)),
-            ),
-          ), true)
+          try {
+            const region = instance.region
+            if (!region) return
+            const factor = delta > 0 ? 0.55 : 1.8
+            instance.setRegionAnimated(new mk.CoordinateRegion(
+              region.center,
+              new mk.CoordinateSpan(
+                Math.max(0.0008, Math.min(160, region.span.latitudeDelta * factor)),
+                Math.max(0.0008, Math.min(320, region.span.longitudeDelta * factor)),
+              ),
+            ), true)
+          } catch (e) {
+            console.error('[mapkit] zoomBy failed', e)
+          }
         },
         locate,
         set3D: () => {},
-        focusPlace: (place) => instance.setRegionAnimated(regionForPlace(mk, place), true),
-        showPlaces: (places) => fitPlaces(instance, mk, places),
+        focusPlace: (place) => {
+          try { instance.setRegionAnimated(regionForPlace(mk, place), true) }
+          catch (e) { console.error('[mapkit] focusPlace failed', e) }
+        },
+        showPlaces: (places) => {
+          try { fitPlaces(instance, mk, places) }
+          catch (e) { console.error('[mapkit] showPlaces failed', e) }
+        },
         getViewport: () => {
-          const region = instance.region
-          if (!region) return null
-          return {
-            center: { lat: region.center.latitude, lon: region.center.longitude },
-            latitudeDelta: region.span.latitudeDelta,
-            longitudeDelta: region.span.longitudeDelta,
+          try {
+            const region = instance.region
+            if (!region) return null
+            return {
+              center: { lat: region.center.latitude, lon: region.center.longitude },
+              latitudeDelta: region.span.latitudeDelta,
+              longitudeDelta: region.span.longitudeDelta,
+            }
+          } catch {
+            return null
           }
         },
         followNavigation: ({ lat, lon, heading }) => {
-          const coordinate = new mk.Coordinate(lat, lon)
-          if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
-          userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
-            title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
-            color: '#1677ff',
-          })
-          instance.addAnnotation(userAnnotation.current)
-          instance.showsUserLocation = true
           try {
+            const coordinate = new mk.Coordinate(lat, lon)
+            if (userAnnotation.current) instance.removeAnnotation(userAnnotation.current)
+            userAnnotation.current = new mk.MarkerAnnotation(coordinate, {
+              title: appRef.current.lang === 'de' ? 'Mein Standort' : 'My location',
+              color: '#1677ff',
+            })
+            instance.addAnnotation(userAnnotation.current)
+            instance.showsUserLocation = true
             if (mk.Camera && typeof instance.setCameraAnimated === 'function') {
               instance.setCameraAnimated(new mk.Camera(coordinate, {
                 heading,
@@ -228,8 +269,8 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
               instance.setCenterAnimated(coordinate, true)
               if (typeof instance.setRotationAnimated === 'function') instance.setRotationAnimated(heading)
             }
-          } catch {
-            instance.setCenterAnimated(coordinate, true)
+          } catch (e) {
+            console.error('[mapkit] followNavigation failed', e)
           }
         },
         subscribeMoveEnd: (listener) => {
@@ -249,14 +290,16 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
         })
       })
       instance.addEventListener?.('region-change-end', () => {
-        const region = instance.region
-        if (!region) return
-        writeViewport('apple', {
-          center: { lat: region.center.latitude, lon: region.center.longitude },
-          latitudeDelta: region.span.latitudeDelta,
-          longitudeDelta: region.span.longitudeDelta,
-        })
-        for (const listener of moveListeners) listener()
+        try {
+          const region = instance.region
+          if (!region) return
+          writeViewport('apple', {
+            center: { lat: region.center.latitude, lon: region.center.longitude },
+            latitudeDelta: region.span.latitudeDelta,
+            longitudeDelta: region.span.longitudeDelta,
+          })
+          for (const listener of moveListeners) listener()
+        } catch { /* ignore */ }
       })
 
       if (!saved && !new URLSearchParams(window.location.search).has('p')) locate()
@@ -272,20 +315,24 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     })
     return () => {
       cancelled = true
-      unregister()
+      try { unregister() } catch { /* ignore */ }
       delete (window as unknown as { __appleMap?: unknown }).__appleMap
-      instance?.destroy()
+      try { instance?.destroy() } catch { /* MapKit destroy can throw if half-init */ }
       setMap(null)
     }
   }, [onFailure])
 
   useEffect(() => {
     if (!map) return
-    const mk = (window as any).mapkit
-    const mapType = resolveAppleMapType(mk, app.mapPreferences.appleMapType)
-    const colorScheme = resolveAppleColorScheme(mk, app.mapPreferences.appleColorScheme)
-    if (mapType != null) map.mapType = mapType
-    if (colorScheme != null) map.colorScheme = colorScheme
+    try {
+      const mk = (window as any).mapkit
+      const mapType = resolveAppleMapType(mk, app.mapPreferences.appleMapType)
+      const colorScheme = resolveAppleColorScheme(mk, app.mapPreferences.appleColorScheme)
+      if (mapType != null) map.mapType = mapType
+      if (colorScheme != null) map.colorScheme = colorScheme
+    } catch (e) {
+      console.error('[mapkit] appearance failed', e)
+    }
   }, [map, app.mapPreferences.appleMapType, app.mapPreferences.appleColorScheme])
 
   useEffect(() => {
@@ -308,45 +355,59 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
       }
     } catch (e) {
       console.error('[mapkit] select place failed', e)
+      // Broken MapKit instance (common after auth/layout glitches) — fall back.
+      onFailure?.()
     }
-  }, [map, app.selected])
+  }, [map, app.selected, onFailure])
 
   useEffect(() => {
     if (!map) return
     const mk = (window as any).mapkit
-    if (poiAnnotations.current.length) map.removeAnnotations(poiAnnotations.current)
-    poiAnnotations.current = app.pois.map((place) => {
-      const annotation = new mk.MarkerAnnotation(
-        new mk.Coordinate(place.lat, place.lon),
-        { title: place.name, subtitle: place.label, color: '#147d78' },
-      )
-      addSelectionListener(annotation, () => appRef.current.selectResult(place))
-      return annotation
-    })
-    if (poiAnnotations.current.length) {
-      map.addAnnotations(poiAnnotations.current)
-      fitPlaces(map, mk, app.pois)
+    try {
+      if (poiAnnotations.current.length) map.removeAnnotations(poiAnnotations.current)
+      poiAnnotations.current = app.pois
+        .filter((place) => Number.isFinite(place.lat) && Number.isFinite(place.lon))
+        .map((place) => {
+          const annotation = new mk.MarkerAnnotation(
+            new mk.Coordinate(place.lat, place.lon),
+            { title: place.name, subtitle: place.label, color: '#147d78' },
+          )
+          addSelectionListener(annotation, () => appRef.current.selectResult(place))
+          return annotation
+        })
+      if (poiAnnotations.current.length) {
+        map.addAnnotations(poiAnnotations.current)
+        fitPlaces(map, mk, app.pois)
+      }
+    } catch (e) {
+      console.error('[mapkit] poi annotations failed', e)
     }
   }, [map, app.pois])
 
   useEffect(() => {
     if (!map) return
     const mk = (window as any).mapkit
-    if (bookmarkAnnotations.current.length) map.removeAnnotations(bookmarkAnnotations.current)
-    bookmarkAnnotations.current = app.bookmarks.map((bookmark) => {
-      const annotation = new mk.MarkerAnnotation(
-        new mk.Coordinate(bookmark.lat, bookmark.lon),
-        { title: bookmark.name, subtitle: bookmark.note || bookmark.name, color: '#c28b00' },
-      )
-      addSelectionListener(annotation, () => appRef.current.select({
-        name: bookmark.name,
-        label: bookmark.note || bookmark.name,
-        lat: bookmark.lat,
-        lon: bookmark.lon,
-      }))
-      return annotation
-    })
-    if (bookmarkAnnotations.current.length) map.addAnnotations(bookmarkAnnotations.current)
+    try {
+      if (bookmarkAnnotations.current.length) map.removeAnnotations(bookmarkAnnotations.current)
+      bookmarkAnnotations.current = app.bookmarks
+        .filter((bookmark) => Number.isFinite(bookmark.lat) && Number.isFinite(bookmark.lon))
+        .map((bookmark) => {
+          const annotation = new mk.MarkerAnnotation(
+            new mk.Coordinate(bookmark.lat, bookmark.lon),
+            { title: bookmark.name, subtitle: bookmark.note || bookmark.name, color: '#c28b00' },
+          )
+          addSelectionListener(annotation, () => appRef.current.select({
+            name: bookmark.name,
+            label: bookmark.note || bookmark.name,
+            lat: bookmark.lat,
+            lon: bookmark.lon,
+          }))
+          return annotation
+        })
+      if (bookmarkAnnotations.current.length) map.addAnnotations(bookmarkAnnotations.current)
+    } catch (e) {
+      console.error('[mapkit] bookmark annotations failed', e)
+    }
   }, [map, app.bookmarks])
 
   useEffect(() => {
@@ -380,48 +441,54 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   useEffect(() => {
     if (!map) return
     const mk = (window as any).mapkit
-    if (drivingAnnotation.current) map.removeAnnotation(drivingAnnotation.current)
-    drivingAnnotation.current = null
-    const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
-    if (!geometry || geometry.length < 2 || app.driving.status === 'idle') {
-      // Flatten camera when leaving an active race.
-      if (app.driving.status === 'idle' && typeof map.setCameraAnimated === 'function') {
-        try {
-          const center = map.center
-          if (mk.Camera && center) {
-            map.setCameraAnimated(new mk.Camera(center, { pitch: 0, altitude: 2500 }), false)
-          }
-        } catch { /* MapKit version without Camera */ }
-      }
-      return
-    }
-    const point = pointAtProgress(geometry, app.driving.progress)
-    const bearing = bearingAtProgress(geometry, app.driving.progress)
-    const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
-    const look = offsetAlongBearing(carPt, bearing, app.driving.status === 'ready' ? 16 : 36)
-    drivingAnnotation.current = new mk.MarkerAnnotation(new mk.Coordinate(carPt[1], carPt[0]), {
-      title: 'Driving position',
-      color: '#0b5fff',
-      glyphText: '🚗',
-    })
-    map.addAnnotation(drivingAnnotation.current)
-    if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
-      const coord = new mk.Coordinate(look[1], look[0])
-      try {
-        if (mk.Camera && typeof map.setCameraAnimated === 'function') {
-          // Street-level chase cam (MapKit JS Camera API).
-          map.setCameraAnimated(new mk.Camera(coord, {
-            heading: bearing,
-            pitch: RACE_PITCH,
-            altitude: 220,
-          }), app.driving.status === 'running')
-        } else {
-          map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
-          if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
+    try {
+      if (drivingAnnotation.current) map.removeAnnotation(drivingAnnotation.current)
+      drivingAnnotation.current = null
+      const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
+      const pts = geometry?.filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])) ?? null
+      if (!pts || pts.length < 2 || app.driving.status === 'idle') {
+        // Flatten camera when leaving an active race.
+        if (app.driving.status === 'idle' && typeof map.setCameraAnimated === 'function') {
+          try {
+            const center = map.center
+            if (mk.Camera && center) {
+              map.setCameraAnimated(new mk.Camera(center, { pitch: 0, altitude: 2500 }), false)
+            }
+          } catch { /* MapKit version without Camera */ }
         }
-      } catch {
-        map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
+        return
       }
+      const point = pointAtProgress(pts, app.driving.progress)
+      const bearing = bearingAtProgress(pts, app.driving.progress)
+      const carPt = carPositionAt(point, bearing, app.driving.lateral ?? 0)
+      if (!Number.isFinite(carPt[0]) || !Number.isFinite(carPt[1])) return
+      const look = offsetAlongBearing(carPt, bearing, app.driving.status === 'ready' ? 16 : 36)
+      drivingAnnotation.current = new mk.MarkerAnnotation(new mk.Coordinate(carPt[1], carPt[0]), {
+        title: 'Driving position',
+        color: '#0b5fff',
+        glyphText: '🚗',
+      })
+      map.addAnnotation(drivingAnnotation.current)
+      if (app.driving.status === 'running' || app.driving.status === 'paused' || app.driving.status === 'ready') {
+        const coord = new mk.Coordinate(look[1], look[0])
+        try {
+          if (mk.Camera && typeof map.setCameraAnimated === 'function') {
+            // Street-level chase cam (MapKit JS Camera API).
+            map.setCameraAnimated(new mk.Camera(coord, {
+              heading: bearing,
+              pitch: RACE_PITCH,
+              altitude: 220,
+            }), app.driving.status === 'running')
+          } else {
+            map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
+            if (typeof map.setRotationAnimated === 'function') map.setRotationAnimated(bearing)
+          }
+        } catch {
+          map.setCenterAnimated(new mk.Coordinate(carPt[1], carPt[0]), false)
+        }
+      }
+    } catch (e) {
+      console.error('[mapkit] driving annotation failed', e)
     }
   }, [map, app.route, app.driving])
 

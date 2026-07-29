@@ -436,19 +436,24 @@ export function MapLibreMapView() {
   // Selected-place marker + flyTo.
   useEffect(() => {
     if (!map) return
-    selMarker.current?.remove()
-    selMarker.current = null
-    if (!app.selected) return
-    selMarker.current = new Marker({ color: MARKER_COLORS.selected, scale: MARKER_SCALES.selected })
-      .setLngLat([app.selected.lon, app.selected.lat])
-      .addTo(map)
-    selMarker.current.getElement().style.filter = MARKER_STROKES.selected
-    // Places zoom to their real size: a country fills the viewport via its
-    // bbox instead of dropping the camera onto one street at z14.
-    if (app.selected.extent) {
-      const [w, n, e, sth] = app.selected.extent
-      map.fitBounds([[w, sth], [e, n]], { padding: framePad(60), duration: 900, maxZoom: 15 })
-    } else {
+    try {
+      selMarker.current?.remove()
+      selMarker.current = null
+      if (!app.selected) return
+      if (!Number.isFinite(app.selected.lat) || !Number.isFinite(app.selected.lon)) return
+      selMarker.current = new Marker({ color: MARKER_COLORS.selected, scale: MARKER_SCALES.selected })
+        .setLngLat([app.selected.lon, app.selected.lat])
+        .addTo(map)
+      selMarker.current.getElement().style.filter = MARKER_STROKES.selected
+      // Places zoom to their real size: a country fills the viewport via its
+      // bbox instead of dropping the camera onto one street at z14.
+      if (app.selected.extent) {
+        const [w, n, e, sth] = app.selected.extent
+        if ([w, n, e, sth].every(Number.isFinite)) {
+          map.fitBounds([[w, sth], [e, n]], { padding: framePad(60), duration: 900, maxZoom: 15 })
+          return
+        }
+      }
       const kindZoom: Record<string, number> = {
         country: 5.5, state: 7, county: 9, city: 11, municipality: 11.5,
         town: 12.5, village: 13.5, suburb: 13.5,
@@ -460,6 +465,8 @@ export function MapLibreMapView() {
         duration: flyDuration(map, targetZoom),
         padding: framePad(0),
       })
+    } catch (e) {
+      console.error('[maplibre] select place failed', e)
     }
   }, [map, app.selected])
 

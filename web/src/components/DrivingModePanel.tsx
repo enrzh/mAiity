@@ -74,17 +74,21 @@ export function DrivingModePanel() {
     }
   }, [app.driveDrivingMode, session.status])
 
+  const geometry = route?.geometry
   const currentPoint = useMemo(
-    () => (route ? pointAtProgress(route.geometry, session.progress) : null),
-    [route, session.progress],
+    () => (geometry && geometry.length > 0 ? pointAtProgress(geometry, session.progress) : null),
+    [geometry, session.progress],
   )
   const minimap = useMemo(() => {
-    if (!route || route.geometry.length < 2) return null
+    if (!geometry || geometry.length < 2) return null
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-    for (const [lon, lat] of route.geometry) {
+    for (const pt of geometry) {
+      if (!pt || !Number.isFinite(pt[0]) || !Number.isFinite(pt[1])) continue
+      const [lon, lat] = pt
       minX = Math.min(minX, lon); maxX = Math.max(maxX, lon)
       minY = Math.min(minY, lat); maxY = Math.max(maxY, lat)
     }
+    if (!Number.isFinite(minX) || !Number.isFinite(maxX)) return null
     const pad = 0.08
     const w = Math.max(1e-6, maxX - minX)
     const h = Math.max(1e-6, maxY - minY)
@@ -93,15 +97,19 @@ export function DrivingModePanel() {
       const y = 1 - (((lat - minY) / h) * (1 - 2 * pad) + pad)
       return [x * 100, y * 100] as const
     }
-    const path = route.geometry.map(([lon, lat], i) => {
-      const [x, y] = to(lon, lat)
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
-    }).join(' ')
-    const car = currentPoint ? to(currentPoint[0], currentPoint[1]) : null
+    const path = geometry
+      .filter((pt) => pt && Number.isFinite(pt[0]) && Number.isFinite(pt[1]))
+      .map(([lon, lat], i) => {
+        const [x, y] = to(lon, lat)
+        return `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
+      }).join(' ')
+    const car = currentPoint && Number.isFinite(currentPoint[0]) && Number.isFinite(currentPoint[1])
+      ? to(currentPoint[0], currentPoint[1])
+      : null
     return { path, car }
-  }, [route, currentPoint])
+  }, [geometry, currentPoint])
 
-  if (!route || session.status === 'idle') return null
+  if (!route || !geometry || geometry.length < 2 || session.status === 'idle') return null
   const speed = Math.round(session.speedMps * 3.6)
   const recent = app.drivingRuns.slice(0, 5)
   const countingDown = countdown != null
