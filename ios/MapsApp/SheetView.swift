@@ -329,6 +329,9 @@ struct SheetView: View {
                                 .frame(maxWidth: .infinity, minHeight: 32).fontWeight(.semibold)
                         }
                         .buttonStyle(.borderedProminent)
+                        if route.mode == .car {
+                            drivingSection
+                        }
                         ForEach(Array(r.steps.enumerated()), id: \.offset) { i, step in
                             HStack(alignment: .top, spacing: 10) {
                                 Text("\(i + 1)")
@@ -349,12 +352,53 @@ struct SheetView: View {
         }
     }
 
+    private var drivingSection: some View {
+        let state = model.driving
+        return VStack(alignment: .leading, spacing: 8) {
+            Label("Driving mode", systemImage: "car.fill")
+                .font(.subheadline.bold())
+            HStack {
+                Text(Self.fmtTime(state.elapsed)).monospacedDigit().font(.title3.bold())
+                Spacer()
+                Text("\(Int(state.progress * 100))%")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            ProgressView(value: state.progress)
+            HStack(spacing: 8) {
+                switch state {
+                case .ready:
+                    Button("Start") { model.startDriving() }.buttonStyle(.borderedProminent)
+                case .running:
+                    Button("Pause") { model.pauseDriving() }.buttonStyle(.bordered)
+                case .paused:
+                    Button("Resume") { model.resumeDriving() }.buttonStyle(.borderedProminent)
+                case .finished:
+                    Label("Finished", systemImage: "flag.checkered")
+                        .font(.caption.bold()).foregroundStyle(.green)
+                case .idle:
+                    EmptyView()
+                }
+                if case .running = state {
+                    Button("Finish") { model.finishDriving() }.buttonStyle(.bordered)
+                }
+                if case .paused = state {
+                    Button("Finish") { model.finishDriving() }.buttonStyle(.bordered)
+                }
+            }
+        }
+        .padding(.vertical, 6)
+    }
+
     static func fmtDist(_ m: Int) -> String {
         m >= 1000 ? String(format: "%.1f km", Double(m) / 1000) : "\(m) m"
     }
     static func fmtDur(_ s: Int) -> String {
         let min = Int((Double(s) / 60).rounded())
         return min < 60 ? "\(min) min" : "\(min / 60) h \(min % 60) min"
+    }
+    static func fmtTime(_ seconds: TimeInterval) -> String {
+        let total = max(0, Int(seconds))
+        return String(format: "%02d:%02d", total / 60, total % 60)
     }
 
     // MARK: Selected place

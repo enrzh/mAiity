@@ -54,6 +54,11 @@ struct CustomMapScreen: View {
                 .color(MapTokens.selected)
                 .strokeWidth(MapTokens.selectedStrokeWidth)
                 .strokeColor(MapTokens.markerStroke)
+            CircleStyleLayer(identifier: "driving-car", source: drivingSource)
+                .radius(10)
+                .color(.blue)
+                .strokeWidth(3)
+                .strokeColor(.white)
         }
         .unsafeMapViewControllerModifier { controller in
             let wanted = location.isAuthorized
@@ -157,6 +162,20 @@ struct CustomMapScreen: View {
             if let geometry = model.route?.result?.geometry, geometry.count > 1 {
                 let points = geometry.map { coordinate($0[1], $0[0]) }
                 MLNPolylineFeature(coordinates: points, count: UInt(points.count))
+            }
+        }
+    }
+
+    private var drivingSource: ShapeSource {
+        ShapeSource(identifier: "driving-source") {
+            if let geometry = model.route?.result?.geometry, geometry.count > 1,
+               model.driving.progress > 0, model.driving.progress < 1 {
+                let position = model.driving.progress * Double(geometry.count - 1)
+                let index = min(geometry.count - 2, Int(position))
+                let t = position - Double(index)
+                let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
+                let lat = geometry[index][1] + (geometry[index + 1][1] - geometry[index][1]) * t
+                MLNPointFeature(coordinate: coordinate(lat, lon))
             }
         }
     }

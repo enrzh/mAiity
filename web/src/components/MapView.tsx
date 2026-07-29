@@ -14,6 +14,7 @@ import {
   type MapViewport,
 } from '../maps/types'
 import { MARKER_COLORS, MARKER_SCALES, MARKER_STROKES, ROUTE_STYLE } from '../lib/markerTokens'
+import { bearingAtProgress, pointAtProgress } from '../lib/driving'
 import { useApp } from '../state'
 import { AppleMapView } from './AppleMapView'
 
@@ -192,6 +193,7 @@ function MapLibreMapView() {
   const wants3DRef = useRef(false)
   const selMarker = useRef<Marker | null>(null)
   const bmMarkers = useRef<globalThis.Map<string, Marker>>(new globalThis.Map())
+  const drivingMarker = useRef<Marker | null>(null)
   const app = useApp()
   // Keep latest handlers reachable from map listeners without re-binding.
   const appRef = useRef(app)
@@ -340,6 +342,7 @@ function MapLibreMapView() {
       if (raf) cancelAnimationFrame(raf)
       ro.disconnect()
       selMarker.current?.remove(); selMarker.current = null
+      drivingMarker.current?.remove(); drivingMarker.current = null
       for (const [, mk] of bmMarkers.current) mk.remove()
       bmMarkers.current.clear()
       m.remove()
@@ -457,6 +460,29 @@ function MapLibreMapView() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, routeGeometry])
+
+  // A lightweight DOM marker keeps the driving mode independent of the style
+  // and works on every custom MapLibre pack.
+  useEffect(() => {
+    if (!map || !routeGeometry || routeGeometry.length < 2 || app.driving.status === 'idle' || app.driving.status === 'ready') {
+      drivingMarker.current?.remove(); drivingMarker.current = null
+      return
+    }
+    if (!drivingMarker.current) {
+      const el = document.createElement('div')
+      el.className = 'maps-driving-car'
+      el.innerHTML = '<span aria-hidden="true"></span>'
+      el.setAttribute('aria-label', 'Driving position')
+      drivingMarker.current = new Marker({ element: el, anchor: 'center' }).addTo(map)
+    }
+    const point = pointAtProgress(routeGeometry, app.driving.progress)
+    drivingMarker.current.setLngLat(point)
+    const car = drivingMarker.current.getElement().firstElementChild as HTMLElement | null
+    if (car) car.style.transform = `rotate(${bearingAtProgress(routeGeometry, app.driving.progress)}deg)`
+    if (app.driving.status === 'running') {
+      map.easeTo({ center: point, duration: 120, essential: true })
+    }
+  }, [map, routeGeometry, app.driving])
 
   // POI category markers (teal), replaced wholesale per category.
   const poiMarkers = useRef<Marker[]>([])

@@ -59,6 +59,17 @@ struct MapScreen: View {
                 MapPolyline(coordinates: geometry.map { coordinate($0[1], $0[0]) })
                     .stroke(.blue, lineWidth: 6)
             }
+
+            if let car = drivingCoordinate {
+                Annotation("Driving position", coordinate: car) {
+                    Image(systemName: "car.fill")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(8)
+                        .background(.blue, in: Circle())
+                        .overlay(Circle().stroke(.white, lineWidth: 2))
+                }
+            }
         }
         .mapStyle(selectedMapStyle)
         .preferredColorScheme(preferredMapColorScheme)
@@ -167,6 +178,17 @@ struct MapScreen: View {
 
     private func coordinate(_ lat: Double, _ lon: Double) -> CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    }
+
+    private var drivingCoordinate: CLLocationCoordinate2D? {
+        guard let geometry = model.route?.result?.geometry, geometry.count > 1,
+              model.driving.progress > 0, model.driving.progress < 1 else { return nil }
+        let position = model.driving.progress * Double(geometry.count - 1)
+        let index = min(geometry.count - 2, Int(position))
+        let t = position - Double(index)
+        let lon = geometry[index][0] + (geometry[index + 1][0] - geometry[index][0]) * t
+        let lat = geometry[index][1] + (geometry[index + 1][1] - geometry[index][1]) * t
+        return coordinate(lat, lon)
     }
 
     private func regionAround(_ lat: Double, _ lon: Double, span: Double) -> MKCoordinateRegion {

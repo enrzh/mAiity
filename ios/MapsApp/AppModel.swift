@@ -2,6 +2,28 @@ import CoreLocation
 import Foundation
 import SwiftUI
 
+struct DrivingRun: Codable, Equatable, Identifiable {
+    let id: UUID
+    let createdAt: Date
+    let duration: TimeInterval
+    let distanceM: Double
+    let averageSpeedKmh: Double
+}
+
+enum DrivingRunStore {
+    private static let key = "maps.drivingRuns.v1"
+    static func load() -> [DrivingRun] {
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let runs = try? JSONDecoder().decode([DrivingRun].self, from: data) else { return [] }
+        return Array(runs.prefix(20))
+    }
+    static func append(_ run: DrivingRun) -> [DrivingRun] {
+        let runs = Array(([run] + load()).prefix(20))
+        if let data = try? JSONEncoder().encode(runs) { UserDefaults.standard.set(data, forKey: key) }
+        return runs
+    }
+}
+
 /// Single app-wide observable state. All mutations happen on the main actor;
 /// network work is delegated to APIClient.
 struct RouteUI: Equatable {
@@ -51,6 +73,8 @@ final class AppModel: ObservableObject {
     @Published var recents: [GeoResult] = []
     /// Live turn-by-turn session (nil when not navigating).
     @Published var nav: NavState?
+    @Published var driving: DrivingState = .idle
+    @Published var drivingRuns: [DrivingRun] = DrivingRunStore.load()
     /// Current center of the native Apple map, used to bias nearby searches.
     @Published var mapCenter = CLLocationCoordinate2D(latitude: 51.16, longitude: 10.45)
 
@@ -60,6 +84,21 @@ final class AppModel: ObservableObject {
         var remainingM: Double
         var remainingS: Double
         var offRoute = false
+    }
+
+    enum DrivingState: Equatable {
+        case idle
+        case ready(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
+        case running(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
+        case paused(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
+        case finished(elapsed: TimeInterval, progress: Double, duration: TimeInterval, distanceM: Double)
+
+        var progress: Double {
+            switch self { case .idle: return 0; case let .ready(_, p, _, _), let .running(_, p, _, _), let .paused(_, p, _, _), let .finished(_, p, _, _): return p }
+        }
+        var elapsed: TimeInterval {
+            switch self { case .idle: return 0; case let .ready(e, _, _, _), let .running(e, _, _, _), let .paused(e, _, _, _), let .finished(e, _, _, _): return e }
+        }
     }
     /// Set by the floating map button; the sheet presents the pack picker.
     @Published var showPackPicker = false
@@ -456,12 +495,73 @@ final class AppModel: ObservableObject {
         route = nil
         pickingStart = false
         stopNavigation()
+        stopDriving()
+    }
+
+    // MARK: - Driving mode
+
+    private var drivingTask: Task<Void, Never>?
+
+    func prepareDriving() {
+        guard let r = route?.result, r.mode == "car", r.geometry.count > 1 else { return }
+        let duration = max(30, Double(r.durationS) * 0.72)
+        driving = .ready(elapsed: 0, progress: 0, duration: duration, distanceM: Double(r.distanceM))
+    }
+
+    func startDriving() {
+        guard case let .ready(elapsed, _, duration, distance) = driving else { return }
+        startDrivingLoop(elapsed: elapsed, duration: duration, distance: distance)
+    }
+
+    func pauseDriving() {
+        guard case let .running(elapsed, progress, duration, distance) = driving else { return }
+        drivingTask?.cancel(); drivingTask = nil
+        driving = .paused(elapsed: elapsed, progress: progress, duration: duration, distanceM: distance)
+    }
+
+    func resumeDriving() {
+        guard case let .paused(elapsed, _, duration, distance) = driving else { return }
+        startDrivingLoop(elapsed: elapsed, duration: duration, distance: distance)
+    }
+
+    func finishDriving() {
+        switch driving {
+        case let .running(elapsed, _, duration, distance), let .paused(elapsed, _, duration, distance):
+            completeDriving(elapsed: elapsed, duration: duration, distance: distance)
+        default:
+            return
+        }
+    }
+
+    func stopDriving() { drivingTask?.cancel(); drivingTask = nil; driving = .idle }
+
+    private func startDrivingLoop(elapsed: TimeInterval, duration: TimeInterval, distance: Double) {
+        drivingTask?.cancel()
+        let started = Date().timeIntervalSince1970 - elapsed
+        driving = .running(elapsed: elapsed, progress: min(1, elapsed / duration), duration: duration, distanceM: distance)
+        drivingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                let e = Date().timeIntervalSince1970 - started
+                let p = min(1, e / duration)
+                self?.driving = .running(elapsed: e, progress: p, duration: duration, distanceM: distance)
+                if p >= 1 { self?.completeDriving(elapsed: duration, duration: duration, distance: distance); return }
+                try? await Task.sleep(nanoseconds: 100_000_000)
+            }
+        }
+    }
+
+    private func completeDriving(elapsed: TimeInterval, duration: TimeInterval, distance: Double) {
+        drivingTask?.cancel(); drivingTask = nil
+        driving = .finished(elapsed: min(elapsed, duration), progress: 1, duration: duration, distanceM: distance)
+        let hours = max(0.0001, elapsed / 3600)
+        drivingRuns = DrivingRunStore.append(DrivingRun(id: UUID(), createdAt: Date(), duration: elapsed, distanceM: distance, averageSpeedKmh: distance / 1000 / hours))
     }
 
     private func requestRoute(from fromPlace: Place?, to place: Place, mode: RouteMode) {
         routeTask?.cancel()
         selected = nil
         pickingStart = false
+        stopDriving()
         route = RouteUI(from: fromPlace, to: place, mode: mode, status: .loading)
         routeTask = Task { [weak self] in
             guard let self else { return }
@@ -482,6 +582,7 @@ final class AppModel: ObservableObject {
                     from: from, to: (place.lat, place.lon), mode: mode)
                 if !Task.isCancelled {
                     self.route = RouteUI(from: fromPlace, to: place, mode: mode, status: .ready, result: result)
+                    if mode == .car { self.prepareDriving() }
                 }
             } catch let e as APIClient.APIError where e.code == "no_route_found" {
                 if !Task.isCancelled {

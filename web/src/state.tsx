@@ -10,6 +10,10 @@ import { readMapPreferences, writeMapPreferences } from './maps/providerPreferen
 import type {
   AppleColorScheme, AppleMapType, AppleOverlayTone, MapPreferences, MapProvider,
 } from './maps/types'
+import {
+  createDrivingSession, finishDriving, loadDrivingRuns, pauseDriving, resumeDriving,
+  saveDrivingRun, startDriving, tickDriving, toDrivingRun, type DrivingRun, type DrivingSession,
+} from './lib/drivingSession'
 
 export interface Place {
   name: string; label: string; lat: number; lon: number
@@ -81,6 +85,13 @@ interface AppState {
   swapRoute: () => void
   beginPickStart: () => void
   clearRoute: () => void
+  driving: DrivingSession
+  drivingRuns: DrivingRun[]
+  startDrivingMode: () => void
+  pauseDrivingMode: () => void
+  resumeDrivingMode: () => void
+  tickDrivingMode: (now?: number) => void
+  finishDrivingMode: () => void
   showCategory: (
     cat: NearbyCategory,
     center: { lat: number; lon: number },
@@ -128,6 +139,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
   const [is3D, setIs3D] = useState(false)
   const [navigating, setNavigating] = useState(false)
+  const [driving, setDriving] = useState<DrivingSession>(() =>
+    route?.result ? createDrivingSession(route.result) : createDrivingSession({ distanceM: 0, durationS: 0 }))
+  const [drivingRuns, setDrivingRuns] = useState<DrivingRun[]>(() => loadDrivingRuns())
 
   // Async-write guards: a session epoch (bumped on login/logout) plus a
   // bookmark mutation counter — stale fetches must never clobber newer state.
@@ -382,6 +396,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const requestRoute = useCallback(async (fromPlace: Place | null, to: Place, mode: RouteMode) => {
     const seq = ++routeSeq.current
     setRoute({ from: fromPlace, to, mode, status: 'loading' })
+    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
     setSelected(null)
     setPickingStart(false)
     let from: { lat: number; lon: number }
@@ -405,6 +420,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const result = await api.route(from, to, mode)
       if (seq !== routeSeq.current) return
       setRoute({ from: fromPlace, to, mode, status: 'ready', result })
+      setDriving(createDrivingSession(result))
     } catch (e) {
       if (seq !== routeSeq.current) return
       const code = (e as { code?: string })?.code
@@ -436,6 +452,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setRoute(null)
     setPickingStart(false)
     setNavigating(false)
+    setDriving(createDrivingSession({ distanceM: 0, durationS: 0 }))
+  }, [])
+
+  const startDrivingMode = useCallback(() => setDriving((s) => startDriving(s)), [])
+  const pauseDrivingMode = useCallback(() => setDriving((s) => pauseDriving(s)), [])
+  const resumeDrivingMode = useCallback(() => setDriving((s) => resumeDriving(s)), [])
+  const tickDrivingMode = useCallback((now = Date.now()) => {
+    setDriving((s) => {
+      const next = tickDriving(s, now)
+      if (next.status === 'running' && next.progress >= 1) {
+        const finished = finishDriving(next, now)
+        const run = toDrivingRun(finished, now)
+        setDrivingRuns((runs) => {
+          const nextRuns = [run, ...runs].slice(0, 20)
+          try { localStorage.setItem('maps.driving-runs.v1', JSON.stringify(nextRuns)) } catch { /* best effort */ }
+          return nextRuns
+        })
+        return finished
+      }
+      return next
+    })
+  }, [])
+  const finishDrivingMode = useCallback(() => {
+    setDriving((s) => {
+      const finished = finishDriving(s)
+      if (finished.status !== 'finished') return finished
+      const run = toDrivingRun(finished)
+      setDrivingRuns((runs) => saveDrivingRun(run))
+      return finished
+    })
   }, [])
 
   // ---- POI category browsing ----------------------------------------------
@@ -499,6 +545,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMapProvider, setAppleAppearance, setCustomPack, setActivePack,
     loadPacks, loadBookmarks, saveBookmark, removeBookmark, bookmarkFor,
     startRoute, setRouteMode, setRouteStart, swapRoute, beginPickStart, clearRoute,
+    driving, drivingRuns, startDrivingMode, pauseDrivingMode, resumeDrivingMode,
+    tickDrivingMode, finishDrivingMode,
     showCategory, clearPois, installPack, removePack,
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

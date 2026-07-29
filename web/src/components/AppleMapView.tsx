@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
+import { pointAtProgress } from '../lib/driving'
 import { appleOverlayClass, resolveAppleColorScheme, resolveAppleMapType } from '../maps/appleAppearance'
 import { registerMapRenderer } from '../maps/rendererController'
 import { readViewport, writeViewport } from '../maps/viewportStorage'
@@ -63,6 +64,7 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
   const poiAnnotations = useRef<any[]>([])
   const bookmarkAnnotations = useRef<any[]>([])
   const routeOverlay = useRef<any>(null)
+  const drivingAnnotation = useRef<any>(null)
   appRef.current = app
 
   useEffect(() => {
@@ -294,6 +296,23 @@ export function AppleMapView({ onFailure }: { onFailure?: () => void }) {
     map.addOverlay(routeOverlay.current)
     fitPlaces(map, mk, geometry.map(([lon, lat]) => ({ name: '', label: '', lat, lon })))
   }, [map, app.route])
+
+  useEffect(() => {
+    if (!map) return
+    const mk = (window as any).mapkit
+    if (drivingAnnotation.current) map.removeAnnotation(drivingAnnotation.current)
+    drivingAnnotation.current = null
+    const geometry = app.route?.status === 'ready' ? app.route.result?.geometry : null
+    if (!geometry || geometry.length < 2 || app.driving.status === 'idle' || app.driving.status === 'ready') return
+    const point = pointAtProgress(geometry, app.driving.progress)
+    drivingAnnotation.current = new mk.MarkerAnnotation(new mk.Coordinate(point[1], point[0]), {
+      title: 'Driving position', color: '#1677ff', glyphText: '▶',
+    })
+    map.addAnnotation(drivingAnnotation.current)
+    if (app.driving.status === 'running') {
+      map.setCenterAnimated(new mk.Coordinate(point[1], point[0]), false)
+    }
+  }, [map, app.route, app.driving])
 
   const tone = appleOverlayClass(app.mapPreferences.appleOverlayTone)
   return (

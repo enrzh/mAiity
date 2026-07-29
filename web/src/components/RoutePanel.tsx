@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator'
 import type { RouteMode } from '../lib/api'
 import { useT } from '../lib/useT'
 import { useApp } from '../state'
+import { DrivingModePanel } from './DrivingModePanel'
 
 const fmtDist = (m: number) => (m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`)
 const fmtDur = (s: number) => {
@@ -80,6 +81,7 @@ export function RoutePanel() {
             <Button className="w-full gap-2" onClick={app.startNavigation}>
               <Navigation2 className="size-4" /> {t('nav-start')}
             </Button>
+            {route.mode === 'car' && <DrivingModePanel />}
             <Separator />
             <ol className="space-y-2 pr-1 text-sm">
               {route.result.steps.map((s, i) => (
