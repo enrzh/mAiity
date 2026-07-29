@@ -171,12 +171,17 @@ function kickTiles(m: MLMap) {
     for (const manager of managers) {
       if (!manager) continue
       try {
+        // Style recalc normally sets `used` each frame. If that loop stalls
+        // (seen with deferred style.load mutations), managers stay with
+        // used=undefined and never request tiles — blank basemap.
+        manager.used = true
         if (manager._paused && typeof manager.resume === 'function') manager.resume()
         if (typeof manager.update === 'function' && m.transform) {
           manager.update(m.transform, terrain)
         }
       } catch { /* manager mid-dispose */ }
     }
+    try { m.resize() } catch { /* ok */ }
     m.triggerRepaint()
   } catch { /* style not ready */ }
 }
@@ -416,11 +421,20 @@ export function MapLibreMapView() {
       } catch { /* ignore bad saved state */ }
     }
     // Layout can settle after first paint (flex + lazy engine). Force a resize
-    // so we never stay stuck at 0×0 / stale canvas size.
+    // so we never stay stuck at 0×0 / stale canvas size — then kick tiles.
     requestAnimationFrame(() => {
       try { m.resize() } catch { /* disposed */ }
-      requestAnimationFrame(() => { try { m.resize() } catch { /* disposed */ } })
+      kickTiles(m)
+      requestAnimationFrame(() => {
+        try { m.resize() } catch { /* disposed */ }
+        kickTiles(m)
+      })
     })
+    // Periodic safety net for the first few seconds after boot (covers the
+    // case where style.load overlays re-pause managers).
+    const kickTimers = [300, 800, 1600].map((ms) =>
+      window.setTimeout(() => { try { kickTiles(m) } catch { /* disposed */ } }, ms),
+    )
     const unregisterController = registerMapRenderer({
       provider: 'custom',
       capabilities: {
@@ -458,6 +472,7 @@ export function MapLibreMapView() {
     // Debug handle (harmless, and invaluable for diagnosing render issues).
     ;(window as unknown as { __map?: MLMap }).__map = m
     return () => {
+      for (const id of kickTimers) window.clearTimeout(id)
       if (raf) cancelAnimationFrame(raf)
       ro.disconnect()
       m.off('moveend', onMoveEnd)
