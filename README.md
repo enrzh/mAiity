@@ -1,4 +1,41 @@
-# maps — web + native map with swappable texture packs
+# mAiity
+
+**Maps that stay yours — and still look the way you want.** Search, save places,
+route, and navigate on web and iPhone, with **Apple Maps** and **custom visual
+packs** as equal providers.
+
+> **Status: on ice.** There is no site up at the moment — maps.aiity.de no
+> longer resolves. Web and iOS both build from this repo.
+> No Google Maps tiles. Texture packs and race mode are first-class features,
+> not demos bolted on the side.
+
+---
+
+## One-liner (for listings)
+
+> **mAiity** — map-first discovery and navigation on web and iPhone. Apple Maps
+> or your own style packs; same product on both platforms.
+
+## Short description (aiity / sAiity length)
+
+**mAiity** is a map-first app for finding places, searching addresses, browsing
+nearby categories, saving locations, and navigating. You can switch between
+native **Apple Maps** and **custom MapLibre styles** (swappable texture packs
+from tiles you control) without the UI changing personality. Success means
+search, location, camera, saved places, navigation, and optional **race mode**
+on car routes behave the same way regardless of which renderer is active.
+
+Part of the **aiity** family:
+
+| | |
+|---|---|
+| **aiity** | Chat with agents that work together — mini-tools get built instead of installed. |
+| **sAiity** | Subtitles for whatever your Mac is playing. Fully on-device. |
+| **mAiity** | Map-first discovery and navigation — Apple Maps or your packs, web + iOS. |
+
+---
+
+## Engineering focus
 
 Phase 0 goal: **one `style.json` renders identically on web and iOS**, from tiles
 you control, with no third-party API key. Everything runs on the open
