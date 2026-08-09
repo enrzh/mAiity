@@ -1,4 +1,4 @@
-# mAiity
+# mAiity (DISCONTINUED for now)
 
 **Maps that stay yours — and still look the way you want.** Search, save places,
 route, and navigate on web and iPhone, with **Apple Maps** and **custom visual
