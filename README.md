@@ -13,7 +13,7 @@ packs** as equal providers.
 
 ## One-liner (for listings)
 
-> **mAiity** — map-first discovery and navigation on web and iPhone. Apple Maps
+> **mAiity** — (DISCONTINUED for now) map-first discovery and navigation on web and iPhone. Apple Maps
 > or your own style packs; same product on both platforms.
 
 ## Short description (aiity / sAiity length)
